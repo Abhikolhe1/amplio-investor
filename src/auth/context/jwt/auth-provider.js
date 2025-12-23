@@ -61,7 +61,18 @@ export function AuthProvider({ children }) {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
 
-        const response = await axios.get(endpoints.auth.me);
+        // const response = await axios.get(endpoints.auth.me);
+
+        const response = {
+          data: {
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzYzBmMjc4LWFkNWUtNDVlMS1hMzliLWU3NDliMzgxYjIzZiIsImVtYWlsIjoia2FyYW5yYWtoMTlAZ21haWwuY29tIiwicGhvbmUiOiI4ODg4NjQ0Mzc4Iiwicm9sZXMiOlsic3VwZXJfYWRtaW4iXSwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3NjY0ODcxNTEsImV4cCI6MTc2NjUxMjM1MX0.8JVhT_Z_7uWeeb20tdgTrs_yIA9u_5hmwu-zvsKu2oI",
+            user: {
+              fullName: 'Admin Amplio',
+              email: 'admin@gmail.com',
+              phone: '4444444444'
+            }
+          }
+        }
 
         const { user } = response.data;
 
@@ -101,7 +112,19 @@ export function AuthProvider({ children }) {
       password,
     };
 
-    const response = await axios.post(endpoints.auth.login, data);
+
+    // const response = await axios.post(endpoints.auth.login, data);
+
+    const response = {
+      data: {
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzYzBmMjc4LWFkNWUtNDVlMS1hMzliLWU3NDliMzgxYjIzZiIsImVtYWlsIjoia2FyYW5yYWtoMTlAZ21haWwuY29tIiwicGhvbmUiOiI4ODg4NjQ0Mzc4Iiwicm9sZXMiOlsic3VwZXJfYWRtaW4iXSwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3NjY0ODcxNTEsImV4cCI6MTc2NjUxMjM1MX0.8JVhT_Z_7uWeeb20tdgTrs_yIA9u_5hmwu-zvsKu2oI",
+        user: {
+          fullName: 'Admin Amplio',
+          email: 'admin@gmail.com',
+          phone: '4444444444'
+        }
+      }
+    }
 
     const { accessToken, user } = response.data;
 
