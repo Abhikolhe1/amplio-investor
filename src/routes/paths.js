@@ -1,6 +1,7 @@
 // utils
 import { paramCase } from 'src/utils/change-case';
 import { _id, _postTitles } from 'src/_mock/assets';
+import { options } from 'numeral';
 
 // ----------------------------------------------------------------------
 
@@ -61,7 +62,9 @@ export const paths = {
     },
     jwt: {
       login: `${ROOTS.AUTH}/jwt/login`,
-      register: `${ROOTS.AUTH}/jwt/register`,
+      registerEmail: `${ROOTS.AUTH}/jwt/register-email`,
+      registerMobile: `${ROOTS.AUTH}/jwt/register-mobile`,
+      kyc: `${ROOTS.AUTH}/jwt/kyc`,
     },
     firebase: {
       login: `${ROOTS.AUTH}/firebase/login`,

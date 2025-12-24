@@ -19,7 +19,9 @@ const AmplifyForgotPasswordPage = lazy(() => import('src/pages/auth/amplify/forg
 
 // JWT
 const JwtLoginPage = lazy(() => import('src/pages/auth/jwt/login'));
-const JwtRegisterPage = lazy(() => import('src/pages/auth/jwt/register'));
+const JwtRegisterEmailPage = lazy(() => import('src/pages/auth/jwt/register-email'));
+const JwtRegisterMobilePage = lazy(() => import('src/pages/auth/jwt/register-mobile'));
+const OptionPage = lazy(() => import('src/pages/kyc/option'));
 
 // FIREBASE
 const FirebaseLoginPage = lazy(() => import('src/pages/auth/firebase/login'));
@@ -93,13 +95,29 @@ const authJwt = {
       ),
     },
     {
-      path: 'register',
+      path: 'register-email',
       element: (
         <AuthClassicLayout title="Manage the job more effectively with Minimal">
-          <JwtRegisterPage />
+          <JwtRegisterEmailPage />
         </AuthClassicLayout>
       ),
     },
+    {
+      path: 'register-mobile',
+      element: (
+        <AuthClassicLayout title="Manage the job more effectively with Minimal">
+          <JwtRegisterMobilePage />
+        </AuthClassicLayout>
+      ),
+    },
+    {
+      path: 'kyc',
+      element: (
+        // <AuthClassicLayout  maxWidth={false}>
+          <OptionPage />
+        // </AuthClassicLayout>
+      ),
+    }
   ],
 };
 

@@ -23,6 +23,7 @@ import { useAuthContext } from 'src/auth/hooks';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import OtpInput from './jwt-otp';
 
 // ----------------------------------------------------------------------
 
@@ -32,6 +33,9 @@ export default function JwtLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [otp, setOtp] = useState(Array(6).fill(''));
 
   const searchParams = useSearchParams();
 
@@ -40,13 +44,13 @@ export default function JwtLoginView() {
   const password = useBoolean();
 
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().required('Email is required').email('Email must be a valid email address'),
-    password: Yup.string().required('Password is required'),
+    emailOrMobile: Yup.string().required('Email or Mobile is required'),
+    // password: Yup.string().required('Password is required'),
   });
 
   const defaultValues = {
-    email: 'demo@minimals.cc',
-    password: 'demo1234',
+    emailOrMobile: '',
+    // password: '',
   };
 
   const methods = useForm({
@@ -60,29 +64,41 @@ export default function JwtLoginView() {
     formState: { isSubmitting },
   } = methods;
 
+  // const onSubmit = handleSubmit(async (data) => {
+  //   try {
+  //     await login?.(data.email, data.passdwor);
+
+  //     router.push(returnTo || PATH_AFTER_LOGIN);
+  //   } catch (error) {
+  //     console.error(error);
+  //     reset();
+  //     setErrorMsg(typeof error === 'string' ? error : error.message);
+  //   }
+  // });
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await login?.(data.email, data.password);
-
-      router.push(returnTo || PATH_AFTER_LOGIN);
+      setIdentifier(data.emailOrMobile);
+      setShowOtp(true);
     } catch (error) {
-      console.error(error);
       reset();
       setErrorMsg(typeof error === 'string' ? error : error.message);
     }
   });
 
   const renderHead = (
-    <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4">Sign in to Minimal</Typography>
+    <Stack spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 3 }}>
+      <Typography variant="h4">Sign In to Investor Portal</Typography>
+    </Stack>
+  );
 
-      <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">New user?</Typography>
+  const renderBottom = (
+    <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ mt: 2 }}>
+      <Typography variant="body2">New Inverstor?</Typography>
 
-        <Link component={RouterLink} href={paths.auth.jwt.register} variant="subtitle2">
-          Create an account
-        </Link>
-      </Stack>
+      <Link component={RouterLink} href={paths.auth.jwt.registerEmail} variant="subtitle2">
+        Create an account
+      </Link>
     </Stack>
   );
 
@@ -90,9 +106,9 @@ export default function JwtLoginView() {
     <Stack spacing={2.5}>
       {!!errorMsg && <Alert severity="error">{errorMsg}</Alert>}
 
-      <RHFTextField name="email" label="Email address" />
+      <RHFTextField name="emailOrMobile" label="Registered email or mobile number" />
 
-      <RHFTextField
+      {/* <RHFTextField
         name="password"
         label="Password"
         type={password.value ? 'text' : 'password'}
@@ -105,11 +121,15 @@ export default function JwtLoginView() {
             </InputAdornment>
           ),
         }}
-      />
+      /> */}
 
-      <Link variant="body2" color="inherit" underline="always" sx={{ alignSelf: 'flex-end' }}>
+      {/* <Link variant="body2" color="inherit" underline="always" sx={{ alignSelf: 'flex-end' }}>
         Forgot password?
-      </Link>
+      </Link> */}
+      <Typography variant="caption">
+        By clicking continue, you agree to our <Link>Terms & Conditions</Link> and{' '}
+        <Link>Privacy Policy</Link>
+      </Typography>
 
       <LoadingButton
         fullWidth
@@ -119,20 +139,39 @@ export default function JwtLoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Login
+        Continue
       </LoadingButton>
     </Stack>
   );
 
+  const handleVerifyOtp = () => {
+    const enteredOtp = otp.join('');
+    console.log('Verify OTP:', enteredOtp);
+    // call verify OTP API here
+  };
+
+  const handleResendOtp = () => {
+    console.log('Resend OTP');
+    // call resend OTP API here
+  };
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
-      {renderHead}
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Use email : <strong>demo@minimals.cc</strong> / password :<strong> demo1234</strong>
-      </Alert>
-
-      {renderForm}
+      {!showOtp ? (
+        <>
+          {renderHead}
+          {renderForm}
+          {renderBottom}
+        </>
+      ) : (
+        <OtpInput
+          emailOrMobile={identifier}
+          value={otp}
+          onChange={setOtp}
+          onVerify={handleVerifyOtp}
+          onResend={handleResendOtp}
+        />
+      )}
     </FormProvider>
   );
 }
