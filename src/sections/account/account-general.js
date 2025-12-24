@@ -25,14 +25,15 @@ import FormProvider, {
   RHFUploadAvatar,
   RHFAutocomplete,
 } from 'src/components/hook-form';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function AccountGeneral() {
   const { enqueueSnackbar } = useSnackbar();
 
-  const { user } = useMockedUser();
-
+  // const { user } = useMockedUser();
+ const { user } = useAuthContext();
   const UpdateUserSchema = Yup.object().shape({
     displayName: Yup.string().required('Name is required'),
     email: Yup.string().required('Email is required').email('Email must be a valid email address'),
@@ -43,7 +44,7 @@ export default function AccountGeneral() {
     state: Yup.string().required('State is required'),
     city: Yup.string().required('City is required'),
     zipCode: Yup.string().required('Zip code is required'),
-    about: Yup.string().required('About is required'),
+    // about: Yup.string().required('About is required'),
     // not required
     isPublic: Yup.boolean(),
   });
@@ -58,7 +59,7 @@ export default function AccountGeneral() {
     state: user?.state || '',
     city: user?.city || '',
     zipCode: user?.zipCode || '',
-    about: user?.about || '',
+    // about: user?.about || '',
     isPublic: user?.isPublic || false,
   };
 
@@ -124,7 +125,7 @@ export default function AccountGeneral() {
               }
             />
 
-            <RHFSwitch
+            {/* <RHFSwitch
               name="isPublic"
               labelPlacement="start"
               label="Public Profile"
@@ -133,7 +134,7 @@ export default function AccountGeneral() {
 
             <Button variant="soft" color="error" sx={{ mt: 3 }}>
               Delete User
-            </Button>
+            </Button> */}
           </Card>
         </Grid>
 
@@ -187,7 +188,7 @@ export default function AccountGeneral() {
             </Box>
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-              <RHFTextField name="about" multiline rows={4} label="About" />
+              {/* <RHFTextField name="about" multiline rows={4} label="About" /> */}
 
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
                 Save Changes

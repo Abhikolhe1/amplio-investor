@@ -12,6 +12,7 @@ const ROOTS = {
   AUTH: '/auth',
   AUTH_DEMO: '/auth-demo',
   DASHBOARD: '/dashboard',
+  
 };
 
 // ----------------------------------------------------------------------
@@ -128,6 +129,11 @@ export const paths = {
         details: `${ROOTS.DASHBOARD}/product/${MOCK_ID}`,
         edit: `${ROOTS.DASHBOARD}/product/${MOCK_ID}/edit`,
       },
+    },
+     help: {
+      root: `${ROOTS.DASHBOARD}/help`,
+      help: `${ROOTS.DASHBOARD}/help/helpPage`,
+
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,
