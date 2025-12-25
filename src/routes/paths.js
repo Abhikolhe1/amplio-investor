@@ -65,6 +65,7 @@ export const paths = {
       registerEmail: `${ROOTS.AUTH}/jwt/register-email`,
       registerMobile: `${ROOTS.AUTH}/jwt/register-mobile`,
       kyc: `${ROOTS.AUTH}/jwt/kyc`,
+      kycPending: `${ROOTS.AUTH}/jwt/kyc-pending`,
     },
     firebase: {
       login: `${ROOTS.AUTH}/firebase/login`,

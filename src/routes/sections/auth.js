@@ -22,6 +22,7 @@ const JwtLoginPage = lazy(() => import('src/pages/auth/jwt/login'));
 const JwtRegisterEmailPage = lazy(() => import('src/pages/auth/jwt/register-email'));
 const JwtRegisterMobilePage = lazy(() => import('src/pages/auth/jwt/register-mobile'));
 const OptionPage = lazy(() => import('src/pages/kyc/option'));
+const KycPendingPage = lazy(() => import('src/pages/kyc/kyc-pending'));
 
 // FIREBASE
 const FirebaseLoginPage = lazy(() => import('src/pages/auth/firebase/login'));
@@ -116,6 +117,12 @@ const authJwt = {
         // <AuthClassicLayout  maxWidth={false}>
           <OptionPage />
         // </AuthClassicLayout>
+      ),
+    },    
+    {
+      path: 'kyc-pending',
+      element: (
+          <KycPendingPage />
       ),
     }
   ],
