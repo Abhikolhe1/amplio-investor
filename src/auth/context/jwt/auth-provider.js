@@ -106,10 +106,12 @@ export function AuthProvider({ children }) {
   }, [initialize]);
 
   // LOGIN
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (emailOrMobile,
+    //  password
+    ) => {
     const data = {
-      email,
-      password,
+      emailOrMobile,
+      // password,
     };
 
 
@@ -117,11 +119,11 @@ export function AuthProvider({ children }) {
 
     const response = {
       data: {
-        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NjM4MzMyLCJleHAiOjE3NjY2NjM1MzJ9.e6Cluu29vLzfhGIZs0KoWDXjmmPEGamZ0HVugY2fALo",
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzYzBmMjc4LWFkNWUtNDVlMS1hMzliLWU3NDliMzgxYjIzZiIsImVtYWlsIjoia2FyYW5yYWtoMTlAZ21haWwuY29tIiwicGhvbmUiOiI4ODg4NjQ0Mzc4Iiwicm9sZXMiOlsic3VwZXJfYWRtaW4iXSwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3NjY2NjYyNjAsImV4cCI6MTc2NjY5MTQ2MH0.IhRvB6o6hrwfcD8dbBr7gRIfJkQB3wzAXGwG2iROMNc",
         user: {
           fullName: 'Admin Amplio',
           email: 'admin@gmail.com',
-          phone: '4444444444'
+          emailOrMobile: '4444444444' || 'admin@gmail.com',
         }
       }
     }

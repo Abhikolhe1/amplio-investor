@@ -144,10 +144,24 @@ export default function JwtLoginView() {
     </Stack>
   );
 
-  const handleVerifyOtp = () => {
-    const enteredOtp = otp.join('');
-    console.log('Verify OTP:', enteredOtp);
-    // call verify OTP API here
+  const handleVerifyOtp = async () => {
+    try {
+      const enteredOtp = otp.join('');
+
+      // 👉 Mock OTP check
+      if (enteredOtp !== '123456') {
+        setErrorMsg('Invalid OTP');
+        return;
+      }
+
+      // ✅ LOGIN AFTER OTP VERIFIED
+      await login(identifier);
+
+      // ✅ Redirect to dashboard
+      router.push(returnTo || PATH_AFTER_LOGIN);
+    } catch (error) {
+      setErrorMsg('OTP verification failed');
+    }
   };
 
   const handleResendOtp = () => {
