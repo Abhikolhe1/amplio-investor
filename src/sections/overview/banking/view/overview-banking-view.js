@@ -119,7 +119,7 @@ export default function OverviewBankingView() {
               }}
             />
 
-            <BankingExpensesCategories
+            {/* <BankingExpensesCategories
               title="Expenses Categories"
               chart={{
                 series: [
@@ -145,9 +145,9 @@ export default function OverviewBankingView() {
                   theme.palette.info.main,
                 ],
               }}
-            />
+            /> */}
 
-            <BankingRecentTransitions
+            {/* <BankingRecentTransitions
               title="Recent Transitions"
               tableData={_bankingRecentTransitions}
               tableLabels={[
@@ -157,26 +157,26 @@ export default function OverviewBankingView() {
                 { id: 'status', label: 'Status' },
                 { id: '' },
               ]}
-            />
+            /> */}
           </Stack>
         </Grid>
 
         <Grid xs={12} md={4}>
           <Stack spacing={3}>
             <BankingQuickTransfer title="Quick Transfer" list={_bankingContacts} />
-
+{/* 
             <BankingContacts
               title="Contacts"
               subheader="You have 122 contacts"
               list={_bankingContacts.slice(-5)}
-            />
+            /> */}
 
-            <BankingInviteFriends
+            {/* <BankingInviteFriends
               price="$50"
               title={`Invite friends \n and earn`}
               description="Praesent egestas tristique nibh. Duis lobortis massa imperdiet quam."
               img="/assets/illustrations/characters/character_11.png"
-            />
+            /> */}
           </Stack>
         </Grid>
       </Grid>

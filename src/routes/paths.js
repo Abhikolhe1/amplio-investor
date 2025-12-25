@@ -133,7 +133,10 @@ export const paths = {
      help: {
       root: `${ROOTS.DASHBOARD}/help`,
       help: `${ROOTS.DASHBOARD}/help/helpPage`,
-
+    },
+      invest: {
+      root: `${ROOTS.DASHBOARD}/invest`,
+      view: `${ROOTS.DASHBOARD}/invest/investPage`,
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,
