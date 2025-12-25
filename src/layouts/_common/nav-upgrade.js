@@ -12,14 +12,15 @@ import { paths } from 'src/routes/paths';
 import { useLocales } from 'src/locales';
 // components
 import Label from 'src/components/label';
+import { RouterLink } from 'src/routes/components';
+import { useRouter } from 'src/routes/hook';
 
 // ----------------------------------------------------------------------
 
 export default function NavUpgrade() {
   const { user } = useMockedUser();
 
-  const { t } = useLocales();
-
+  const router = useRouter();
   return (
     <Stack
       sx={{
@@ -31,7 +32,7 @@ export default function NavUpgrade() {
       <Stack alignItems="center">
         <Box sx={{ position: 'relative' }}>
           <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 48, height: 48 }} />
-          <Label
+          {/* <Label
             color="success"
             variant="filled"
             sx={{
@@ -44,22 +45,45 @@ export default function NavUpgrade() {
             }}
           >
             Free
-          </Label>
+          </Label> */}
         </Box>
 
         <Stack spacing={0.5} sx={{ mt: 1.5, mb: 2 }}>
           <Typography variant="subtitle2" noWrap>
             {user?.displayName}
           </Typography>
-
+          <Typography variant="body2" noWrap sx={{ color: 'text.disabled' }}>
+            Support & contact
+          </Typography>
           <Typography variant="body2" noWrap sx={{ color: 'text.disabled' }}>
             {user?.email}
           </Typography>
+          <Typography variant="body2" noWrap sx={{ color: 'text.disabled' }}>
+            {user?.phoneNumber}
+          </Typography>
+          <Typography
+            variant="body2"
+            noWrap
+            component={RouterLink}
+            to={paths.dashboard.help.help}
+            sx={{
+              color: '#363636',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              '&:hover': {
+                color: 'primary.main',
+              },
+            }}
+          >
+            Need Help?
+          </Typography>
+
+
         </Stack>
 
-        <Button variant="contained" href={paths.minimalUI} target="_blank" rel="noopener">
+        {/* <Button variant="contained" href={paths.minimalUI} target="_blank" rel="noopener">
           {t('upgrade_to_pro')}
-        </Button>
+        </Button> */}
       </Stack>
     </Stack>
   );

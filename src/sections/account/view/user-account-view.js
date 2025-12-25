@@ -5,18 +5,24 @@ import Tabs from '@mui/material/Tabs';
 import Container from '@mui/material/Container';
 // routes
 import { paths } from 'src/routes/paths';
+import { useSearchParams } from 'react-router-dom';
+
 // _mock
 import { _userAbout, _userPlans, _userPayment, _userInvoices, _userAddressBook } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import { useRouter } from 'src/routes/hook';
+
 //
 import AccountGeneral from '../account-general';
 import AccountBilling from '../account-billing';
 import AccountSocialLinks from '../account-social-links';
 import AccountNotifications from '../account-notifications';
 import AccountChangePassword from '../account-change-password';
+import BankNewForm from '../account-bank-details';
+import AccountNomineeForm from '../account-nominee-details';
 
 // ----------------------------------------------------------------------
 
@@ -27,25 +33,26 @@ const TABS = [
     icon: <Iconify icon="solar:user-id-bold" width={24} />,
   },
   {
-    value: 'billing',
-    label: 'Billing',
-    icon: <Iconify icon="solar:bill-list-bold" width={24} />,
+    value: 'bank',
+    label: 'Bank',
+    icon: <Iconify icon="fluent:building-bank-16-filled" width={24} />,
   },
   {
-    value: 'notifications',
-    label: 'Notifications',
-    icon: <Iconify icon="solar:bell-bing-bold" width={24} />,
+    value: 'nominee',
+    label: 'Nominee',
+    icon: <Iconify icon="solar:user-id-bold" width={24} />,
   },
+
   {
-    value: 'social',
-    label: 'Social links',
-    icon: <Iconify icon="solar:share-bold" width={24} />,
+    value: 'demat',
+    label: 'Demat',
+    icon: <Iconify icon="fluent:building-bank-16-filled" width={24} />,
   },
-  {
-    value: 'security',
-    label: 'Security',
-    icon: <Iconify icon="ic:round-vpn-key" width={24} />,
-  },
+  // {
+  //   value: 'security',
+  //   label: 'Security',
+  //   icon: <Iconify icon="ic:round-vpn-key" width={24} />,
+  // },
 ];
 
 // ----------------------------------------------------------------------
@@ -53,11 +60,20 @@ const TABS = [
 export default function AccountView() {
   const settings = useSettingsContext();
 
-  const [currentTab, setCurrentTab] = useState('general');
+  const router = useRouter();
+
+  const [searchParams] = useSearchParams();
+
+  const tabs = searchParams.get('tab');
+
+  const [currentTab, setCurrentTab] = useState(tabs || 'general');
 
   const handleChangeTab = useCallback((event, newValue) => {
     setCurrentTab(newValue);
-  }, []);
+    router.push({
+      search: `?tab=${newValue}`
+    });
+  }, [router]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
@@ -87,20 +103,15 @@ export default function AccountView() {
 
       {currentTab === 'general' && <AccountGeneral />}
 
-      {currentTab === 'billing' && (
-        <AccountBilling
-          plans={_userPlans}
-          cards={_userPayment}
-          invoices={_userInvoices}
-          addressBook={_userAddressBook}
-        />
+      {currentTab === 'bank' && (
+        <BankNewForm />
       )}
 
-      {currentTab === 'notifications' && <AccountNotifications />}
+      {currentTab === 'nominee' && <AccountNomineeForm />}
 
-      {currentTab === 'social' && <AccountSocialLinks socialLinks={_userAbout.socialLinks} />}
+      {currentTab === 'demat' && <BankNewForm />}
 
-      {currentTab === 'security' && <AccountChangePassword />}
+      {/* {currentTab === 'security' && <AccountChangePassword />} */}
     </Container>
   );
 }
