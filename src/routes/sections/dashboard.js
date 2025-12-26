@@ -6,6 +6,7 @@ import { AuthGuard } from 'src/auth/guard';
 import DashboardLayout from 'src/layouts/dashboard';
 // components
 import { LoadingScreen } from 'src/components/loading-screen';
+import { element } from 'prop-types';
 
 // ----------------------------------------------------------------------
 
@@ -44,7 +45,8 @@ const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
 // NEED HELP
 const NeedHelpPage = lazy(() => import('src/pages/dashboard/help/help'));
 // INVEST 
-const InvestViewPage = lazy(() => import('src/pages/dashboard/invest/view'))
+const InvestViewPage = lazy(() => import('src/pages/dashboard/invest/view'));
+const InvestDetailsPage = lazy(() => import('src/pages/dashboard/invest/details'))
 // JOB
 const JobDetailsPage = lazy(() => import('src/pages/dashboard/job/details'));
 const JobListPage = lazy(() => import('src/pages/dashboard/job/list'));
@@ -67,7 +69,7 @@ const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission')
 // BLANK PAGE
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 // FAQS
-const FaqsViewPage = lazy(()=> import('src/pages/dashboard/faqs/view'))
+const FaqsViewPage = lazy(() => import('src/pages/dashboard/faqs/view'))
 
 // ----------------------------------------------------------------------
 
@@ -160,6 +162,7 @@ export const dashboardRoutes = [
         children: [
           { element: <InvestViewPage />, index: true },
           { path: 'investPage', element: <InvestViewPage /> },
+          { path: ':id', element: <InvestDetailsPage /> }
 
         ],
       },

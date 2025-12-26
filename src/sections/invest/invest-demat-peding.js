@@ -9,19 +9,28 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-
-// icon
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Iconify from 'src/components/iconify';
+
+const DEMAT_POPUP_KEY = 'demat_popup_shown';
 
 export default function DematPendingDialog() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false); 
+
+  useEffect(() => {
+    const alreadyShown = localStorage.getItem(DEMAT_POPUP_KEY);
+
+    if (!alreadyShown) {
+      setOpen(true);
+    }
+  }, []);
 
   const handleClose = () => {
     setOpen(false);
+    localStorage.setItem(DEMAT_POPUP_KEY, 'true'); 
   };
 
   return (
@@ -56,9 +65,8 @@ export default function DematPendingDialog() {
               right: 12,
               color: '#6B7280',
             }}
-         > 
-          <Iconify icon="eva:close-fill" />
-
+          >
+            <Iconify icon="eva:close-fill" />
           </IconButton>
 
           {/* Image */}

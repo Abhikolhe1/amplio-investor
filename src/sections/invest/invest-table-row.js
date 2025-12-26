@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
-import { Card, Stack, Typography, Box } from '@mui/material';
+import { Card, Grid, Stack, Typography, Box } from '@mui/material';
 import Iconify from 'src/components/iconify';
 
-export default function InvestTableRow({ row, selected, onSelectRow, onViewRow }) {
+export default function InvestTableRow({ row, onViewRow }) {
   const { buyer, buyerLogo, seller, sellerLogo, unitCost, xirr, unitLeft, tenure } = row;
 
   return (
@@ -14,8 +14,6 @@ export default function InvestTableRow({ row, selected, onSelectRow, onViewRow }
         cursor: 'pointer',
         border: '1px solid',
         borderColor: 'divider',
-        maxHeight:'230px',
-        height:'100%',
         transition: '0.25s',
         '&:hover': {
           boxShadow: 4,
@@ -23,87 +21,89 @@ export default function InvestTableRow({ row, selected, onSelectRow, onViewRow }
         },
       }}
     >
-      {/* MAIN GRID */}
-      <Stack direction="row" justifyContent="space-between" spacing={3}>
-        {/* LEFT SECTION */}
-        <Stack spacing={2}>
-          {/* Buyer */}
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              component="img"
-              src={buyerLogo}
-              alt={buyer}
-              sx={{ width: 40, height: 40, borderRadius: 1 }}
-            />
-
-            <Stack>
-              <Typography fontWeight={700}>{buyer}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Buyer
-              </Typography>
+      <Grid container alignItems="center">
+        <Grid item xs={6} md={6}>
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                component="img"
+                src={buyerLogo}
+                alt={buyer}
+                sx={{ width: 40 }}
+              />
+              <Stack>
+                <Typography fontWeight={700}>{buyer}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Buyer
+                </Typography>
+              </Stack>
             </Stack>
-          </Stack>
 
-          {/* Arrow */}
-          <Stack alignItems="center">
-            <Iconify
-              icon="material-symbols:swap-horiz-rounded"
-              width={35}
-              height={35}
+            <Box
               sx={{
-                transform: 'rotate(90deg)',
+                display: 'flex',
+                justifyContent: 'flex-start',
+                pl: '60px',
               }}
-            />{' '}
-          </Stack>
+            >
+              <Iconify
+                icon="material-symbols:swap-horiz-rounded"
+                width={32}
+                sx={{ transform: 'rotate(90deg)' }}
+              />
+            </Box>
 
-          {/* Seller */}
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              component="img"
-              src={sellerLogo}
-              alt={seller}
-              sx={{ width: 40, height: 40, borderRadius: '50%' }}
-            />
-
-            <Stack>
-              <Typography fontWeight={700}>{seller}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Seller
-              </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                component="img"
+                src={sellerLogo}
+                alt={seller}
+                sx={{ width: 40, height: 40, borderRadius: '50%' }}
+              />
+              <Stack>
+                <Typography fontWeight={700}>{seller}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Seller
+                </Typography>
+              </Stack>
             </Stack>
           </Stack>
-        </Stack>
+        </Grid>
 
-        {/* RIGHT SECTION */}
-        <Stack alignItems="flex-end" spacing={1}>
-          <Stack alignItems="flex-end" direction='row' spacing={1}>
-            <Typography color="text.secondary">Unit Cost</Typography>
-            <Typography fontWeight={700}>₹{unitCost.toLocaleString()}</Typography>
-          </Stack>
-
-          <Stack alignItems="flex-end" direction='row' spacing={1}>
-            <Typography color="text.secondary">XIRR</Typography>
-            <Typography fontWeight={700}>{xirr}</Typography>
-          </Stack>
-
-          <Stack alignItems="flex-end" direction='row' spacing={1}>
-            <Typography color="text.secondary">Unit Left</Typography>
-            <Typography fontWeight={700}>{unitLeft}</Typography>
-          </Stack>
-
-          <Stack alignItems="flex-end" direction='row' spacing={1}>
-            <Typography color="text.secondary">Tenure</Typography>
-            <Typography fontWeight={700}>{tenure}</Typography>
-          </Stack>
-        </Stack>
-      </Stack>
+        <Grid item xs={6} md={6} >
+          <Grid container spacing={2}>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>Unit Cost</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>₹{unitCost.toLocaleString()}</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>XIRR</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>{xirr}</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>Unit Left</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>{unitLeft}</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>Tenure</Typography>
+            </Grid>
+            <Grid item xs={6} >
+              <Typography color="#212B36" fontWeight={500}>{tenure}</Typography>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
     </Card>
   );
 }
 
 InvestTableRow.propTypes = {
   row: PropTypes.object,
-  selected: PropTypes.bool,
-  onSelectRow: PropTypes.func,
   onViewRow: PropTypes.func,
 };

@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
 
         const response = {
           data: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzI1MTU2LCJleHAiOjE3NjY3NTAzNTZ9.Jah8aibialBb9g-W-xmBCWTLTRk2JheuKd4kYR2_pR4",
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzUwMzgxLCJleHAiOjE3NjY3NzU1ODF9.9A5ltgpGLKXXbZ3K-92w2h7x0fIEZ1mTXQd_OdW9RZg",
             user: {
               fullName: 'Admin Amplio',
               email: 'admin@gmail.com',
@@ -108,7 +108,7 @@ export function AuthProvider({ children }) {
   // LOGIN
   const login = useCallback(async (emailOrMobile,
     //  password
-    ) => {
+  ) => {
     const data = {
       emailOrMobile,
       // password,
@@ -119,7 +119,7 @@ export function AuthProvider({ children }) {
 
     const response = {
       data: {
-        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzI1MTU2LCJleHAiOjE3NjY3NTAzNTZ9.Jah8aibialBb9g-W-xmBCWTLTRk2JheuKd4kYR2_pR4",
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzUwMzgxLCJleHAiOjE3NjY3NzU1ODF9.9A5ltgpGLKXXbZ3K-92w2h7x0fIEZ1mTXQd_OdW9RZg",
         user: {
           fullName: 'Admin Amplio',
           email: 'admin@gmail.com',
@@ -166,6 +166,7 @@ export function AuthProvider({ children }) {
   // LOGOUT
   const logout = useCallback(async () => {
     setSession(null);
+    localStorage.removeItem('demat_popup_shown');
     dispatch({
       type: 'LOGOUT',
     });

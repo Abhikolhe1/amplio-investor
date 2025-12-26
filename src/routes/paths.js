@@ -141,6 +141,7 @@ export const paths = {
       invest: {
       root: `${ROOTS.DASHBOARD}/invest`,
       view: `${ROOTS.DASHBOARD}/invest/investPage`,
+      details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,

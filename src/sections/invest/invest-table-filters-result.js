@@ -41,7 +41,6 @@ export default function InvestTableFiltersResult({
           <Block label="Status:">
             <Chip
               size="small"
-              label={filters.status === '1' ? 'Active' : 'In-Active'}
               onDelete={handleRemoveStatus}
             />
           </Block>
