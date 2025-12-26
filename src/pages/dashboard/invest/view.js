@@ -10,7 +10,7 @@ export default function InvestViewPage() {
             <Helmet>
                 <title> Invest View</title>
             </Helmet>
-            {/* <RMVerificationPending/> */}
+            <RMVerificationPending/>
             <DematPendingDialog/>
                 
         </>

@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
 
         const response = {
           data: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NjM4MzMyLCJleHAiOjE3NjY2NjM1MzJ9.e6Cluu29vLzfhGIZs0KoWDXjmmPEGamZ0HVugY2fALo",
+            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzI1MTU2LCJleHAiOjE3NjY3NTAzNTZ9.Jah8aibialBb9g-W-xmBCWTLTRk2JheuKd4kYR2_pR4",
             user: {
               fullName: 'Admin Amplio',
               email: 'admin@gmail.com',
@@ -117,7 +117,7 @@ export function AuthProvider({ children }) {
 
     const response = {
       data: {
-        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NjM4MzMyLCJleHAiOjE3NjY2NjM1MzJ9.e6Cluu29vLzfhGIZs0KoWDXjmmPEGamZ0HVugY2fALo",
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzI1MTU2LCJleHAiOjE3NjY3NTAzNTZ9.Jah8aibialBb9g-W-xmBCWTLTRk2JheuKd4kYR2_pR4",
         user: {
           fullName: 'Admin Amplio',
           email: 'admin@gmail.com',

@@ -58,7 +58,7 @@ export default function RMVerificationPending() {
   return (
     <Box
       sx={{
-        minHeight: '60vh',
+        minHeight: '70vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

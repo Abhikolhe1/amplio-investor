@@ -165,6 +165,10 @@ export const paths = {
         details: `${ROOTS.DASHBOARD}/order/${MOCK_ID}`,
       },
     },
+      faqs: {
+      root: `${ROOTS.DASHBOARD}/faqs`,
+      details: (id) => `${ROOTS.DASHBOARD}/faqs/${id}`,
+    },
     job: {
       root: `${ROOTS.DASHBOARD}/job`,
       new: `${ROOTS.DASHBOARD}/job/new`,

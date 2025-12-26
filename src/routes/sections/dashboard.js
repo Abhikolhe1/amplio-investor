@@ -10,7 +10,7 @@ import { LoadingScreen } from 'src/components/loading-screen';
 // ----------------------------------------------------------------------
 
 // OVERVIEW
-const IndexPage = lazy(() => import('src/pages/dashboard/app'));
+const IndexPage = lazy(() => import('src/pages/dashboard/banking'));
 const OverviewEcommercePage = lazy(() => import('src/pages/dashboard/ecommerce'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
 const OverviewBankingPage = lazy(() => import('src/pages/dashboard/banking'));
@@ -66,6 +66,8 @@ const KanbanPage = lazy(() => import('src/pages/dashboard/kanban'));
 const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission'));
 // BLANK PAGE
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
+// FAQS
+const FaqsViewPage = lazy(()=> import('src/pages/dashboard/faqs/view'))
 
 // ----------------------------------------------------------------------
 
@@ -116,6 +118,13 @@ export const dashboardRoutes = [
           { element: <OrderListPage />, index: true },
           { path: 'list', element: <OrderListPage /> },
           { path: ':id', element: <OrderDetailsPage /> },
+        ],
+      },
+      {
+        path: 'faqs',
+        children: [
+          { element: <FaqsViewPage />, index: true },
+          { path: ':id', element: <FaqsViewPage /> },
         ],
       },
       {

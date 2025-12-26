@@ -51,14 +51,14 @@ const ICONS = {
 
 export function useNavData() {
   const { t } = useLocales();
-  const { user: currentUser } = useAuthContext();
+  // const { user: currentUser } = useAuthContext();
 
   const data = useMemo(
-    () => [
+    () => [                   
       {
         subheader: t('dashboard'),
         items: [
-          { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
+          // { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
           { title: t('Activity'), path: paths.dashboard.general.banking, icon: ICONS.banking },
           { title: t('Invest'), path: paths.dashboard.invest.view, icon: ICONS.invest },
         ],
@@ -295,8 +295,10 @@ export function useNavData() {
       //   ],
       // },
     ],
-    [t, currentUser]
+    [t, ]
   );
+
+  // currentUser
 
   return data;
 }
