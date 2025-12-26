@@ -55,27 +55,37 @@ export default function AuthClassicLayout({ children, image, title }) {
   const upMd = useResponsive('up', 'md');
 
   const renderLogo = (
-    <Logo
-      sx={{
-        zIndex: 9,
-        position: 'absolute',
-        m: { xs: 2, md: 5 },
-      }}
-    />
+    // <Logo
+    //   sx={{
+    //     zIndex: 9,
+    //     position: 'absolute',
+    //     m: { xs: 2, md: 5 },
+    //   }}
+    // />
+    <Typography>logo</Typography>
   );
 
   const renderContent = (
-    <Stack
+    <Box
       sx={{
-        width: 1,
-        mx: 'auto',
-        maxWidth: 480,
-        px: { xs: 2, md: 8 },
-        py: { xs: 15, md: 30 },
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      {children}
-    </Stack>
+      <Stack
+        sx={{
+          // width: 1,
+          mx: 'auto',
+          maxWidth:520 ,
+          px: { xs: 2, md: 8 },
+          // py: { xs: 15, md: 30 },
+        }}
+      >
+        {children}
+      </Stack>
+    </Box>
   );
 
   const renderSection = (
@@ -131,14 +141,17 @@ export default function AuthClassicLayout({ children, image, title }) {
   return (
     <Stack
       component="main"
-      direction="row"
-      sx={{
-        minHeight: '100vh',
-      }}
+      // direction="row"
+      sx={
+        {
+          // minHeight: '100vh',
+          position: 'relative',
+        }
+      }
     >
       {renderLogo}
 
-      {upMd && renderSection}
+      {/* {upMd && renderSection} */}
 
       {renderContent}
     </Stack>

@@ -106,10 +106,12 @@ export function AuthProvider({ children }) {
   }, [initialize]);
 
   // LOGIN
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (emailOrMobile,
+    //  password
+    ) => {
     const data = {
-      email,
-      password,
+      emailOrMobile,
+      // password,
     };
 
 
@@ -121,7 +123,7 @@ export function AuthProvider({ children }) {
         user: {
           fullName: 'Admin Amplio',
           email: 'admin@gmail.com',
-          phone: '4444444444'
+          emailOrMobile: '4444444444' || 'admin@gmail.com',
         }
       }
     }
