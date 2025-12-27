@@ -27,7 +27,7 @@ export default function JwtRegisterMobileView() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [identifier, setIdentifier] = useState('');
-  const [otp, setOtp] = useState(Array(6).fill(''));
+  const [otp, setOtp] = useState(Array(4).fill(''));
 
   const RegisterSchema = Yup.object().shape({
     mobile: Yup.string()

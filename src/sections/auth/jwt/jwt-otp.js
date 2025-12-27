@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Stack, Typography, Grid, TextField, Button, Link } from '@mui/material';
 
 export default function OtpInput({
-  length = 6,
+  length = 4,
   value,
   onChange,
   emailOrMobile,

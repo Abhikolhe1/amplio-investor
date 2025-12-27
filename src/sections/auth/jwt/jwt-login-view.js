@@ -35,7 +35,7 @@ export default function JwtLoginView() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [identifier, setIdentifier] = useState('');
-  const [otp, setOtp] = useState(Array(6).fill(''));
+  const [otp, setOtp] = useState(Array(4).fill(''));
 
   const searchParams = useSearchParams();
 
@@ -149,7 +149,7 @@ export default function JwtLoginView() {
       const enteredOtp = otp.join('');
 
       // 👉 Mock OTP check
-      if (enteredOtp !== '123456') {
+      if (enteredOtp !== '1234') {
         setErrorMsg('Invalid OTP');
         return;
       }
