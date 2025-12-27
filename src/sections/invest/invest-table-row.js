@@ -3,7 +3,7 @@ import { Card, Grid, Stack, Typography, Box } from '@mui/material';
 import Iconify from 'src/components/iconify';
 
 export default function InvestTableRow({ row, onViewRow }) {
-  const { buyer, buyerLogo, seller, sellerLogo, unitCost, xirr, unitLeft, tenure } = row;
+  const { buyer, seller, overview } = row;
 
   return (
     <Card
@@ -25,14 +25,9 @@ export default function InvestTableRow({ row, onViewRow }) {
         <Grid item xs={6} md={6}>
           <Stack spacing={2}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box
-                component="img"
-                src={buyerLogo}
-                alt={buyer}
-                sx={{ width: 40 }}
-              />
+              <Box component="img" src={buyer?.logo} alt={buyer?.name} sx={{ width: 40 }} />
               <Stack>
-                <Typography fontWeight={700}>{buyer}</Typography>
+                <Typography fontWeight={700}>{buyer?.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Buyer
                 </Typography>
@@ -56,12 +51,12 @@ export default function InvestTableRow({ row, onViewRow }) {
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Box
                 component="img"
-                src={sellerLogo}
-                alt={seller}
+                src={seller?.logo}
+                alt={seller?.name}
                 sx={{ width: 40, height: 40, borderRadius: '50%' }}
               />
               <Stack>
-                <Typography fontWeight={700}>{seller}</Typography>
+                <Typography fontWeight={700}>{seller?.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Seller
                 </Typography>
@@ -70,31 +65,47 @@ export default function InvestTableRow({ row, onViewRow }) {
           </Stack>
         </Grid>
 
-        <Grid item xs={6} md={6} >
+        <Grid item xs={6} md={6}>
           <Grid container spacing={2}>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>Unit Cost</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                Unit Cost
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>₹{unitCost.toLocaleString()}</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                ₹{overview?.unitCost.toLocaleString()}
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>XIRR</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                XIRR
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>{xirr}</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                {overview?.xirr}
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>Unit Left</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                Unit Left
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>{unitLeft}</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                {overview?.unitLeft}
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>Tenure</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                Tenure
+              </Typography>
             </Grid>
-            <Grid item xs={6} >
-              <Typography color="#212B36" fontWeight={500}>{tenure}</Typography>
+            <Grid item xs={6}>
+              <Typography color="#212B36" fontWeight={500}>
+                {overview?.tenure}
+              </Typography>
             </Grid>
           </Grid>
         </Grid>

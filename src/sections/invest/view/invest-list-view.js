@@ -80,6 +80,7 @@ export default function InvestListView() {
   const [filters, setFilters] = useState(defaultFilters);
 
   const { products, productsLoading, productsEmpty } = useGetProducts();
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const confirm = useBoolean();
 
@@ -148,6 +149,7 @@ export default function InvestListView() {
   const handleViewRow = useCallback(
     (id) => {
       router.push(paths.dashboard.invest.details(id));
+      console.log('click');
     },
     [router]
   );
@@ -157,7 +159,7 @@ export default function InvestListView() {
   }, []);
 
   return (
-    <>
+    // <>
       <Container maxWidth={settings.themeStretch ? false : 'lg'}>
         <CustomBreadcrumbs
           heading="Invest"
@@ -283,7 +285,7 @@ export default function InvestListView() {
 
       </Container>
 
-    </>
+    // </>
   );
 }
 
