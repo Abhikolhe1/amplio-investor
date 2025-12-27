@@ -2,6 +2,9 @@ import PropTypes from 'prop-types';
 import { Card, Typography, Box } from '@mui/material';
 
 export default function AboutSection({ currentDetails }) {
+  if (!currentDetails) {
+    return null;
+  }
   return (
     <Card
       sx={{

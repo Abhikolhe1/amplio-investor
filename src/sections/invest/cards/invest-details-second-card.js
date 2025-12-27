@@ -14,6 +14,9 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   const handleDecrease = () => {
     if (units > 1) setUnits((prev) => prev - 1);
   };
+  if (!currentDetails) {
+    return null;
+  }
   return (
     <Card
       sx={{

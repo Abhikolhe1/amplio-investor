@@ -1,9 +1,23 @@
 import PropTypes from 'prop-types';
-import { Grid, Stack, Typography, Button, Box, Card, Tooltip, IconButton, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import {
+  Grid,
+  Stack,
+  Typography,
+  Button,
+  Box,
+  Card,
+  Tooltip,
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material';
 import Iconify from 'src/components/iconify';
 
 export default function RiskMititgationCard({ currentDetails }) {
-  console.log('currentDetails', currentDetails);
+  if (!currentDetails) {
+    return null;
+  }
   const { riskMitigation, shareDeal, faqs } = currentDetails || {};
 
   return (

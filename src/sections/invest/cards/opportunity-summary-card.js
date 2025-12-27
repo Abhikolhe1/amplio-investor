@@ -2,6 +2,9 @@ import PropTypes from 'prop-types';
 import { Card, Typography, Stack, Button, Box } from '@mui/material';
 
 export default function OpportunitySummary({ currentDetails }) {
+  if (!currentDetails) {
+    return null; 
+  }
   return (
     <Card
       sx={{
@@ -35,11 +38,7 @@ export default function OpportunitySummary({ currentDetails }) {
 
         <Stack direction="row" spacing={2} mt={1}>
           {currentDetails?.howItWorks?.steps.map((step, index) => (
-            <Typography
-              key={index}
-              variant="body2"
-              color="text.secondary"
-            >
+            <Typography key={index} variant="body2" color="text.secondary">
               {step}
             </Typography>
           ))}

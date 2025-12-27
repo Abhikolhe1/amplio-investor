@@ -3,6 +3,9 @@ import { Box, Card, Grid, Typography, Chip, Button, Stack } from '@mui/material'
 import Iconify from 'src/components/iconify';
 
 export default function PlatformTrackRecord({ currentDetails }) {
+  if (!currentDetails) {
+    return null;
+  }
   const { stats, documentsSummary, documents, badge } = currentDetails;
 
   return (

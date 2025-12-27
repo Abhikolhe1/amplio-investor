@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import Iconify from 'src/components/iconify';
 
 export default function InvestDetails({ currentDetails }) {
+  if (!currentDetails) {
+    return null;
+  }
   return (
     <Card
       sx={{
@@ -53,8 +56,8 @@ export default function InvestDetails({ currentDetails }) {
           </Stack>
         </Stack>
 
-        <Grid item xs={12} md={12} display='flex' justifyContent='center'>
-          <Typography variant="caption" color="text.secondary" >
+        <Grid item xs={12} md={12} display="flex" justifyContent="center">
+          <Typography variant="caption" color="text.secondary">
             Regulated by RBI
           </Typography>
         </Grid>
