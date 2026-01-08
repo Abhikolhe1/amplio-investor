@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 // @mui
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -16,6 +16,8 @@ import { useAuthContext } from 'src/auth/hooks';
 // components
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import { useRouter } from 'src/routes/hook';
+import axiosInstance from 'src/utils/axios';
+import { enqueueSnackbar } from 'notistack';
 import OtpInput from './jwt-otp';
 
 // ----------------------------------------------------------------------
@@ -25,9 +27,14 @@ export default function JwtRegisterMobileView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [showOtp, setShowOtp] = useState(false);
+  const [sessionId, setSessionId] = useState('');
+  const [otpStarted, setOtpStarted] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+  const [isOtpSend, setIsOtpSend] = useState(false);
   const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState(Array(4).fill(''));
+  const otpRefs = useRef([]);
 
   const RegisterSchema = Yup.object().shape({
     mobile: Yup.string()
@@ -47,29 +54,59 @@ export default function JwtRegisterMobileView() {
   const {
     handleSubmit,
     reset,
+    getValues,
+    trigger,
     formState: { isSubmitting },
   } = methods;
 
-  // ---------------- SUBMIT ----------------
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      setIdentifier(data.mobile);
-      setShowOtp(true);
-    } catch (error) {
-      reset();
-      setErrorMsg(typeof error === 'string' ? error : error.message);
-    }
-  });
-
   // ---------------- OTP HANDLERS ----------------
-  const handleVerifyOtp = () => {
-    const enteredOtp = otp.join('');
-    console.log('Verify OTP:', enteredOtp);
-    router.push(paths.auth.jwt.kyc);
+
+  const handleSendOtp = async () => {
+    const valid = await trigger('mobile');
+    if (!valid) return;
+
+    const phone = getValues('mobile');
+
+    try {
+      const res = await axiosInstance.post('/auth/send-phone-otp', {
+        phone,
+        role: 'investor',
+      });
+      enqueueSnackbar(res.data.message, { variant: 'success' });
+      setSessionId(res.data.sessionId);
+      localStorage.setItem('sessionId', res.data.sessionId);
+
+      setIdentifier(phone);
+      setOtp(Array(4).fill(''));
+      setOtpStarted(false);
+      setIsOtpSend(true);
+      setTimer();
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to send OTP', { variant: 'error' });
+    }
   };
 
-  const handleResendOtp = () => {
-    console.log('Resend OTP');
+  const handleVerifyOtp = async () => {
+    const enteredOtp = otp.join('');
+
+    if (enteredOtp.length !== 4) {
+      enqueueSnackbar('Enter all 4 digits', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.post('/auth/verify-phone-otp', {
+        sessionId,
+        otp: enteredOtp,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: 'success' });
+      router.push(paths.auth.jwt.registerEmail);
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || 'Invalid OTP', {
+        variant: 'error',
+      });
+    }
   };
 
   // ---------------- UI PARTS ----------------
@@ -124,22 +161,22 @@ export default function JwtRegisterMobileView() {
 
   // ---------------- RENDER ----------------
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      {!showOtp ? (
-        <>
+    <>
+      {!isOtpSend ? (
+        <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
           {renderHead}
           {renderForm}
           {renderBottom}
-        </>
+        </FormProvider>
       ) : (
         <OtpInput
           emailOrMobile={identifier}
           value={otp}
           onChange={setOtp}
           onVerify={handleVerifyOtp}
-          onResend={handleResendOtp}
+          onResend={handleSendOtp}
         />
       )}
-    </FormProvider>
+    </>
   );
 }

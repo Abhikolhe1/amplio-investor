@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 
-export default function UploadChooser({ open, onCamera, onUpload, onClose }) {
+export default function UploadChooser({ open, onCamera, onClose }) {
   if (!open) return null;
 
   return (
@@ -25,16 +25,12 @@ export default function UploadChooser({ open, onCamera, onUpload, onClose }) {
           textAlign: 'center',
         }}
       >
-        <Typography fontWeight={600} mb={2}>
+        {/* <Typography fontWeight={600} mb={2}>
           Choose option
-        </Typography>
+        </Typography> */}
 
         <Button fullWidth variant="contained" onClick={onCamera}>
           Open Camera
-        </Button>
-
-        <Button fullWidth sx={{ mt: 1 }} variant="outlined" onClick={onUpload}>
-          Upload from Device
         </Button>
 
         <Button sx={{ mt: 1 }} onClick={onClose}>
@@ -48,6 +44,5 @@ export default function UploadChooser({ open, onCamera, onUpload, onClose }) {
 UploadChooser.propTypes = {
   open: PropTypes.bool,
   onCamera: PropTypes.func,
-  onUpload: PropTypes.func,
   onClose: PropTypes.func,
 };

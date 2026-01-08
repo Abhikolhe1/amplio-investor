@@ -5,55 +5,62 @@ import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 //
 import Iconify from '../iconify';
+import MultiFilePreview from './preview-multi-file';
 
 // ----------------------------------------------------------------------
 
-export default function UploadBox({ placeholder, error, disabled, sx, ...other }) {
+export default function UploadBox({ placeholder, error, disabled, sx, files, ...other }) {
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     disabled,
     ...other,
   });
 
+  console.log('UploadBox files:', files);
+
   const hasError = isDragReject || error;
 
   return (
-    <Box
-      {...getRootProps()}
-      sx={{
-        m: 0.5,
-        width: 64,
-        height: 64,
-        flexShrink: 0,
-        display: 'flex',
-        borderRadius: 1,
-        cursor: 'pointer',
-        alignItems: 'center',
-        color: 'text.disabled',
-        justifyContent: 'center',
-        bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
-        border: (theme) => `dashed 1px ${alpha(theme.palette.grey[500], 0.16)}`,
-        ...(isDragActive && {
-          opacity: 0.72,
-        }),
-        ...(disabled && {
-          opacity: 0.48,
-          pointerEvents: 'none',
-        }),
-        ...(hasError && {
-          color: 'error.main',
-          bgcolor: 'error.lighter',
-          borderColor: 'error.light',
-        }),
-        '&:hover': {
-          opacity: 0.72,
-        },
-        ...sx,
-      }}
-    >
-      <input {...getInputProps()} />
+    <>
+      <Box
+        {...getRootProps()}
+        sx={{
+          m: 0.5,
+          width: 64,
+          height: 64,
+          flexShrink: 0,
+          display: 'flex',
+          borderRadius: 1,
+          cursor: 'pointer',
+          alignItems: 'center',
+          color: 'text.disabled',
+          justifyContent: 'center',
+          bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+          border: (theme) => `dashed 1px ${alpha(theme.palette.grey[500], 0.16)}`,
+          ...(isDragActive && {
+            opacity: 0.72,
+          }),
+          ...(disabled && {
+            opacity: 0.48,
+            pointerEvents: 'none',
+          }),
+          ...(hasError && {
+            color: 'error.main',
+            bgcolor: 'error.lighter',
+            borderColor: 'error.light',
+          }),
+          '&:hover': {
+            opacity: 0.72,
+          },
+          ...sx,
+        }}
+      >
+        <input {...getInputProps()} />
 
-      {placeholder || <Iconify icon="eva:cloud-upload-fill" width={28} />}
-    </Box>
+        {placeholder || <Iconify icon="eva:cloud-upload-fill" width={28} />}
+      </Box>
+
+      {files && <MultiFilePreview files={Array.isArray(files) ? files : [files]} />}
+    </>
   );
 }
 
@@ -62,4 +69,5 @@ UploadBox.propTypes = {
   error: PropTypes.bool,
   placeholder: PropTypes.object,
   sx: PropTypes.object,
+  files: PropTypes.array,
 };

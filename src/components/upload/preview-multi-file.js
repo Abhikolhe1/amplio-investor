@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 // utils
 import { fData } from 'src/utils/format-number';
 //
+import { Tooltip } from '@mui/material';
 import Iconify from '../iconify';
 import { varFade } from '../animate';
 import FileThumbnail, { fileData } from '../file-thumbnail';
@@ -86,20 +87,20 @@ export default function MultiFilePreview({ thumbnail, files, onRemove, sx }) {
               py: 1,
               px: 1.5,
               borderRadius: 1,
-              border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.16)}`,
+              // border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.16)}`,
               ...sx,
             }}
           >
-            <FileThumbnail file={file} />
+            <FileThumbnail file={file} imageView tooltip />
 
-            <ListItemText
-              primary={isNotFormatFile ? file : name}
+            {/* <ListItemText
+              // primary={isNotFormatFile ? file : name}
               secondary={isNotFormatFile ? '' : fData(size)}
               secondaryTypographyProps={{
                 component: 'span',
                 typography: 'caption',
               }}
-            />
+            /> */}
 
             {onRemove && (
               <IconButton size="small" onClick={() => onRemove(file)}>

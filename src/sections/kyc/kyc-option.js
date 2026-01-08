@@ -16,6 +16,16 @@ export default function KycOptionPage({ onManualVerify }) {
   const progress = 50;
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
+  const handleAutoVerify = () => {
+  localStorage.setItem('kycMode', 'auto');
+  // navigate or trigger next step here if needed
+};
+
+const handleManualVerify = () => {
+  localStorage.setItem('kycMode', 'manual');
+  onManualVerify?.();
+};
+
   const Content = (
     <>
       <Stack spacing={1} alignItems="center">
@@ -102,6 +112,7 @@ export default function KycOptionPage({ onManualVerify }) {
           borderRadius: 999,
           py: 1.5,
         }}
+        onClick={handleAutoVerify}
       >
         Start with DigiLocker
       </Button>
@@ -112,7 +123,7 @@ export default function KycOptionPage({ onManualVerify }) {
           component="button"
           underline="hover"
           sx={{ fontWeight: 600 }}
-          onClick={onManualVerify}
+          onClick={handleManualVerify}
         >
           Verify Manually
         </Link>

@@ -14,7 +14,11 @@ import * as Yup from 'yup';
 import FormProvider, { RHFSelect, RHFTextField, RHFUploadBox } from 'src/components/hook-form';
 import { DatePicker } from '@mui/x-date-pickers';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import axiosInstance from 'src/utils/axios';
+import { enqueueSnackbar } from 'notistack';
+import { useGetKycProgress } from 'src/api/investorKyc';
+import { format } from 'date-fns';
 import FormProgressBar from './stepper-bar';
 import { useKycStepper } from './kyc-stepper-context';
 import CameraCapture from './camera-capture';
@@ -29,7 +33,9 @@ export default function PersonalDetailKyc() {
 
   const fileInputRef = useRef(null);
 
-  const { activeStep, progress, setStepProgress, nextStep } = useKycStepper();
+  const { activeStep, setActiveStep, progress, setStepProgress, nextStep } = useKycStepper();
+  const sessionId = localStorage.getItem('sessionId');
+  const { kycProgress, profileId: fetchedProfileId } = useGetKycProgress(sessionId);
 
   const PersonalKycSchema = Yup.object().shape({
     fullName: Yup.string()
@@ -43,10 +49,10 @@ export default function PersonalDetailKyc() {
 
     dob: Yup.date().nullable().required('Date of Birth is required'),
     gender: Yup.string().required('Gender is required'),
-    // panCardFront: Yup.mixed().required('PAN Card front image is required'),
-    // adharCardFront: Yup.mixed().required('Aadhar Card front image is required'),
-    // adharCardBack: Yup.mixed().required('Aadhar Card back image is required'),
-    // selfieImage: Yup.mixed().required('Selfie image is required'),
+    panCardFront: Yup.mixed().required('PAN Card front image is required'),
+    adharCardFront: Yup.mixed().required('Aadhar Card front image is required'),
+    adharCardBack: Yup.mixed().required('Aadhar Card back image is required'),
+    selfieImage: Yup.mixed().required('Selfie image is required'),
   });
 
   const defaultValues = {
@@ -65,30 +71,124 @@ export default function PersonalDetailKyc() {
     defaultValues,
   });
 
-  const { handleSubmit, setValue, control, watch } = methods;
+  const {
+    handleSubmit,
+    control,
+    reset,
+    setValue,
+    getValues,
+    watch,
+    formState: { isSubmitting, errors },
+  } = methods;
 
-  const handleDrop = (fieldName) => (acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setValue(fieldName, file, { shouldValidate: true });
+  const uploadCapturedImage = async (fieldName, file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = () => setPreview(reader.result);
-        reader.readAsDataURL(file);
-      }
+      const res = await axiosInstance.post('/files', formData);
+
+      setValue(fieldName, res?.data?.files?.[0], {
+        shouldValidate: true,
+      });
+    } catch (error) {
+      enqueueSnackbar('Selfie upload failed', { variant: 'error' });
     }
   };
 
-  const handleRemove = () => {
-    setValue('addressProof', null, { shouldValidate: true });
-    setPreview(null);
-  };
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!kycProgress || hydratedRef.current) return;
+
+    const p = kycProgress?.profile;
+    if (!p) return;
+
+    // ✅ Reset basic form fields
+    reset({
+      fullName: p.fullName || '',
+      gender: p.gender || '',
+      dob: p?.investorPanCards?.submittedDateOfBirth
+        ? new Date(p?.investorPanCards?.submittedDateOfBirth)
+        : null,
+      pan: p?.investorPanCards?.submittedPanNumber || p?.investorPanCards?.extractedPanNumber || '',
+
+      panCardFront: p.investorPanCards.panCardDocument,
+      adharCardFront: p.aadharFrontImage,
+      adharCardBack: p.aadharBackImage,
+      selfieImage: p.selfie,
+    });
+
+    setActiveStep(2);
+    setStepProgress('personal', 100);
+
+    hydratedRef.current = true;
+  }, [kycProgress, reset, setValue, setActiveStep, setStepProgress]);
+
+  useEffect(() => {
+    if (fetchedProfileId) {
+      sessionStorage.setItem('investor_user_id', fetchedProfileId);
+    }
+  }, [fetchedProfileId]);
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log('Personal KYC Data:', data);
-    setStepProgress('personal', 100);
-    nextStep();
+    try {
+      const kycMode = localStorage.getItem('kycMode') || 'manual';
+
+      const payload = {
+        sessionId: localStorage.getItem('sessionId') || '',
+
+        fullName: data.fullName?.trim(),
+        gender: data.gender,
+        kycMode,
+
+        humanInteraction: kycMode === 'manual',
+
+        submittedPanDetails: {
+          submittedInvestorName: data.fullName?.trim(),
+          submittedPanNumber: data.pan?.toUpperCase(),
+          submittedDateOfBirth: format(data.dob, 'yyyy-MM-dd'),
+        },
+
+        // extractedPanDetails: {
+        //   extractedInvestorName: '',
+        //   extractedPanNumber: '',
+        // },
+
+        panCardDocumentId: data.panCardFront?.id || '',
+        aadharFrontImageId: data.adharCardFront?.id || '',
+        aadharBackImageId: data.adharCardBack?.id || '',
+        selfieId: data.selfieImage?.id || '',
+      };
+
+      console.log('✅ FINAL PAYLOAD:', payload);
+
+      const response = await axiosInstance.post('/auth/investor-registration', payload);
+
+      if (response?.data?.success) {
+        const usersId = response?.data?.usersId;
+
+        // ✅ Store it so next page can access it
+        if (usersId) {
+          sessionStorage.setItem('investor_user_id', usersId);
+        } else {
+          console.warn('No usersId found in investor-registration response');
+        }
+        enqueueSnackbar('Personal details submitted successfully!', {
+          variant: 'success',
+        });
+
+        setStepProgress('personal', 100);
+        nextStep();
+      } else {
+        throw new Error(response?.data?.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('❌ Investor registration failed', error);
+      enqueueSnackbar(error?.response?.data?.error?.message || 'KYC submission failed', {
+        variant: 'error',
+      });
+    }
   });
 
   const Header = (
@@ -183,7 +283,7 @@ export default function PersonalDetailKyc() {
           </Typography>
           <RHFUploadBox
             name="panCardFront"
-            onDrop={handleDrop('panCardFront')}
+            // onDrop={handleDrop('panCardFront')}
             maxSize={5 * 1024 * 1024}
             accept={{
               'application/pdf': ['.pdf'],
@@ -203,7 +303,7 @@ export default function PersonalDetailKyc() {
           </Typography>
           <RHFUploadBox
             name="adharCardFront"
-            onDrop={handleDrop('adharCardFront')}
+            // onDrop={handleDrop('adharCardFront')}
             maxSize={5 * 1024 * 1024}
             accept={{
               'application/pdf': ['.pdf'],
@@ -223,7 +323,7 @@ export default function PersonalDetailKyc() {
           </Typography>
           <RHFUploadBox
             name="adharCardBack"
-            onDrop={handleDrop('adharCardBack')}
+            // onDrop={handleDrop('adharCardBack')}
             maxSize={5 * 1024 * 1024}
             accept={{
               'application/pdf': ['.pdf'],
@@ -264,6 +364,7 @@ export default function PersonalDetailKyc() {
           >
             <RHFUploadBox
               name="selfieImage"
+              autoUpload={false}
               sx={{
                 width: '100%',
                 height: 100,
@@ -330,10 +431,6 @@ export default function PersonalDetailKyc() {
             setShowChooser(false);
             setShowCamera(true);
           }}
-          onUpload={() => {
-            setShowChooser(false);
-            fileInputRef.current?.click();
-          }}
           onClose={() => setShowChooser(false)}
         />
 
@@ -350,8 +447,8 @@ export default function PersonalDetailKyc() {
             }}
           >
             <CameraCapture
-              onCapture={(file) => {
-                setValue(activeField, file, { shouldValidate: true });
+              onCapture={async (file) => {
+                await uploadCapturedImage(activeField, file);
                 setShowCamera(false);
               }}
               onClose={() => setShowCamera(false)}

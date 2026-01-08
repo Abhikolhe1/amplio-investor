@@ -3,6 +3,7 @@ import { useFormContext, Controller } from 'react-hook-form';
 // @mui
 import FormHelperText from '@mui/material/FormHelperText';
 //
+import axiosInstance from 'src/utils/axios';
 import { UploadAvatar, Upload, UploadBox } from '../upload';
 
 // ----------------------------------------------------------------------
@@ -35,15 +36,88 @@ RHFUploadAvatar.propTypes = {
 
 // ----------------------------------------------------------------------
 
-export function RHFUploadBox({ name, ...other }) {
-  const { control } = useFormContext();
+export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...other }) {
+  const { control, setValue } = useFormContext();
+
+  // const handleFileDrop = async (fieldName, acceptedFiles) => {
+  //   if (!acceptedFiles || acceptedFiles.length === 0) return;
+  //   try {
+  //     const formData = new FormData();
+  //     if (multiple) {
+  //       formData.append('files', acceptedFiles);
+  //     } else {
+  //       formData.append('file', acceptedFiles[0]);
+  //     }
+
+  //     const res = await axiosInstance.post('/files', formData);
+
+  //     if (multiple) {
+  //       setValue(fieldName, res?.data?.files, {
+  //         shouldValidate: true,
+  //       });
+  //     } else {
+  //       setValue(fieldName, res?.data?.files?.[0], {
+  //         shouldValidate: true,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error('File upload failed', error);
+  //   }
+  // };
+
+  const uploadFiles = async (fieldName, files) => {
+    const formData = new FormData();
+
+    if (multiple) {
+      files.forEach((file) => formData.append('files', file));
+    } else {
+      formData.append('file', files[0]);
+    }
+
+    const res = await axiosInstance.post('/files', formData);
+
+    if (multiple) {
+      setValue(fieldName, res?.data?.files, { shouldValidate: true });
+    } else {
+      setValue(fieldName, res?.data?.files?.[0], { shouldValidate: true });
+    }
+  };
+  
+  const handleRemoveFile = (fieldName) => {
+    setValue(fieldName, null, { shouldValidate: true });
+  };
+
+  const handleRemoveAllFiles = (fieldName) => {
+    setValue(fieldName, [], { shouldValidate: true });
+  };
 
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState: { error } }) => (
-        <UploadBox files={field.value} error={!!error} {...other} />
+        <UploadBox
+          files={field.value}
+          error={!!error}
+          {...other}
+          onRemove={() => handleRemoveFile(name)}
+          onRemoveAll={() => handleRemoveAllFiles(name)}
+          // onDrop={(acceptedFiles) => {
+          //   handleFileDrop(name, acceptedFiles);
+          // }}
+          onDrop={async (acceptedFiles) => {
+            if (!acceptedFiles?.length) return;
+
+            // ✅ Device upload: just set file, don't upload
+            if (!autoUpload) {
+              setValue(name, acceptedFiles[0], { shouldValidate: true });
+              return;
+            }
+
+            // ✅ Default behavior: upload immediately
+            await uploadFiles(name, acceptedFiles);
+          }}
+        />
       )}
     />
   );
@@ -51,6 +125,8 @@ export function RHFUploadBox({ name, ...other }) {
 
 RHFUploadBox.propTypes = {
   name: PropTypes.string,
+  multiple: PropTypes.bool,
+  autoUpload: PropTypes.bool,
 };
 
 // ----------------------------------------------------------------------

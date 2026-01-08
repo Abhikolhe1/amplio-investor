@@ -96,7 +96,7 @@ export default function JwtLoginView() {
     <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ mt: 2 }}>
       <Typography variant="body2">New Inverstor?</Typography>
 
-      <Link component={RouterLink} href={paths.auth.jwt.registerEmail} variant="subtitle2">
+      <Link component={RouterLink} href={paths.auth.jwt.registerMobile} variant="subtitle2">
         Create an account
       </Link>
     </Stack>

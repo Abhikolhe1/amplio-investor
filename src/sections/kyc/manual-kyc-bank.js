@@ -11,13 +11,14 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import * as Yup from 'yup';
-import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFSelect, RHFTextField, RHFUploadBox } from 'src/components/hook-form';
 import { DatePicker } from '@mui/x-date-pickers';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useState } from 'react';
 import { useRouter } from 'src/routes/hook';
 import { paths } from 'src/routes/paths';
 import { useSnackbar } from 'notistack';
+import axiosInstance from 'src/utils/axios';
 import FormProgressBar from './stepper-bar';
 import { useKycStepper } from './kyc-stepper-context';
 
@@ -28,6 +29,11 @@ export default function BankDetailKyc() {
   const { enqueueSnackbar } = useSnackbar();
   const { activeStep, progress, setStepProgress, nextStep } = useKycStepper();
 
+  const ACCOUNT_TYPE_MAP = {
+    SAVINGS: 0,
+    CURRENT: 1,
+  };
+
   const BankKycSchema = Yup.object().shape({
     ifscCode: Yup.string().required('IFSC Code is required'),
     bankName: Yup.string().required('Bank Name is required'),
@@ -35,6 +41,7 @@ export default function BankDetailKyc() {
     accountHolderName: Yup.string().required('Account Holder Name is required'),
     accountNumber: Yup.string().required('Account Number is required'),
     accountType: Yup.string().required('Account Type is required'),
+    documentTypeProof: Yup.mixed().required('Document proof is required'),
   });
 
   const defaultValues = {
@@ -46,6 +53,7 @@ export default function BankDetailKyc() {
     bankAddress: '',
     bankShortCode: '',
     accountType: 'SAVINGS',
+    documentTypeProof: null,
   };
 
   const methods = useForm({
@@ -53,42 +61,49 @@ export default function BankDetailKyc() {
     defaultValues,
   });
 
-  const { handleSubmit, setValue, control, watch } = methods;
+  const { handleSubmit, setValue, control, watch, getValues } = methods;
 
-  const handleDrop = (acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setValue('addressProof', file, { shouldValidate: true });
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = () => setPreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        setPreview(null);
-      }
-    }
-  };
-
-  const handleRemove = () => {
-    setValue('addressProof', null, { shouldValidate: true });
-    setPreview(null);
-  };
-
-  const onSubmit = async (data) => {
+  const onSubmit = handleSubmit(async (data) => {
     try {
-      console.log('Personal KYC Bank Data:', data);
+      const usersId = sessionStorage.getItem('investor_user_id');
 
-      // simulate api or save
+      if (!usersId) {
+        enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
+        return;
+      }
+      const payload = {
+        usersId,
+        bankDetails: {
+          bankName: data.bankName?.trim(),
+          bankShortCode: data.bankShortCode?.trim(),
+          ifscCode: data.ifscCode?.toUpperCase(),
+          branchName: data.branchName?.trim(),
+          bankAddress: data.bankAddress?.trim(),
+          accountHolderName: data.accountHolderName?.trim(),
+          accountNumber: data.accountNumber?.trim(),
+          accountType: ACCOUNT_TYPE_MAP[data.accountType],
+          bankAccountProofType: 0,
+          bankAccountProofId: data.documentTypeProof.id,
+        },
+      };
+
+      console.log('✅ Bank KYC Payload:', payload);
+
+      await axiosInstance.post('/investor-profiles/kyc-bank-details', payload);
+
+      enqueueSnackbar('Bank details submitted successfully!', {
+        variant: 'success',
+      });
+
       setStepProgress('bank', 100);
-
-      enqueueSnackbar('KYC submitted successfully!', { variant: 'success' });
-
-      // redirect to pending page
       router.push(paths.auth.jwt.kycPending);
     } catch (error) {
-      enqueueSnackbar('Something went wrong', { variant: 'error' });
+      console.error('❌ Bank KYC submission failed:', error);
+      enqueueSnackbar(error?.response?.data?.error?.message || 'Bank KYC submission failed', {
+        variant: 'error',
+      });
     }
-  };
+  });
 
   const Header = (
     <Box>
@@ -130,7 +145,98 @@ export default function BankDetailKyc() {
         </Grid>
 
         <Grid item xs={12}>
-          <RHFTextField name="ifscCode" label="IFSC Code" placeholder="Enter IFSC Code" />
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+            Select Document Type:
+          </Typography>
+
+          <RHFSelect name="documentType" fullWidth label="Document Type">
+            <MenuItem value="cheque">Cheque</MenuItem>
+            <MenuItem value="bank_statement">Bank Statement</MenuItem>
+          </RHFSelect>
+        </Grid>
+
+        <Grid item xs={12}>
+          <RHFUploadBox
+            name="documentTypeProof"
+            maxSize={5 * 1024 * 1024}
+            accept={{
+              'application/pdf': ['.pdf'],
+              'image/*': ['.jpeg', '.jpg', '.png'],
+            }}
+            sx={{
+              width: '100%',
+              height: 100,
+              m: 0,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <RHFTextField
+            name="ifscCode"
+            label="IFSC Code"
+            placeholder="Enter IFSC Code"
+            InputProps={{
+              endAdornment: (
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    bgcolor: '#00328A',
+                    color: 'white',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    minHeight: '32px',
+                    px: 2,
+                    '&:hover': { bgcolor: '#002670' },
+                  }}
+                  onClick={async () => {
+                    const ifsc = getValues('ifscCode');
+
+                    if (!ifsc) {
+                      enqueueSnackbar('Please enter IFSC Code first', {
+                        variant: 'warning',
+                      });
+                      return;
+                    }
+
+                    try {
+                      const res = await axiosInstance.get(`/bank-details/get-by-ifsc/${ifsc}`);
+
+                      const data = res?.data?.bankDetails;
+
+                      if (!data) {
+                        enqueueSnackbar('No bank details found', { variant: 'error' });
+                        return;
+                      }
+
+                      // Autofill form values
+                      setValue('bankName', data.bankName || '');
+                      setValue('branchName', data.branchName || '');
+                      setValue('bankShortCode', data.bankShortCode || '');
+                      setValue('bankAddress', data.bankAddress || '');
+                      setValue('city', data.city || '');
+                      setValue('state', data.state || '');
+                      setValue('district', data.district || '');
+
+                      enqueueSnackbar('Bank details fetched successfully', {
+                        variant: 'success',
+                      });
+                    } catch (error) {
+                      console.error(error);
+                      enqueueSnackbar(error?.response?.data?.message || 'Invalid IFSC Code', {
+                        variant: 'error',
+                      });
+                    }
+                  }}
+                >
+                  Fetch
+                </Button>
+              ),
+            }}
+          />
         </Grid>
 
         <Grid item xs={12}>

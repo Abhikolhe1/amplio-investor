@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 // @mui
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -16,6 +16,8 @@ import { useAuthContext } from 'src/auth/hooks';
 // components
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import { useRouter } from 'src/routes/hook';
+import { enqueueSnackbar } from 'notistack';
+import axiosInstance from 'src/utils/axios';
 import OtpInput from './jwt-otp';
 
 // ----------------------------------------------------------------------
@@ -24,10 +26,44 @@ export default function JwtRegisterEmailView() {
   const { register } = useAuthContext();
   const router = useRouter();
 
+  const redirectBasedOnProgress = async (sessionId) => {
+    try {
+      const res = await axiosInstance.get(`/investor-profiles/kyc-progress/${sessionId}`);
+
+      const progress = res?.data?.currentProgress || [];
+      const profile = res?.data?.profile;
+
+      console.log('CURRENT PROGRESS:', progress);
+
+      if (profile?.usersId) {
+        sessionStorage.setItem('investor_user_id', profile.usersId);
+      }
+
+      if (profile?.id) {
+        sessionStorage.setItem('investor_profile_id', profile.id);
+      }
+
+      if (!progress.includes('investor_kyc')) {
+        router.push(paths.auth.jwt.kyc);
+        return;
+      }
+
+      router.push(paths.auth.jwt.kyc);
+    } catch (err) {
+      console.error('KYC Progress Fetch Error:', err);
+      enqueueSnackbar('Unable to fetch KYC progress', { variant: 'error' });
+
+      router.push(paths.auth.jwt.kyc);
+    }
+  };
+
   const [errorMsg, setErrorMsg] = useState('');
-  const [showOtp, setShowOtp] = useState(false);
   const [identifier, setIdentifier] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState(Array(4).fill(''));
+  const [otpStarted, setOtpStarted] = useState(false);
+  const [canResend, setCanResend] = useState(false);
+  const otpRefs = useRef([]);
 
   const RegisterSchema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('Enter a valid email'),
@@ -45,31 +81,68 @@ export default function JwtRegisterEmailView() {
   const {
     handleSubmit,
     reset,
+    getValues,
+    trigger,
     formState: { isSubmitting },
   } = methods;
 
-  // ---------------- SUBMIT ----------------
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      setIdentifier(data.email);
-      setShowOtp(true);
-    } catch (error) {
-      reset();
-      setErrorMsg(typeof error === 'string' ? error : error.message);
-    }
-  });
-
   // ---------------- OTP HANDLERS ----------------
-  const handleVerifyOtp = () => {
-    const enteredOtp = otp.join('');
-    console.log('Verify OTP:', enteredOtp);
 
-    // after successful OTP verification
-    router.push(paths.auth.jwt.registerMobile);
+  const handleSendOtp = async () => {
+    const validEmail = await trigger('email');
+    if (!validEmail) return;
+
+    const sessionId = localStorage.getItem('sessionId');
+    const email = getValues('email');
+
+    if (!sessionId) {
+      setErrorMsg('Session expired. Please verify phone again.');
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.post('/auth/send-email-otp', {
+        sessionId,
+        email,
+      });
+
+      enqueueSnackbar(res.data.message || 'OTP Sent!', { variant: 'success' });
+
+      setOtp(Array(4).fill(''));
+      setOtpStarted(false);
+      setIsOtpSent(true);
+    } catch (err) {
+      setErrorMsg(err?.response?.data?.message || 'Failed to send OTP');
+    }
   };
+  const handleVerifyOtp = async () => {
+    const sessionId = localStorage.getItem('sessionId');
+    const enteredOtp = otp.join('');
 
-  const handleResendOtp = () => {
-    console.log('Resend OTP');
+    if (enteredOtp.length !== 4) {
+      setErrorMsg('Enter all 4 digits');
+      return;
+    }
+
+    if (!sessionId) {
+      setErrorMsg('Session expired. Please verify your phone again.');
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.post('/auth/verify-email-otp', {
+        sessionId,
+        otp: enteredOtp,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: 'success' });
+      // router.push(paths.auth.jwt.kyc);
+      await redirectBasedOnProgress(sessionId);
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || 'Invalid OTP', {
+        variant: 'error',
+      });
+    }
   };
 
   // ---------------- UI PARTS ----------------
@@ -113,8 +186,8 @@ export default function JwtRegisterEmailView() {
 
   // ---------------- RENDER ----------------
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      {!showOtp ? (
+    <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
+      {!isOtpSent ? (
         <>
           {renderHead}
           {renderForm}
@@ -126,7 +199,7 @@ export default function JwtRegisterEmailView() {
           value={otp}
           onChange={setOtp}
           onVerify={handleVerifyOtp}
-          onResend={handleResendOtp}
+          onResend={handleSendOtp}
         />
       )}
     </FormProvider>

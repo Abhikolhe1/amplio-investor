@@ -34,6 +34,7 @@ export function KycStepperProvider({ children }) {
         activeStep,
         progress,
         setStepProgress,
+        setActiveStep,
         nextStep,
         prevStep,
       }}

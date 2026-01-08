@@ -77,6 +77,12 @@ export const paths = {
     auth0: {
       login: `${ROOTS.AUTH}/auth0/login`,
     },
+    kyc: {
+      investorKyc: `${ROOTS.AUTH}/kyc/investor-kyc`,
+      kycBasicInfo: `${ROOTS.AUTH}/kyc/basic-info`,
+      kycSuccessful: `${ROOTS.AUTH}/kyc/kyc-successful`,
+      kycPending: `${ROOTS.AUTH}/kyc/kyc-pending`,
+    },
   },
   authDemo: {
     classic: {

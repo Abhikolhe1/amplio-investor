@@ -45,6 +45,15 @@ export const endpoints = {
     latest: '/api/post/latest',
     search: '/api/post/search',
   },
+  investorKyc: {
+    kycProgress: (sessionId) => `/investor-profiles/kyc-progress/${sessionId}`,
+    getSection: (section, profileId, route = '') =>
+      `/investor-profiles/kyc-get-data/${section}/${profileId}?route=${encodeURIComponent(route)}`,
+    details: (id) => `/investor-profiles/bank-details/${id}`,
+    getBankDetails: `/investor-profiles/bank-details`,
+    getDocuments: `/investor-profiles/documents`,
+    getProfileData: `/investor-profiles/me`,
+  },
   product: {
     list: '/api/product/list',
     details: '/api/product/details',

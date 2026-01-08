@@ -136,12 +136,12 @@ export function fileData(file) {
 
   // File
   return {
-    key: file.preview,
-    name: file.name,
+    key: file.fileUrl,
+    name: file.fileOriginalName || file.fileName,
     size: file.size,
-    path: file.path,
+    path: file.fileUrl,
     type: file.type,
-    preview: file.preview,
+    preview: file.fileUrl,
     lastModified: file.lastModified,
     lastModifiedDate: file.lastModifiedDate,
   };

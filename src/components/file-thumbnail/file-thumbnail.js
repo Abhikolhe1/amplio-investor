@@ -13,16 +13,19 @@ export default function FileThumbnail({ file, tooltip, imageView, onDownload, sx
 
   const format = fileFormat(path || preview);
 
+  console.log('format', format);
   const renderContent =
     format === 'image' && imageView ? (
       <Box
         component="img"
         src={preview}
+        onClick={() => window.open(preview, '_blank')}
         sx={{
-          width: 1,
-          height: 1,
+          // width: 64,
+          height: 48,
           flexShrink: 0,
           objectFit: 'cover',
+          cursor: 'pointer',
           ...imgSx,
         }}
       />
