@@ -105,6 +105,31 @@ export function AuthProvider({ children }) {
     initialize();
   }, [initialize]);
 
+  const sendOtp = useCallback(async (emailOrPhone, rememberMe = false) => {
+    await axios.post(endpoints.auth.loginSendOtp, {
+      emailOrPhone,
+      rememberMe,
+    });
+  }, []);
+
+  const verifyOtp = useCallback(async (emailOrPhone, otp, rememberMe = false) => {
+    const response = await axios.post(endpoints.auth.loginVerifyOtp, {
+      emailOrPhone,
+      otp,
+      rememberMe,
+    });
+
+    const { accessToken, user } = response.data;
+
+    sessionStorage.setItem(STORAGE_KEY, accessToken);
+    setSession(accessToken);
+
+    dispatch({
+      type: 'LOGIN',
+      payload:{user},
+    });
+  },[]);
+
   // LOGIN
   const login = useCallback(async (emailOrMobile,
     //  password
@@ -189,8 +214,10 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      sendOtp,
+      verifyOtp,
     }),
-    [login, logout, register, state.user, status]
+    [login, logout, register, state.user, status, sendOtp, verifyOtp]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

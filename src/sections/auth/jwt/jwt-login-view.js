@@ -23,12 +23,13 @@ import { useAuthContext } from 'src/auth/hooks';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import { enqueueSnackbar } from 'notistack';
 import OtpInput from './jwt-otp';
 
 // ----------------------------------------------------------------------
 
 export default function JwtLoginView() {
-  const { login } = useAuthContext();
+  const { sendOtp, verifyOtp } = useAuthContext();
 
   const router = useRouter();
 
@@ -45,12 +46,10 @@ export default function JwtLoginView() {
 
   const LoginSchema = Yup.object().shape({
     emailOrMobile: Yup.string().required('Email or Mobile is required'),
-    // password: Yup.string().required('Password is required'),
   });
 
   const defaultValues = {
     emailOrMobile: '',
-    // password: '',
   };
 
   const methods = useForm({
@@ -59,19 +58,17 @@ export default function JwtLoginView() {
   });
 
   const {
-    reset,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
   // const onSubmit = handleSubmit(async (data) => {
   //   try {
-  //     await login?.(data.email, data.passdwor);
+  //     await login?.(data.emailOrMobile, data.rememberMe);
 
   //     router.push(returnTo || PATH_AFTER_LOGIN);
   //   } catch (error) {
   //     console.error(error);
-  //     reset();
   //     setErrorMsg(typeof error === 'string' ? error : error.message);
   //   }
   // });
@@ -79,10 +76,33 @@ export default function JwtLoginView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setIdentifier(data.emailOrMobile);
+      await sendOtp(data.emailOrMobile, true);
       setShowOtp(true);
+      enqueueSnackbar('OTP has been sent to your registered email or mobile number', {
+        variant: 'success',
+      });
     } catch (error) {
-      reset();
-      setErrorMsg(typeof error === 'string' ? error : error.message);
+      console.error(error);
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.error?.message ||
+            error?.response?.data?.message ||
+            error?.message ||
+            'Failed to send OTP';
+      if (message.toLowerCase().includes('email')) {
+        setErrorMsg('Email address not found');
+      } else if (message.toLowerCase().includes('phone')) {
+        setErrorMsg('Mobile number not registered');
+      } else if (message.toLowerCase().includes('otp')) {
+        setErrorMsg('Unable to send OTP. Please try again');
+      } else {
+        setErrorMsg(message);
+      }
+
+      enqueueSnackbar(setErrorMsg ? message : 'Failed to send OTP', {
+        variant: 'error',
+      });
     }
   });
 
@@ -148,25 +168,40 @@ export default function JwtLoginView() {
     try {
       const enteredOtp = otp.join('');
 
-      // 👉 Mock OTP check
-      if (enteredOtp !== '1234') {
-        setErrorMsg('Invalid OTP');
-        return;
-      }
+      await verifyOtp(identifier, enteredOtp, false);
 
-      // ✅ LOGIN AFTER OTP VERIFIED
-      await login(identifier);
-
-      // ✅ Redirect to dashboard
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
-      setErrorMsg('OTP verification failed');
+      console.error(error);
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.error?.message ||
+            error?.response?.data?.message ||
+            error?.message ||
+            'OTP verification failed';
+      if (message.toLowerCase().includes('otp')) {
+        setErrorMsg('Invalid or expired OTP');
+      } else if (message.toLowerCase().includes('expired')) {
+        setErrorMsg('OTP has expired. Please request a new one');
+      } else if (message.toLowerCase().includes('attempt')) {
+        setErrorMsg('Too many incorrect attempts. Please try again later');
+      } else if (message.toLowerCase().includes('email')) {
+        setErrorMsg('Email verification failed');
+      } else if (message.toLowerCase().includes('phone')) {
+        setErrorMsg('Mobile verification failed');
+      } else {
+        setErrorMsg(message);
+      }
     }
   };
 
-  const handleResendOtp = () => {
-    console.log('Resend OTP');
-    // call resend OTP API here
+  const handleResendOtp = async () => {
+    try {
+      await sendOtp(identifier, true);
+    } catch (error) {
+      setErrorMsg('Failed to resend OTP');
+    }
   };
 
   return (

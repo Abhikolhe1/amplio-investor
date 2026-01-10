@@ -30,8 +30,9 @@ export const endpoints = {
   kanban: '/api/kanban',
   calendar: '/api/calendar',
   auth: {
-    me: '/api/auth/me',
-    login: '/api/auth/login',
+    me: '/investor-profiles/me',
+    loginSendOtp: '/auth/investor-login/send-otp',
+    loginVerifyOtp: '/auth/investor-login/verify-otp',
     register: '/api/auth/register',
   },
   mail: {
