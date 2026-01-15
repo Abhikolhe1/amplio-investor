@@ -55,14 +55,17 @@ export default function AuthClassicLayout({ children, image, title }) {
   const upMd = useResponsive('up', 'md');
 
   const renderLogo = (
-    // <Logo
-    //   sx={{
-    //     zIndex: 9,
-    //     position: 'absolute',
-    //     m: { xs: 2, md: 5 },
-    //   }}
-    // />
-    <Typography>logo</Typography>
+   <Box
+  sx={{
+    position: 'absolute',
+    top: 24,
+    left: 24,
+    zIndex: 9,
+  }}
+>
+  <Logo />
+</Box>
+
   );
 
   const renderContent = (
@@ -78,7 +81,7 @@ export default function AuthClassicLayout({ children, image, title }) {
         sx={{
           // width: 1,
           mx: 'auto',
-          maxWidth:520 ,
+          maxWidth: 520,
           px: { xs: 2, md: 8 },
           // py: { xs: 15, md: 30 },
         }}
@@ -139,23 +142,26 @@ export default function AuthClassicLayout({ children, image, title }) {
   );
 
   return (
-    <Stack
-      component="main"
-      // direction="row"
-      sx={
-        {
-          // minHeight: '100vh',
-          position: 'relative',
+    <>
+
+      < Stack
+        component="main"
+        // direction="row"
+        sx={
+          {
+            // minHeight: '100vh',
+            position: 'relative',
+          }
         }
-      }
-    >
-      {renderLogo}
+      >
+        {renderLogo}
+        {/* {upMd && renderSection} */}
 
-      {/* {upMd && renderSection} */}
-
-      {renderContent}
-    </Stack>
+        {renderContent}
+      </Stack >
+    </>
   );
+
 }
 
 AuthClassicLayout.propTypes = {

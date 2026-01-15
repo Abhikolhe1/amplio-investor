@@ -39,7 +39,11 @@ export default function SplashScreen({ sx, ...other }) {
             repeat: Infinity,
           }}
         >
-          <Logo disabledLink sx={{ width: 64, height: 64 }} />
+          <Box component="img"
+               src="/logo/logo.png"
+               alt="Logo"
+               disabledLink  sx={{ width: 55, height: 55 }} />
+          
         </m.div>
 
         <Box
