@@ -61,20 +61,20 @@ export function AuthProvider({ children }) {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
 
-        // const response = await axios.get(endpoints.auth.me);
+        const response = await axios.get(endpoints.auth.me);
 
-        const response = {
-          data: {
-            accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzUwMzgxLCJleHAiOjE3NjY3NzU1ODF9.9A5ltgpGLKXXbZ3K-92w2h7x0fIEZ1mTXQd_OdW9RZg",
-            user: {
-              fullName: 'Admin Amplio',
-              email: 'admin@gmail.com',
-              phone: '4444444444'
-            }
-          }
-        }
+        // const response = {
+        //   data: {
+        //     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUxNDM0NmE0LWQ5YjgtNDgwNC1iM2U2LWQwOTEyZTA3NjczZCIsImVtYWlsIjoiY29tcGFueUBnbWFpbC5jb20iLCJwaG9uZSI6Ijg3ODgwMDIwMzMiLCJyb2xlcyI6WyJjb21wYW55Il0sInBlcm1pc3Npb25zIjpbXSwiaWF0IjoxNzY2NzUwMzgxLCJleHAiOjE3NjY3NzU1ODF9.9A5ltgpGLKXXbZ3K-92w2h7x0fIEZ1mTXQd_OdW9RZg",
+        //     user: {
+        //       fullName: 'Admin Amplio',
+        //       email: 'admin@gmail.com',
+        //       phone: '4444444444'
+        //     }
+        //   }
+        // }
 
-        const { user } = response.data;
+       const user = response.data?.profile;
 
         dispatch({
           type: 'INITIAL',
@@ -140,18 +140,18 @@ export function AuthProvider({ children }) {
     };
 
 
-    // const response = await axios.post(endpoints.auth.login, data);
+    const response = await axios.post(endpoints.auth.login, data);
 
-    const response = {
-      data: {
-        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzYzBmMjc4LWFkNWUtNDVlMS1hMzliLWU3NDliMzgxYjIzZiIsImVtYWlsIjoia2FyYW5yYWtoMTlAZ21haWwuY29tIiwicGhvbmUiOiI4ODg4NjQ0Mzc4Iiwicm9sZXMiOlsic3VwZXJfYWRtaW4iXSwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3Njc3NzkyMjcsImV4cCI6MTc2NzgwNDQyN30.Mv9PiIyxGnKySJGWb7OqQah_vVEx1p1ri78ATRs2cww",
-        user: {
-          fullName: 'Admin Amplio',
-          email: 'admin@gmail.com',
-          emailOrMobile: '4444444444' || 'admin@gmail.com',
-        }
-      }
-    }
+    // const response = {
+    //   data: {
+    //     accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzYzBmMjc4LWFkNWUtNDVlMS1hMzliLWU3NDliMzgxYjIzZiIsImVtYWlsIjoia2FyYW5yYWtoMTlAZ21haWwuY29tIiwicGhvbmUiOiI4ODg4NjQ0Mzc4Iiwicm9sZXMiOlsic3VwZXJfYWRtaW4iXSwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3Njc3NzkyMjcsImV4cCI6MTc2NzgwNDQyN30.Mv9PiIyxGnKySJGWb7OqQah_vVEx1p1ri78ATRs2cww",
+    //     user: {
+    //       fullName: 'Admin Amplio',
+    //       email: 'admin@gmail.com',
+    //       emailOrMobile: '4444444444' || 'admin@gmail.com',
+    //     }
+    //   }
+    // }
 
     const { accessToken, user } = response.data;
 

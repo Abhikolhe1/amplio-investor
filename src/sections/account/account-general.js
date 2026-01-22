@@ -33,27 +33,28 @@ export default function AccountGeneral() {
   const { enqueueSnackbar } = useSnackbar();
 
   // const { user } = useMockedUser();
- const { user } = useAuthContext();
+ const { user } = useAuthContext()
+
   const UpdateUserSchema = Yup.object().shape({
-    displayName: Yup.string().required('Name is required'),
+    fullName: Yup.string().required('Name is required'),
     email: Yup.string().required('Email is required').email('Email must be a valid email address'),
     photoURL: Yup.mixed().nullable().required('Avatar is required'),
     phoneNumber: Yup.string().required('Phone number is required'),
-    country: Yup.string().required('Country is required'),
-    address: Yup.string().required('Address is required'),
-    state: Yup.string().required('State is required'),
-    city: Yup.string().required('City is required'),
-    zipCode: Yup.string().required('Zip code is required'),
+    // country: Yup.string().required('Country is required'),
+    // address: Yup.string().required('Address is required'),
+    // state: Yup.string().required('State is required'),
+    // city: Yup.string().required('City is required'),
+    // zipCode: Yup.string().required('Zip code is required'),
     // about: Yup.string().required('About is required'),
     // not required
     isPublic: Yup.boolean(),
   });
 
   const defaultValues = {
-    displayName: user?.displayName || '',
-    email: user?.email || '',
+    fullName: user?.fullName || '',
+    email: user?.users?.email || '',
     photoURL: user?.photoURL || null,
-    phoneNumber: user?.phoneNumber || '',
+    phoneNumber: user?.users?.phone || '',
     country: user?.country || '',
     address: user?.address || '',
     state: user?.state || '',
@@ -149,10 +150,10 @@ export default function AccountGeneral() {
                 sm: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="displayName" label="Name" />
+              <RHFTextField name="fullName" label="Name" />
               <RHFTextField name="email" label="Email Address" />
               <RHFTextField name="phoneNumber" label="Phone Number" />
-              <RHFTextField name="address" label="Address" />
+              {/* <RHFTextField name="address" label="Address" />
 
               <RHFAutocomplete
                 name="country"
@@ -184,7 +185,7 @@ export default function AccountGeneral() {
 
               <RHFTextField name="state" label="State/Region" />
               <RHFTextField name="city" label="City" />
-              <RHFTextField name="zipCode" label="Zip/Code" />
+              <RHFTextField name="zipCode" label="Zip/Code" /> */}
             </Box>
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
