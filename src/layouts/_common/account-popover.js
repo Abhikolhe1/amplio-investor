@@ -19,6 +19,7 @@ import { useAuthContext } from 'src/auth/hooks';
 import { varHover } from 'src/components/animate';
 import { useSnackbar } from 'src/components/snackbar';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { AuthContext } from 'src/auth/context/jwt';
 
 // ----------------------------------------------------------------------
 
@@ -41,9 +42,9 @@ const OPTIONS = [
 export default function AccountPopover() {
   const router = useRouter();
 
-  const { user } = useMockedUser();
+  // const { user } = AuthContext();
 
-  const { logout } = useAuthContext();
+  const { logout , user } = useAuthContext();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -85,7 +86,7 @@ export default function AccountPopover() {
       >
         <Avatar
           src={user?.photoURL}
-          alt={user?.displayName}
+          alt={user?.fullName}
           sx={{
             width: 36,
             height: 36,
@@ -97,7 +98,7 @@ export default function AccountPopover() {
       <CustomPopover open={popover.open} onClose={popover.onClose} sx={{ width: 200, p: 0 }}>
         <Box sx={{ p: 2, pb: 1.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {user?.displayName}
+            {user?.fullName}
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
