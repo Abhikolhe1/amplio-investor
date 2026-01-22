@@ -29,217 +29,213 @@ import { Card } from '@mui/material';
 
 // ----------------------------------------------------------------------
 const documentOptions = [
-    { label: 'Cheque', value: 0 },
-    { label: 'Bank Statement', value: 1 },
-]
+  { label: 'Cheque', value: 0 },
+  { label: 'Bank Statement', value: 1 },
+];
 
-export default function BankNewForm({ bankDetails, refreshBankDetail }) {
-    const router = useRouter();
-    const navigate = useNavigate();
-    const [isEdit, setIsEdit] = useState();
+export default function BankNewForm({ bankDetail }) {
+  console.log('bankDetail', bankDetail);
+  const router = useRouter();
+  const navigate = useNavigate();
+  const [isEdit, setIsEdit] = useState();
 
-    useEffect(() => {
-        if (bankDetails?.status === 1) {
-            setIsEdit(false);  // View only
-        } else {
-            setIsEdit(true);   // Edit mode
-        }
-    }, [bankDetails?.status]);
-
-
-    // ---------------- VALIDATION ----------------
-    const NewSchema = Yup.object().shape({
-        documentType: Yup.string().required('Document Type is required'),
-        addressProof: Yup.mixed().when([], {
-            is: () => !bankDetails?.id,
-            then: (schema) => schema.required('Address proof is required'),
-            otherwise: (schema) => schema.nullable(),
-        }),
-        bankName: Yup.string().required('Bank Name is required'),
-        branchName: Yup.string().required('Branch Name is required'),
-        accountNumber: Yup.number().required('Account Number is required'),
-        ifscCode: Yup.string().required('IFSC Code is required'),
-        accountType: Yup.string().required('Account Type is required'),
-        accountHolderName: Yup.string().required('Account Holder Name is required'),
-    });
-
-    const methods = useForm({
-        resolver: yupResolver(NewSchema),
-        reValidateMode: 'onChange',
-        defaultValues: {
-            documentType: 0,
-            bankName: '',
-            branchName: '',
-            accountNumber: '',
-            ifscCode: '',
-            accountType: 'CURRENT',
-            addressProof: null,
-            accountHolderName: '',
-            bankAddress: '',
-            bankAccountProofId: null,
-        },
-    });
-
-    const {
-        handleSubmit,
-        getValues,
-        setValue,
-        watch,
-        reset,
-        control,
-        formState: { isSubmitting },
-    } = methods;
-
-    const values = watch();
-    const documentType = useWatch({ control, name: 'documentType' });
-
-    const handleProofUpload = async (file) => {
-        try {
-            const fd = new FormData();
-            fd.append('file', file);
-
-            const uploadRes = await axiosInstance.post('/files', fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-
-            const proofId = uploadRes?.data?.files?.[0]?.id;
-
-            if (!proofId) {
-                enqueueSnackbar('Failed to upload file', { variant: 'error' });
-                return;
-            }
-
-            // Store uploaded file ID in form
-            setValue('bankAccountProofId', proofId);
-
-            enqueueSnackbar('File uploaded successfully!', { variant: 'success' });
-
-        } catch (error) {
-            console.error(error);
-            enqueueSnackbar('Upload failed!', { variant: 'error' });
-        }
-    };
-
-
-    const handleDrop = async (acceptedFiles) => {
-        const file = acceptedFiles[0];
-
-        if (file) {
-            setValue('addressProof', file, { shouldValidate: true });
-
-            // Upload instantly
-            await handleProofUpload(file);
-        }
-    };
-
-
-    const existingProof = bankDetails?.bankAccountProof
-        ? {
-            id: bankDetails.bankAccountProof.id,
-            name: bankDetails.bankAccountProof.fileOriginalName,
-            url: bankDetails.bankAccountProof.fileUrl,
-            status: bankDetails.status === 1 ? 'approved' : 'pending',
-            isServerFile: true,
-        }
-        : null;
-
-
-
-    //   const onSubmit = handleSubmit(async (data) => {
-    //     try {
-
-    //       const accountId = bankDetails?.id
-
-    //       const payload = {
-    //         bankName: data.bankName,
-    //         bankShortCode: data.bankShortCode,
-    //         ifscCode: data.ifscCode,
-    //         branchName: data.branchName,
-    //         bankAddress: data.bankAddress,
-    //         accountType: data.accountType === 'CURRENT' ? 1 : 0,
-    //         accountHolderName: data.accountHolderName,
-    //         accountNumber: String(data.accountNumber),
-    //         bankAccountProofType: Number(data.documentType),
-    //         bankAccountProofId: data.bankAccountProofId,
-    //       };
-    //       console.log('📤 FINAL BANK PAYLOAD:', payload);
-    //       let finalPayload;
-
-    //       if (!accountId) {
-    //         finalPayload = { bankDetails: payload };
-    //       } else {
-    //         finalPayload = payload;
-    //       }
-
-    //       let res;
-
-    //       if (!bankDetails?.id) {
-    //         res = await axiosInstance.post('/company-profiles/bank-details', finalPayload);
-    //       } else {
-    //         res = await axiosInstance.patch(`/company-profiles/bank-details/${accountId}`, finalPayload);
-    //       }
-
-    //       if (res?.data?.success) {
-    //         enqueueSnackbar('Bank details saved successfully!', { variant: 'success' });
-    //         refreshBankDetail();
-    //         router.push(paths.dashboard.company.profile);
-    //       } else {
-    //         enqueueSnackbar(res?.data?.message || 'Something went wrong!', { variant: 'error' });
-    //       }
-    //     } catch (error) {
-    //       console.error(error);
-    //       enqueueSnackbar('Failed to submit bank details', { variant: 'error' });
-    //     }
-    //   });
-
-    const onSubmit = handleSubmit(async (data) => {
-        console.log("submmited data", data)
+  useEffect(() => {
+    if (bankDetail?.bankDetails?.status === 1) {
+      setIsEdit(false); // View only
+    } else {
+      setIsEdit(true); // Edit mode
     }
-    )
-    const requiredFields = ['addressProof', 'bankName', 'branchName', 'accountNumber', 'ifscCode'];
+  }, [bankDetail?.bankDetails?.status]);
 
-    const errors = methods.formState.errors;
+  // ---------------- VALIDATION ----------------
+  const NewSchema = Yup.object().shape({
+    documentType: Yup.string().required('Document Type is required'),
+    addressProof: Yup.mixed().when([], {
+      is: () => !bankDetail?.id,
+      then: (schema) => schema.required('Address proof is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),
+    bankName: Yup.string().required('Bank Name is required'),
+    branchName: Yup.string().required('Branch Name is required'),
+    accountNumber: Yup.number().required('Account Number is required'),
+    ifscCode: Yup.string().required('IFSC Code is required'),
+    accountType: Yup.string().required('Account Type is required'),
+    accountHolderName: Yup.string().required('Account Holder Name is required'),
+  });
 
+  const methods = useForm({
+    resolver: yupResolver(NewSchema),
+    reValidateMode: 'onChange',
+    defaultValues: {
+      documentType: 0,
+      bankName: '',
+      branchName: '',
+      accountNumber: '',
+      ifscCode: '',
+      accountType: 'CURRENT',
+      addressProof: null,
+      accountHolderName: '',
+      bankAddress: '',
+      bankAccountProofId: null,
+    },
+  });
 
-    useEffect(() => {
-        if (bankDetails) {
-            reset({
-                documentType: bankDetails.bankAccountProofType ?? 0,
-                bankName: bankDetails.bankName || '',
-                branchName: bankDetails.branchName || '',
-                accountNumber: bankDetails.accountNumber || '',
-                ifscCode: bankDetails.ifscCode || '',
-                accountType: bankDetails.accountType === 1 ? 'CURRENT' : 'SAVINGS',
-                addressProof: null,
-                accountHolderName: bankDetails.accountHolderName || '',
-                bankAddress: bankDetails.bankAddress || '',
-                bankShortCode: bankDetails.bankShortCode || '',
-            });
-        }
-    }, [bankDetails, reset]);
+  const {
+    handleSubmit,
+    getValues,
+    setValue,
+    watch,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = methods;
 
-    return (
-        <Container>
+  const values = watch();
+  const documentType = useWatch({ control, name: 'documentType' });
 
-            <FormProvider methods={methods} onSubmit={onSubmit}>
-                <Card sx={{ p:3}}>
-                    <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
-                        Select Document Type:
-                    </Typography>
+  const handleProofUpload = async (file) => {
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
 
-                    <Box sx={{ width: 200, mb: 3 }}>
-                        <RHFSelect name="documentType" label="Document Type" disabled={!isEdit} sx={{ width: 200 }}>
-                            {documentOptions.map((item) => (
-                                <MenuItem key={item.value} value={item.value}>
-                                    {item.label}
-                                </MenuItem>
-                            ))}
-                        </RHFSelect>
+      const uploadRes = await axiosInstance.post('/files', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-                    </Box>
+      const proofId = uploadRes?.data?.files?.[0]?.id;
 
-                    {/* ---------------- ADDRESS PROOF UPLOAD ---------------- */}
-                    {/* {isEdit &&
+      if (!proofId) {
+        enqueueSnackbar('Failed to upload file', { variant: 'error' });
+        return;
+      }
+
+      // Store uploaded file ID in form
+      setValue('bankAccountProofId', proofId);
+
+      enqueueSnackbar('File uploaded successfully!', { variant: 'success' });
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Upload failed!', { variant: 'error' });
+    }
+  };
+
+  const handleDrop = async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+
+    if (file) {
+      setValue('addressProof', file, { shouldValidate: true });
+
+      // Upload instantly
+      await handleProofUpload(file);
+    }
+  };
+
+  const existingProof = bankDetail?.bankAccountProof
+    ? {
+        id: bankDetail.bankAccountProof.id,
+        name: bankDetail.bankAccountProof.fileOriginalName,
+        url: bankDetail.bankAccountProof.fileUrl,
+        status: bankDetail.status === 1 ? 'approved' : 'pending',
+        isServerFile: true,
+      }
+    : null;
+
+  //   const onSubmit = handleSubmit(async (data) => {
+  //     try {
+
+  //       const accountId = bankDetail?.id
+
+  //       const payload = {
+  //         bankName: data.bankName,
+  //         bankShortCode: data.bankShortCode,
+  //         ifscCode: data.ifscCode,
+  //         branchName: data.branchName,
+  //         bankAddress: data.bankAddress,
+  //         accountType: data.accountType === 'CURRENT' ? 1 : 0,
+  //         accountHolderName: data.accountHolderName,
+  //         accountNumber: String(data.accountNumber),
+  //         bankAccountProofType: Number(data.documentType),
+  //         bankAccountProofId: data.bankAccountProofId,
+  //       };
+  //       console.log('📤 FINAL BANK PAYLOAD:', payload);
+  //       let finalPayload;
+
+  //       if (!accountId) {
+  //         finalPayload = { bankDetail: payload };
+  //       } else {
+  //         finalPayload = payload;
+  //       }
+
+  //       let res;
+
+  //       if (!bankDetail?.id) {
+  //         res = await axiosInstance.post('/company-profiles/bank-details', finalPayload);
+  //       } else {
+  //         res = await axiosInstance.patch(`/company-profiles/bank-details/${accountId}`, finalPayload);
+  //       }
+
+  //       if (res?.data?.success) {
+  //         enqueueSnackbar('Bank details saved successfully!', { variant: 'success' });
+  //         refreshBankDetail();
+  //         router.push(paths.dashboard.company.profile);
+  //       } else {
+  //         enqueueSnackbar(res?.data?.message || 'Something went wrong!', { variant: 'error' });
+  //       }
+  //     } catch (error) {
+  //       console.error(error);
+  //       enqueueSnackbar('Failed to submit bank details', { variant: 'error' });
+  //     }
+  //   });
+
+  const onSubmit = handleSubmit(async (data) => {
+    console.log('submmited data', data);
+  });
+  const requiredFields = ['addressProof', 'bankName', 'branchName', 'accountNumber', 'ifscCode'];
+
+  const errors = methods.formState.errors;
+
+  useEffect(() => {
+    if (bankDetail) {
+      reset({
+        documentType: bankDetail?.bankDetails?.bankAccountProofType ?? 0,
+        bankName: bankDetail?.bankDetails?.bankName || '',
+        branchName: bankDetail?.bankDetails?.branchName || '',
+        accountNumber: bankDetail?.bankDetails?.accountNumber || '',
+        ifscCode: bankDetail?.bankDetails?.ifscCode || '',
+        accountType: bankDetail?.bankDetails?.accountType === 1 ? 'CURRENT' : 'SAVINGS',
+        addressProof: null,
+        accountHolderName: bankDetail?.bankDetails?.accountHolderName || '',
+        bankAddress: bankDetail?.bankDetails?.bankAddress || '',
+        bankShortCode: bankDetail?.bankDetails?.bankShortCode || '',
+      });
+    }
+  }, [bankDetail, reset]);
+
+  return (
+    <Container>
+      <FormProvider methods={methods} onSubmit={onSubmit}>
+        <Card sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+            Select Document Type:
+          </Typography>
+
+          <Box sx={{ width: 200, mb: 3 }}>
+            <RHFSelect
+              name="documentType"
+              label="Document Type"
+              disabled={!isEdit}
+              sx={{ width: 200 }}
+            >
+              {documentOptions.map((item) => (
+                <MenuItem key={item.value} value={item.value}>
+                  {item.label}
+                </MenuItem>
+              ))}
+            </RHFSelect>
+          </Box>
+
+          {/* ---------------- ADDRESS PROOF UPLOAD ---------------- */}
+          {/* {isEdit &&
             // <RHFFileUploadBox
             //   name="addressProof"
             //   label={`Upload ${documentType === 'cheque' ? 'Cheque' : 'Bank Statement'}`}
@@ -263,220 +259,222 @@ export default function BankNewForm({ bankDetails, refreshBankDetail }) {
             // }}
             />
           } */}
-                    {!isEdit &&
-                        <Box sx={{ mb: 3 }}>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                    flexWrap: 'wrap',
-                                    mb: 1,
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography sx={{ fontWeight: 600 }}>
-                                        Check  Uploaded PanCard :
-                                    </Typography>
-                                </Box>
+          {!isEdit && (
+            <Box sx={{ mb: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                  mb: 1,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography sx={{ fontWeight: 600 }}>Check Uploaded PanCard :</Typography>
+                </Box>
 
-                                {bankDetails?.bankAccountProof?.fileUrl ? (
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
+                {bankDetail?.bankDetails?.bankAccountProof?.fileUrl ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<Iconify icon="mdi:eye" />}
+                    sx={{
+                      height: 36,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    }}
+                    onClick={() => window.open(bankDetail?.bankDetails.bankAccountProof.fileUrl, '_blank')}
+                  >
+                    Preview Document
+                  </Button>
+                ) : (
+                  <Typography color="text.secondary">No file uploaded.</Typography>
+                )}
+              </Box>
+            </Box>
+          )}
 
-                                        startIcon={<Iconify icon="mdi:eye" />}
-                                        sx={{
-                                            height: 36,
-                                            textTransform: 'none',
-                                            fontWeight: 600,
-                                        }}
-                                        onClick={() => window.open(bankDetails.bankAccountProof.fileUrl, '_blank')}
-                                    >
-                                        Preview Document
-                                    </Button>
-                                ) : (
-                                    <Typography color="text.secondary">No file uploaded.</Typography>
-                                )}
-                            </Box>
-                        </Box>
-                    }
+          {/* ---------------- BANK FIELDS ---------------- */}
+          <Box sx={{ py: 4 }}>
+            <Grid container spacing={3}>
+              <Grid xs={12} md={9}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <RHFTextField
+                      name="ifscCode"
+                      label="IFSC Code"
+                      disabled={!isEdit}
+                      placeholder="Enter IFSC Code"
+                      InputProps={{
+                        endAdornment: (
+                          <LoadingButton
+                            variant="contained"
+                            loading={isSubmitting}
+                            size="small"
+                            disabled={!isEdit}
+                            sx={{
+                              ml: 1,
+                              bgcolor: '#00328A',
+                              color: 'white',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              borderRadius: '6px',
+                              minHeight: '32px',
+                              px: 2,
+                              '&:hover': { bgcolor: '#002670' },
+                            }}
+                            onClick={async () => {
+                              const ifsc = getValues('ifscCode');
 
-                    {/* ---------------- BANK FIELDS ---------------- */}
-                    <Box sx={{ py: 4 }}>
-                        <Grid container spacing={3}>
-                            <Grid xs={12} md={9}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                    <Box sx={{ position: 'relative' }}>
-                                        <RHFTextField
-                                            name="ifscCode"
-                                            label="IFSC Code"
-                                            disabled={!isEdit}
-                                            placeholder="Enter IFSC Code"
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <LoadingButton
-                                                        variant="contained"
-                                                        loading={isSubmitting}
-                                                        size="small"
-                                                        disabled={!isEdit}
-                                                        sx={{
-                                                            ml: 1,
-                                                            bgcolor: '#00328A',
-                                                            color: 'white',
-                                                            textTransform: 'none',
-                                                            fontWeight: 600,
-                                                            borderRadius: '6px',
-                                                            minHeight: '32px',
-                                                            px: 2,
-                                                            '&:hover': { bgcolor: '#002670' },
-                                                        }}
-                                                        onClick={async () => {
-                                                            const ifsc = getValues('ifscCode');
+                              if (!ifsc) {
+                                enqueueSnackbar('Please enter IFSC Code first', {
+                                  variant: 'warning',
+                                });
+                                return;
+                              }
 
-                                                            if (!ifsc) {
-                                                                enqueueSnackbar('Please enter IFSC Code first', {
-                                                                    variant: 'warning',
-                                                                });
-                                                                return;
-                                                            }
+                              try {
+                                const res = await axiosInstance.get(
+                                  `/bank-details/get-by-ifsc/${ifsc}`
+                                );
 
-                                                            try {
-                                                                const res = await axiosInstance.get(
-                                                                    `/bank-details/get-by-ifsc/${ifsc}`
-                                                                );
+                                const data = res?.data?.bankDetail;
 
-                                                                const data = res?.data?.bankDetails;
+                                if (!data) {
+                                  enqueueSnackbar('No bank details found', { variant: 'error' });
+                                  return;
+                                }
 
-                                                                if (!data) {
-                                                                    enqueueSnackbar('No bank details found', { variant: 'error' });
-                                                                    return;
-                                                                }
+                                // Autofill form values
+                                setValue('bankName', data.bankName || '');
+                                setValue('branchName', data.branchName || '');
+                                setValue('bankShortCode', data.bankShortCode || '');
+                                setValue('bankAddress', data.bankAddress || '');
+                                setValue('city', data.city || '');
+                                setValue('state', data.state || '');
+                                setValue('district', data.district || '');
 
-                                                                // Autofill form values
-                                                                setValue('bankName', data.bankName || '');
-                                                                setValue('branchName', data.branchName || '');
-                                                                setValue('bankShortCode', data.bankShortCode || '');
-                                                                setValue('bankAddress', data.bankAddress || '');
-                                                                setValue('city', data.city || '');
-                                                                setValue('state', data.state || '');
-                                                                setValue('district', data.district || '');
+                                enqueueSnackbar('Bank details fetched successfully', {
+                                  variant: 'success',
+                                });
+                              } catch (error) {
+                                console.error(error);
+                                enqueueSnackbar(
+                                  error?.response?.data?.message || 'Invalid IFSC Code',
+                                  { variant: 'error' }
+                                );
+                              }
+                            }}
+                          >
+                            Fetch
+                          </LoadingButton>
+                        ),
+                      }}
+                    />
+                  </Box>
 
-                                                                enqueueSnackbar('Bank details fetched successfully', {
-                                                                    variant: 'success',
-                                                                });
-                                                            } catch (error) {
-                                                                console.error(error);
-                                                                enqueueSnackbar(
-                                                                    error?.response?.data?.message || 'Invalid IFSC Code',
-                                                                    { variant: 'error' }
-                                                                );
-                                                            }
-                                                        }}
-                                                    >
-                                                        Fetch
-                                                    </LoadingButton>
-                                                ),
-                                            }}
-                                        />
-                                    </Box>
+                  <Box>
+                    <RHFTextField
+                      name="bankName"
+                      disabled={!isEdit}
+                      label="Bank Name"
+                      placeholder="Enter Bank Name"
+                    />
+                  </Box>
+                  <Box>
+                    <RHFTextField
+                      name="branchName"
+                      label="Branch Name"
+                      disabled={!isEdit}
+                      placeholder="Enter Branch Name"
+                    />
+                  </Box>
+                  <Box>
+                    <RHFTextField
+                      name="accountHolderName"
+                      label="Account Holder Name"
+                      disabled={!isEdit}
+                      placeholder="Enter Account Holder Name"
+                    />
+                  </Box>
+                  <Box>
+                    <RHFTextField
+                      name="accountNumber"
+                      label="Account Number"
+                      disabled={!isEdit}
+                      placeholder="Enter Account Number"
+                    />
+                  </Box>
+                  <Box>
+                    <RHFTextField
+                      name="bankAddress"
+                      label="Bank Address"
+                      placeholder="Bank Address"
+                      disabled={!isEdit}
+                      InputLabelProps={{
+                        shrink: Boolean(getValues('bankAddress')),
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Grid>
 
-                                    <Box>
-                                        <RHFTextField name="bankName" disabled={!isEdit} label="Bank Name" placeholder="Enter Bank Name" />
-                                    </Box>
-                                    <Box>
-                                        <RHFTextField
-                                            name="branchName"
-                                            label="Branch Name"
-                                            disabled={!isEdit}
-                                            placeholder="Enter Branch Name"
-                                        />
-                                    </Box>
-                                    <Box>
-                                        <RHFTextField
-                                            name="accountHolderName"
-                                            label="Account Holder Name"
-                                            disabled={!isEdit}
-                                            placeholder="Enter Account Holder Name"
-                                        />
-                                    </Box>
-                                    <Box>
-                                        <RHFTextField
-                                            name="accountNumber"
-                                            label="Account Number"
-                                            disabled={!isEdit}
-                                            placeholder="Enter Account Number"
-                                        />
-                                    </Box>
-                                    <Box>
-                                        <RHFTextField
-                                            name="bankAddress"
-                                            label="Bank Address"
-                                            placeholder="Bank Address"
-                                            disabled={!isEdit}
-                                            InputLabelProps={{
-                                                shrink: Boolean(getValues('bankAddress')),
-                                            }}
-                                        />
-                                    </Box>
-                                </Box>
-                            </Grid>
-
-                            <Grid xs={12} md={3}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                    <Box>
-                                        <RHFSelect name="accountType" label="Account Type" disabled>
-                                            <MenuItem value="SAVINGS">Savings</MenuItem>
-                                            <MenuItem value="CURRENT">Current</MenuItem>
-                                        </RHFSelect>
-                                    </Box>
-                                    <Box>
-                                        <RHFTextField
-                                            name="bankShortCode"
-                                            label="Bank Short Code"
-                                            disabled={!isEdit}
-                                            placeholder="Bank Short Code"
-                                            InputLabelProps={{
-                                                shrink: Boolean(getValues('bankShortCode')),
-                                            }}
-                                        />
-                                    </Box>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </Box>
-                    {/* ---------------- FOOTER BUTTONS ---------------- */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, mb: 2 }}>
-                        {/* <Button
+              <Grid xs={12} md={3}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box>
+                    <RHFSelect name="accountType" label="Account Type" disabled>
+                      <MenuItem value="SAVINGS">Savings</MenuItem>
+                      <MenuItem value="CURRENT">Current</MenuItem>
+                    </RHFSelect>
+                  </Box>
+                  <Box>
+                    <RHFTextField
+                      name="bankShortCode"
+                      label="Bank Short Code"
+                      disabled={!isEdit}
+                      placeholder="Bank Short Code"
+                      InputLabelProps={{
+                        shrink: Boolean(getValues('bankShortCode')),
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+          {/* ---------------- FOOTER BUTTONS ---------------- */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, mb: 2 }}>
+            {/* <Button
               component={RouterLink}
               href={paths.dashboard.company.profile}
               sx={{ bgcolor: '#000', color: '#fff', '&:hover': { bgcolor: '#333' } }}
             >
               Back
             </Button> */}
-                        {/* <Button
+            {/* <Button
               variant="outlined"
 
             >
               Cancel
             </Button> */}
-                        {isEdit &&
-                            <LoadingButton type="submit" variant="contained" loading={isSubmitting} sx={{ ml: 'auto' }}>
-                                Save
-                            </LoadingButton>
-                        }
-                    </Box>
-                </Card>
-
-
-            </FormProvider>
-
-        </Container>
-    );
+            {isEdit && (
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                loading={isSubmitting}
+                sx={{ ml: 'auto' }}
+              >
+                Save
+              </LoadingButton>
+            )}
+          </Box>
+        </Card>
+      </FormProvider>
+    </Container>
+  );
 }
-
 
 BankNewForm.propTypes = {
-    bankDetails: PropTypes.object,
-    refreshBankDetail: PropTypes.func
-}
+  bankDetail: PropTypes.object,
+};

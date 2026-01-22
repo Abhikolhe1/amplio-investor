@@ -111,8 +111,17 @@ export default function JwtRegisterEmailView() {
       setOtp(Array(4).fill(''));
       setOtpStarted(false);
       setIsOtpSent(true);
-    } catch (err) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to send OTP');
+    } catch (error) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.error?.message ||
+            error?.response?.data?.message ||
+            error?.message ||
+            'OTP verification failed';
+      enqueueSnackbar(message, {
+        variant: 'error',
+      });
     }
   };
   const handleVerifyOtp = async () => {
@@ -135,11 +144,17 @@ export default function JwtRegisterEmailView() {
         otp: enteredOtp,
       });
 
-      enqueueSnackbar(res.data.message, { variant: 'success' });
-      // router.push(paths.auth.jwt.kyc);
+      enqueueSnackbar(res.data.message, { variant: 'success' }); // router.push(paths.auth.jwt.kyc);
       await redirectBasedOnProgress(sessionId);
-    } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || 'Invalid OTP', {
+    } catch (error) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.error?.message ||
+            error?.response?.data?.message ||
+            error?.message ||
+            'OTP verification failed';
+      enqueueSnackbar(message, {
         variant: 'error',
       });
     }
@@ -186,13 +201,13 @@ export default function JwtRegisterEmailView() {
 
   // ---------------- RENDER ----------------
   return (
-    <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
+    <>
       {!isOtpSent ? (
-        <>
+        <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
           {renderHead}
           {renderForm}
           {renderBottom}
-        </>
+        </FormProvider>
       ) : (
         <OtpInput
           emailOrMobile={identifier}
@@ -202,6 +217,6 @@ export default function JwtRegisterEmailView() {
           onResend={handleSendOtp}
         />
       )}
-    </FormProvider>
+    </>
   );
 }

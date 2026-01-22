@@ -60,4 +60,7 @@ export const endpoints = {
     details: '/api/product/details',
     search: '/api/product/search',
   },
+  bankDetail: {
+    list: '/investor-profiles/bank-details',
+  }
 };

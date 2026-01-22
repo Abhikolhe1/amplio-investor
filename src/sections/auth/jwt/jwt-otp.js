@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState, useRef, useEffect } from 'react';
 import { Box, Stack, Typography, Grid, TextField, Button, Link } from '@mui/material';
+import FormProvider from 'src/components/hook-form';
 
 export default function OtpInput({
   length = 4,
@@ -13,6 +14,12 @@ export default function OtpInput({
   const [otpStarted, setOtpStarted] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRefs = useRef([]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // ✅ prevent refresh
+    if (value.some((v) => !v)) return;
+    onVerify?.(); // ✅ single source of truth
+  };
 
   const handleOtpChange = (index, digit) => {
     if (!/^\d?$/.test(digit)) return;
@@ -62,68 +69,71 @@ export default function OtpInput({
         justifyContent: 'center',
       }}
     >
-      <Stack spacing={3} alignItems="center" sx={{ width: 360 }}>
-        {/* Heading */}
-        <Typography variant="h5" fontWeight={600}>
-          Verify OTP
-        </Typography>
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={3} alignItems="center" sx={{ width: 360 }}>
+          {/* Heading */}
+          <Typography variant="h5" fontWeight={600}>
+            Verify OTP
+          </Typography>
 
-        {/* Subtitle */}
-        <Typography variant="body2" color="text.secondary" align="center">
-          We have sent an OTP to <strong>{emailOrMobile}</strong>
-        </Typography>
+          {/* Subtitle */}
+          <Typography variant="body2" color="text.secondary" align="center">
+            We have sent an OTP to <strong>{emailOrMobile}</strong>
+          </Typography>
 
-        {/* OTP Boxes */}
-        <Stack direction="row" spacing={2} justifyContent="center">
-          {value.map((digit, i) => (
-            <TextField
-              key={i}
-              value={digit}
-              onChange={(e) => handleOtpChange(i, e.target.value)}
-              inputRef={(el) => {
-                otpRefs.current[i] = el;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Backspace' && !value[i] && i > 0) {
-                  otpRefs.current[i - 1]?.focus();
-                }
-              }}
-              inputProps={{
-                maxLength: 1,
-                style: {
-                  textAlign: 'center',
-                  fontSize: '1.5rem',
-                  width: 44,
-                  height: 44,
-                },
-              }}
-            />
-          ))}
+          {/* OTP Boxes */}
+          <Stack direction="row" spacing={2} justifyContent="center">
+            {value.map((digit, i) => (
+              <TextField
+                key={i}
+                value={digit}
+                onChange={(e) => handleOtpChange(i, e.target.value)}
+                inputRef={(el) => {
+                  otpRefs.current[i] = el;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Backspace' && !value[i] && i > 0) {
+                    otpRefs.current[i - 1]?.focus();
+                  }
+                }}
+                inputProps={{
+                  maxLength: 1,
+                  style: {
+                    textAlign: 'center',
+                    fontSize: '1.5rem',
+                    width: 44,
+                    height: 44,
+                  },
+                }}
+              />
+            ))}
+          </Stack>
+
+          {/* Resend */}
+          <Typography variant="body2">
+            {timer > 0 ? (
+              <span style={{ color: '#999' }}>Resend OTP in {timer}s</span>
+            ) : (
+              <Link component="button" type="button" underline="hover" onClick={handleResendClick}>
+                Resend OTP
+              </Link>
+            )}
+          </Typography>
+
+          {/* Verify Button */}
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
+            disabled={value.some((v) => !v)}
+            onClick={onVerify}
+            sx={{ borderRadius: 999 }}
+            type="submit"
+          >
+            Verify OTP
+          </Button>
         </Stack>
-
-        {/* Resend */}
-        <Typography variant="body2">
-          {timer > 0 ? (
-            <span style={{ color: '#999' }}>Resend OTP in {timer}s</span>
-          ) : (
-            <Link component="button" underline="hover" onClick={handleResendClick}>
-              Resend OTP
-            </Link>
-          )}
-        </Typography>
-
-        {/* Verify Button */}
-        <Button
-          fullWidth
-          size="large"
-          variant="contained"
-          disabled={value.some((v) => !v)}
-          onClick={onVerify}
-          sx={{ borderRadius: 999 }}
-        >
-          Verify OTP
-        </Button>
-      </Stack>
+      </form>
     </Box>
   );
 }

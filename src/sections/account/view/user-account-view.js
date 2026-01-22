@@ -16,6 +16,7 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useRouter } from 'src/routes/hook';
 
 //
+import { useGetBankDetail } from 'src/api/bank-detail';
 import AccountGeneral from '../account-general';
 import AccountBilling from '../account-billing';
 import AccountSocialLinks from '../account-social-links';
@@ -68,12 +69,17 @@ export default function AccountView() {
 
   const [currentTab, setCurrentTab] = useState(tabs || 'general');
 
-  const handleChangeTab = useCallback((event, newValue) => {
-    setCurrentTab(newValue);
-    router.push({
-      search: `?tab=${newValue}`
-    });
-  }, [router]);
+  const handleChangeTab = useCallback(
+    (event, newValue) => {
+      setCurrentTab(newValue);
+      router.push({
+        search: `?tab=${newValue}`,
+      });
+    },
+    [router]
+  );
+
+  const { BankDetail } = useGetBankDetail();
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
@@ -103,9 +109,7 @@ export default function AccountView() {
 
       {currentTab === 'general' && <AccountGeneral />}
 
-      {currentTab === 'bank' && (
-        <BankNewForm />
-      )}
+      {currentTab === 'bank' && <BankNewForm bankDetail={BankDetail} />}
 
       {currentTab === 'nominee' && <AccountNomineeForm />}
 
