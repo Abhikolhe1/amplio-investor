@@ -170,6 +170,10 @@ export default function JwtLoginView() {
 
       await verifyOtp(identifier, enteredOtp, false);
 
+      enqueueSnackbar('OTP verified successfully', {
+        variant: 'success',
+      });
+
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
       console.error(error);
@@ -180,27 +184,31 @@ export default function JwtLoginView() {
             error?.response?.data?.message ||
             error?.message ||
             'OTP verification failed';
-      if (message.toLowerCase().includes('otp')) {
-        setErrorMsg('Invalid or expired OTP');
-      } else if (message.toLowerCase().includes('expired')) {
-        setErrorMsg('OTP has expired. Please request a new one');
-      } else if (message.toLowerCase().includes('attempt')) {
-        setErrorMsg('Too many incorrect attempts. Please try again later');
-      } else if (message.toLowerCase().includes('email')) {
-        setErrorMsg('Email verification failed');
-      } else if (message.toLowerCase().includes('phone')) {
-        setErrorMsg('Mobile verification failed');
-      } else {
-        setErrorMsg(message);
-      }
+      enqueueSnackbar(message, {
+        variant: 'error',
+      });
     }
   };
 
   const handleResendOtp = async () => {
     try {
       await sendOtp(identifier, true);
+
+      enqueueSnackbar('OTP verified successfully', {
+        variant: 'success',
+      });
     } catch (error) {
       setErrorMsg('Failed to resend OTP');
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.error?.message ||
+            error?.response?.data?.message ||
+            error?.message ||
+            'OTP verification failed';
+      enqueueSnackbar(message, {
+        variant: 'error',
+      });
     }
   };
 

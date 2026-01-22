@@ -9,7 +9,7 @@ export default function AboutSection({ currentDetails }) {
     <Card
       sx={{
         p: 3,
-        borderRadius: 0,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
       }}
@@ -20,6 +20,15 @@ export default function AboutSection({ currentDetails }) {
         </Typography>
         <Typography variant="body2" color="text.secondary" mt={0.5}>
           {currentDetails?.aboutBuyer?.description}
+        </Typography>
+      </Box>
+
+      <Box mb={3}>
+        <Typography variant="h6" fontWeight={700}>
+          {currentDetails?.aboutSeller?.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mt={0.5}>
+          {currentDetails?.aboutSeller?.description}
         </Typography>
       </Box>
 
@@ -48,6 +57,7 @@ AboutSection.propTypes = {
   currentDetails: PropTypes.shape({
     aboutBuyer: PropTypes.object,
     aboutTrustee: PropTypes.object,
+    aboutSeller: PropTypes.object,
     aboutNBFC: PropTypes.object,
   }),
 };

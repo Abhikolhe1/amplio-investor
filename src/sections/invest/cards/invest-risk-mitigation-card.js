@@ -24,7 +24,7 @@ export default function RiskMititgationCard({ currentDetails }) {
     <Card
       sx={{
         p: 3,
-        borderRadius: 0,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
       }}
@@ -93,7 +93,7 @@ export default function RiskMititgationCard({ currentDetails }) {
               }}
             >
               <AccordionSummary expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}>
-                <Typography variant="subtitle1" fontWeight={600}>
+                <Typography variant="subtitle1" color='text.secondary' fontWeight={600}>
                   {faq.question}
                 </Typography>
               </AccordionSummary>

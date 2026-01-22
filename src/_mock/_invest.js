@@ -93,6 +93,22 @@ export const INVESTMENTS = [
           question: 'How are the returns calculated?',
           answer: 'Returns depend on the investment amount, interest rate, and tenure.',
         },
+        {
+          id: 4,
+          question: 'What is Invoice Discounting?',
+          answer:
+            'Invoice discounting is a financing method where businesses sell unpaid invoices to investors.',
+        },
+        {
+          id: 5,
+          question: 'How are the returns generated?',
+          answer: 'Returns are generated from interest paid by the buyer over the tenure.',
+        },
+        {
+          id: 6,
+          question: 'How are the returns calculated?',
+          answer: 'Returns depend on the investment amount, interest rate, and tenure.',
+        },
       ],
     },
     platfromTrack: {
@@ -116,15 +132,15 @@ export const INVESTMENTS = [
         title: 'Documents',
         description: 'All the document for you to read and invest for understanding the deal.',
         tags: [
-          {
-            label: 'Invoice',
-          },
-          {
-            label: 'Agreement',
-          },
-          {
-            label: 'PDC',
-          },
+          // {
+          //   label: 'Invoice',
+          // },
+          // {
+          //   label: 'Agreement',
+          // },
+          // {
+          //   label: 'PDC',
+          // },
         ],
       },
 
@@ -180,6 +196,12 @@ export const INVESTMENTS = [
         title: 'About Buyer',
         description:
           'Sampoorna Feeds Pvt Ltd is a Phagwara, Punjab-based company specializing in manufacturing and selling a range of animal feed, including poultry and cattle feed, primarily produced through contract farming.',
+      },
+
+      aboutSeller: {
+        title: 'About the Seller',
+        description:
+          'Beacon Sellership Limited is a SEBI-registered debenture seller that provides a wide range of seller services, including Debenture Seller Services, Security Seller Services, Seller to Alternate Investment Funds (AIF), Seller to Securitization transactions, Bond Sellership Services, Escrow Services, and Safekeeping.',
       },
 
       aboutTrustee: {

@@ -12,7 +12,7 @@ export default function PlatformTrackRecord({ currentDetails }) {
     <Card
       sx={{
         p: 3,
-        borderRadius: 0,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
       }}
@@ -54,18 +54,51 @@ export default function PlatformTrackRecord({ currentDetails }) {
 
       <Box mt={3}>
         <Typography fontWeight={700}>Documents</Typography>
-        <Typography variant="body2" color="text.secondary" mb={1}>
+        <Typography variant="body2" color="text.secondary" mb={3}>
           {documentsSummary?.description}
         </Typography>
 
         <Stack direction="row" spacing={1} flexWrap="wrap">
           {documentsSummary?.tags.map((tag, index) => (
-            <Chip key={index} label={tag.label} />
+            <Button
+              key={index}
+              variant="contained"
+              color="inherit"
+              startIcon={<Iconify icon="mdi:download" />}
+              sx={{
+                borderRadius: 5,
+                backgroundColor: 'primary.dark',
+                color: '#fff',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              }}
+            >
+              {tag.label}
+            </Button>
+          ))}
+          {documents?.actions.map((item, index) => (
+            <Button
+              key={index}
+              variant="contained"
+              color="inherit"
+              startIcon={<Iconify icon="mdi:download" />}
+              sx={{
+                borderRadius: 5,
+                backgroundColor: 'primary.dark',
+                color: '#fff',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              }}
+            >
+              {item?.label}
+            </Button>
           ))}
         </Stack>
       </Box>
 
-      <Box mt={3}>
+      {/* <Box mt={3}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography fontWeight={700}>Documents</Typography>
 
@@ -102,7 +135,7 @@ export default function PlatformTrackRecord({ currentDetails }) {
             </Button>
           ))}
         </Stack>
-      </Box>
+      </Box> */}
     </Card>
   );
 }
