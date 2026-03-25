@@ -137,11 +137,11 @@ export function fileData(file) {
   // File
   return {
     key: file.fileUrl,
-    name: file.fileOriginalName || file.fileName,
+    fileOriginalName: file.fileName || file.fileOriginalName,
     size: file.size,
-    path: file.fileUrl,
+    path: file.path,
     type: file.type,
-    preview: file.fileUrl,
+    fileUrl: file.fileUrl,
     lastModified: file.lastModified,
     lastModifiedDate: file.lastModifiedDate,
   };

@@ -8,6 +8,7 @@ import AuthClassicLayout from 'src/layouts/auth/classic';
 // components
 import { SplashScreen } from 'src/components/loading-screen';
 
+
 // ----------------------------------------------------------------------
 
 // AMPLIFY
@@ -21,8 +22,13 @@ const AmplifyForgotPasswordPage = lazy(() => import('src/pages/auth/amplify/forg
 const JwtLoginPage = lazy(() => import('src/pages/auth/jwt/login'));
 const JwtRegisterEmailPage = lazy(() => import('src/pages/auth/jwt/register-email'));
 const JwtRegisterMobilePage = lazy(() => import('src/pages/auth/jwt/register-mobile'));
+const JwtRegisterInstitutionalPage = lazy(() => import('src/pages/kyc/register-institutional'));
 const OptionPage = lazy(() => import('src/pages/kyc/option'));
 const KycPendingPage = lazy(() => import('src/pages/kyc/kyc-pending'));
+
+// KYV Pages 
+const KYCBasicInfoPage = lazy(() => import('src/pages/kyc/kyc-basic-info'));
+const InvestorKycPage = lazy(()=> import('src/pages/kyc/investor-kyc'))
 
 // FIREBASE
 const FirebaseLoginPage = lazy(() => import('src/pages/auth/firebase/login'));
@@ -112,6 +118,14 @@ const authJwt = {
       ),
     },
     {
+      path: 'register-institutional',
+      element: (
+        // <AuthClassicLayout title="Manage the job more effectively with Minimal">
+          <JwtRegisterInstitutionalPage />
+        // </AuthClassicLayout>
+      ),
+    },
+    {
       path: 'kyc',
       element: (
         // <AuthClassicLayout  maxWidth={false}>
@@ -193,9 +207,29 @@ const authAuth0 = {
   ],
 };
 
+
+const authKyc = {
+  path: 'kyc',
+  element: (
+    <Suspense fallback={<SplashScreen />}>
+      <Outlet />
+    </Suspense>
+  ),
+  children: [
+    {
+      path: 'basic-info',
+      element: <KYCBasicInfoPage />,
+    },
+    {
+      path: 'investor-kyc',
+      element: <InvestorKycPage />,
+    },
+  ],
+};
+
 export const authRoutes = [
   {
     path: 'auth',
-    children: [authAmplify, authJwt, authFirebase, authAuth0],
+    children: [authAmplify, authJwt, authFirebase, authAuth0, authKyc],
   },
 ];
