@@ -212,7 +212,7 @@ export default function UbosListView({
             variant="contained"
             startIcon={<Iconify icon="mingcute:add-line" />}
           >
-            New Ubo
+            New UBO
           </Button>
         </Stack>
 

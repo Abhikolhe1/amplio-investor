@@ -9,6 +9,8 @@ import ProgressStepper from 'src/components/progress-stepper/ProgressStepper';
 // import KYCUBOs from './kyc-ubo-list';
 import DocumentDetails from './investor-document-details';
 import UbosListView from './ubo/view/kyc-ubo-list-view';
+import KYCAddressDetails from './address/kyc-address-details';
+import SignatoriesListView from './signatories/view/kyc-signatories-list-view';
 import InvestorCompliance from './compliance/kyc-investor-compliance';
 import KYCBankDetails from './bank-details/kyc-bank-details';
 import OverviewMandateView from './mandate/view/overview-mandate-view';
@@ -18,12 +20,15 @@ export default function Stepper() {
   const router = useRouter();
   const steps = [
     { id: 'kyc_merchant_documents', number: 1, lines: ['Investor', 'Documents'] },
-    { id: 'kyc_ubo_details', number: 2, lines: ['UBO', 'Details'] },
-    { id: 'kyc_compliance_declarations', number: 3, lines: ['Compliance', '&', 'Declarations'] },
-    { id: 'kyc_bank_details', number: 4, lines: ['Bank', 'Details'] },
-    { id: 'kyc_investment_mandate', number: 5, lines: ['Investment', 'Mandate'] },
+    { id: 'kyc_address_details', number: 2, lines: ['Address', 'Details'] },
+    { id: 'kyc_ubo_details', number: 3, lines: ['UBO', 'Details'] },
+    { id: 'kyc_signatories', number: 4, lines: ['Signatories', ''] },
+    { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
+    { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
+    { id: 'kyc_investment_mandate', number: 7, lines: ['Investment', 'Mandate'] },
 
-    
+    // { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
+    // { id: 'kyc_psp', number: 5, lines: ['PSP', 'Details'] },
   ];
 
   const [activeStepId, setActiveStepId] = useState('kyc_merchant_documents');
@@ -31,6 +36,8 @@ export default function Stepper() {
   const [stepsProgress, setStepsProgress] = useState({
     kyc_merchant_documents: { percent: 0 },
     kyc_ubo_details: { percent: 0 },
+    kyc_address_details: { percent: 0 },
+    kyc_signatories: { percent: 0 },
     kyc_compliance_declarations: { percent: 0 },
     kyc_bank_details: { percent: 0 },
     kyc_investment_mandate: { percent: 0 },
@@ -61,10 +68,22 @@ export default function Stepper() {
         return (
           <DocumentDetails
             percent={(p) => updateStepPercent('kyc_merchant_documents', p)}
-            setActiveStepId={() => setActiveStepId('kyc_ubo_details')}
+            setActiveStepId={() => setActiveStepId('kyc_address_details')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_merchant_documents'])
+            }
+          />
+        );
+
+      case 'kyc_address_details':
+        return (
+          <KYCAddressDetails
+            percent={(p) => updateStepPercent('kyc_address_details', p)}
+            setActiveStepId={() => setActiveStepId('kyc_ubo_details')}
+            dataInitializedSteps={dataInitializedSteps}
+            setDataInitializedSteps={() =>
+              setDataInitializedSteps((prev) => [...prev, 'kyc_address_details'])
             }
           />
         );
@@ -73,7 +92,7 @@ export default function Stepper() {
         return (
           <UbosListView
             percent={(p) => updateStepPercent('kyc_ubo_details', p)}
-            setActiveStepId={() => setActiveStepId('kyc_compliance_declarations')}
+            setActiveStepId={() => setActiveStepId('kyc_signatories')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_ubo_details'])
@@ -81,7 +100,19 @@ export default function Stepper() {
           />
         );
 
-        case 'kyc_compliance_declarations':
+      case 'kyc_signatories':
+        return (
+          <SignatoriesListView
+            percent={(p) => updateStepPercent('kyc_signatories', p)}
+            setActiveStepId={() => setActiveStepId('kyc_compliance_declarations')}
+            dataInitializedSteps={dataInitializedSteps}
+            setDataInitializedSteps={() =>
+              setDataInitializedSteps((prev) => [...prev, 'kyc_signatories'])
+            }
+          />
+        );
+
+      case 'kyc_compliance_declarations':
         return (
           <InvestorCompliance
             percent={(p) => updateStepPercent('kyc_compliance_declarations', p)}
@@ -93,7 +124,7 @@ export default function Stepper() {
           />
         );
 
-        case 'kyc_bank_details':
+      case 'kyc_bank_details':
         return (
           <KYCBankDetails
             percent={(p) => updateStepPercent('kyc_bank_details', p)}
@@ -104,7 +135,8 @@ export default function Stepper() {
             }
           />
         );
-        case 'kyc_investment_mandate':
+
+      case 'kyc_investment_mandate':
         return (
           <OverviewMandateView
             percent={(p) => updateStepPercent('kyc_investment_mandate', p)}
@@ -115,6 +147,16 @@ export default function Stepper() {
             }
           />
         );
+
+      // case 'kyc_psp':
+      //   return (
+      //     <PSPListView
+      //       percent={(p) => updateStepPercent('kyc_psp', p)}
+      //       setActiveStepId={() => router.push(paths.auth.kyc.kycPending)}
+      //       dataInitializedSteps={dataInitializedSteps}
+      //       setDataInitializedSteps={() => setDataInitializedSteps((prev) => [...prev, 'kyc_psp'])}
+      //     />
+      //   );
 
       default:
         return null;

@@ -17,7 +17,7 @@ import MandateExpectedYield from '../mandate-expected-yield';
 
 // ----------------------------------------------------------------------
 
-export default function OverviewMandateView( {percent, setActiveStepId} ) {
+export default function OverviewMandateView({ percent, setActiveStepId }) {
   const { user } = useMockedUser();
   const theme = useTheme();
   const settings = useSettingsContext();
@@ -70,13 +70,13 @@ export default function OverviewMandateView( {percent, setActiveStepId} ) {
   });
 
   const defaultValues = {
-    minInvestment: 1000000,
-    maxExposure: 5000000,
-    minTenor: 1,
-    maxTenor: 7,
-    yield: 7.1,
-    merchantExposure: 25,
-    bankExposure: 35,
+    minInvestment: '',
+    maxExposure: '',
+    minTenor: '',
+    maxTenor: '',
+    yield: '',
+    merchantExposure: '',
+    bankExposure: '',
     autoReinvest: true,
   };
 
