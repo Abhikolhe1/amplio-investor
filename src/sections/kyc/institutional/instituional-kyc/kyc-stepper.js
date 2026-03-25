@@ -26,6 +26,8 @@ export default function Stepper() {
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
     { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
     { id: 'kyc_investment_mandate', number: 7, lines: ['Investment', 'Mandate'] },
+    { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
+    { id: 'kyc_review', number: 9, lines: ['Final', 'Review'] },
 
     // { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
     // { id: 'kyc_psp', number: 5, lines: ['PSP', 'Details'] },
@@ -41,6 +43,8 @@ export default function Stepper() {
     kyc_compliance_declarations: { percent: 0 },
     kyc_bank_details: { percent: 0 },
     kyc_investment_mandate: { percent: 0 },
+    kyc_agreement: { percent: 0 },
+    kyc_review: { percent: 0 }
 
   });
 
@@ -147,6 +151,28 @@ export default function Stepper() {
             }
           />
         );
+      // case 'kyc_agreement':
+      //   return (
+      //     <KycAgreement
+      //       percent={(p) => updateStepPercent('kyc_agreement', p)}
+      //       setActiveStepId={() => setActiveStepId('kyc_review')}
+      //       dataInitializedSteps={dataInitializedSteps}
+      //       setDataInitializedSteps={() =>
+      //         setDataInitializedSteps((prev) => [...prev, 'kyc_agreement'])
+      //       }
+      //     />
+      //   );
+      // case 'kyc_review':
+      //   return (
+      //     <KycFinalReview
+      //       percent={(p) => updateStepPercent('kyc_review', p)}
+      //       setActiveStepId={() => setActiveStepId('')}
+      //       dataInitializedSteps={dataInitializedSteps}
+      //       setDataInitializedSteps={() =>
+      //         setDataInitializedSteps((prev) => [...prev, 'kyc_review'])
+      //       }
+      //     />
+      //   );
 
       // case 'kyc_psp':
       //   return (
