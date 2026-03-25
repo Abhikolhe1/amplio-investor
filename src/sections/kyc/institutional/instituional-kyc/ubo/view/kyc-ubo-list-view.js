@@ -186,7 +186,7 @@ export default function UbosListView({
     console.log('UBO STEP DONE');
 
     percent(100);
-    setActiveStepId();
+    setActiveStepId('kyc_compliance_declarations');
   };
 
   const notFound = !dataFiltered.length;
