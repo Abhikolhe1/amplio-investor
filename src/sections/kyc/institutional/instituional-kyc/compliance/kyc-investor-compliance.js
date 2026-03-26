@@ -94,8 +94,14 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
   const {
     handleSubmit,
     watch,
+    setValue,
     formState: { isSubmitting },
   } = methods;
+
+  const risk1 = watch('risk_ack_1');
+  const risk2 = watch('risk_ack_2');
+
+  const isChecked = risk1 && risk2;
 
   const onSubmit = handleSubmit((data) => {
     console.log(data);
@@ -178,6 +184,7 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
             <Stack spacing={2}>
               {/* Card 1 */}
               <Box
+                onClick={() => setValue('risk_ack_1', !watch('risk_ack_1'))}
                 sx={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -186,9 +193,8 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                   borderRadius: 2,
                   cursor: 'pointer',
 
-                  border: `1px solid ${
-                    watch('risk_ack_1') ? theme.palette.primary.main : theme.palette.divider
-                  }`,
+                  border: `1px solid ${watch('risk_ack_1') ? theme.palette.primary.main : theme.palette.divider
+                    }`,
 
                   bgcolor: watch('risk_ack_1') ? theme.palette.action.selected : 'transparent',
 
@@ -208,6 +214,7 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
 
               {/* Card 2 */}
               <Box
+                onClick={() => setValue('risk_ack_2', !watch('risk_ack_2'))}
                 sx={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -216,9 +223,8 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                   borderRadius: 2,
                   cursor: 'pointer',
 
-                  border: `1px solid ${
-                    watch('risk_ack_2') ? theme.palette.primary.main : theme.palette.divider
-                  }`,
+                  border: `1px solid ${watch('risk_ack_2') ? theme.palette.primary.main : theme.palette.divider
+                    }`,
 
                   bgcolor: watch('risk_ack_2') ? theme.palette.action.selected : 'transparent',
 
@@ -236,6 +242,7 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                 </Typography>
               </Box>
             </Stack>
+
           </Stack>
 
           <Grid item xs={12}>
@@ -244,6 +251,7 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                 type="submit"
                 variant="contained"
                 size="medium"
+                disabled={!isChecked}
                 loading={isSubmitting}
                 color="primary"
                 sx={{
