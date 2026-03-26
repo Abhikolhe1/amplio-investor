@@ -62,21 +62,21 @@ export default function OverviewMandateView({ percent, setActiveStepId }) {
 
     yield: Yup.number().required('Yield is required').min(6, 'Minimum 6%').max(9, 'Maximum 9%'),
 
-    merchantExposure: Yup.number().min(0).max(100).required(),
+    merchantExposure: Yup.number().min(0).max(100).required('Merchant Exposure is Required'),
 
-    bankExposure: Yup.number().min(0).max(100).required(),
+    bankExposure: Yup.number().min(0).max(100).required('Bank Exposure is Required'),
 
     autoReinvest: Yup.boolean(),
   });
 
   const defaultValues = {
-    minInvestment: '',
-    maxExposure: '',
-    minTenor: '',
-    maxTenor: '',
-    yield: '',
-    merchantExposure: '',
-    bankExposure: '',
+    minInvestment: null,
+    maxExposure: null,
+    minTenor: null,
+    maxTenor: null,
+    yield: null,
+    merchantExposure: null,
+    bankExposure: null,
     autoReinvest: true,
   };
 
@@ -101,7 +101,7 @@ export default function OverviewMandateView({ percent, setActiveStepId }) {
       console.error(error);
     }
     percent(100);
-    setActiveStepId('kyc_investment_mandate');
+    setActiveStepId('kyc_agreement');
   };
 
   return (
