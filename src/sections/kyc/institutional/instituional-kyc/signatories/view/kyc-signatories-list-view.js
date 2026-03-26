@@ -194,16 +194,16 @@ export default function SignatoriesListView({
             <Container maxWidth={settings.themeStretch ? false : 'lg'}>
                 <Stack spacing={0.5} sx={{ mb: 2 }}>
                     <Typography variant="h3" color="primary" fontWeight={700}>
-                        Ultimate Beneficial Owners
+                        Signatories
                     </Typography>
 
                     <Typography variant="h5">
-                        Add all UBO details for KYC
+                        All signatories details for KYC
                     </Typography>
                 </Stack>
 
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Typography variant="h4">Add UBO</Typography>
+                    <Typography variant="h4">Add Signatories</Typography>
 
                     <Button
                         onClick={handleAdd}
