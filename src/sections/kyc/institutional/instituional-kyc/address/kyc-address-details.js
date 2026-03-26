@@ -19,7 +19,7 @@ import { useSnackbar } from 'notistack';
 import FormProvider, { RHFTextField, RHFSelect, RHFCustomFileUploadBox } from 'src/components/hook-form';
 import axiosInstance from 'src/utils/axios';
 // import { useGetKycAddressDetails } from 'src/api/merchantKyc';
-import KYCFooter from 'src/sections/kyc/kyc-footer';
+// import KYCFooter from 'src/sections/kyc/kyc-footer';
 // import KYCFooter from './kyc-footer';
 // import { NewKycAddressDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
@@ -417,7 +417,7 @@ export default function KYCAddressDetails({
                     </Stack>
                 </FormProvider>
             </Card>
-            <KYCFooter />
+            {/* <KYCFooter /> */}
         </Container>
     );
 }

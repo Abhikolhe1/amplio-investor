@@ -14,6 +14,7 @@ import SignatoriesListView from './signatories/view/kyc-signatories-list-view';
 import InvestorCompliance from './compliance/kyc-investor-compliance';
 import KYCBankDetails from './bank-details/kyc-bank-details';
 import OverviewMandateView from './mandate/view/overview-mandate-view';
+import KYCAgreement from './agreement/KYCAgreement';
 import KYCFinalReview from './finalReview/kyc-final-review';
 
 
@@ -28,24 +29,21 @@ export default function Stepper() {
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
     { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
     { id: 'kyc_investment_mandate', number: 7, lines: ['Investment', 'Mandate'] },
-    // { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
+    { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
     { id: 'kyc_review', number: 9, lines: ['Final', 'Review'] },
-
-    // { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
-    // { id: 'kyc_psp', number: 5, lines: ['PSP', 'Details'] },
   ];
 
   const [activeStepId, setActiveStepId] = useState('kyc_merchant_documents');
   const [dataInitializedSteps, setDataInitializedSteps] = useState([]);
   const [stepsProgress, setStepsProgress] = useState({
-    kyc_merchant_documents: { percent: 0 },
+     kyc_merchant_documents: { percent: 0 },
     kyc_ubo_details: { percent: 0 },
     kyc_address_details: { percent: 0 },
     kyc_signatories: { percent: 0 },
     kyc_compliance_declarations: { percent: 0 },
     kyc_bank_details: { percent: 0 },
     kyc_investment_mandate: { percent: 0 },
-    // kyc_agreement: { percent: 0 },
+    kyc_agreement: { percent: 0 },
     kyc_review: { percent: 0 }
 
   });
@@ -146,24 +144,24 @@ export default function Stepper() {
         return (
           <OverviewMandateView
             percent={(p) => updateStepPercent('kyc_investment_mandate', p)}
-            setActiveStepId={() => setActiveStepId('kyc_review')}
+            setActiveStepId={() => setActiveStepId('kyc_agreement')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_investment_mandate'])
             }
           />
         );
-      // case 'kyc_agreement':
-      //   return (
-      //     <KycAgreement
-      //       percent={(p) => updateStepPercent('kyc_agreement', p)}
-      //       setActiveStepId={() => setActiveStepId('kyc_review')}
-      //       dataInitializedSteps={dataInitializedSteps}
-      //       setDataInitializedSteps={() =>
-      //         setDataInitializedSteps((prev) => [...prev, 'kyc_agreement'])
-      //       }
-      //     />
-      //   );
+      case 'kyc_agreement':
+        return (
+          <KYCAgreement
+            percent={(p) => updateStepPercent('kyc_agreement', p)}
+            setActiveStepId={() => setActiveStepId('kyc_review')}
+            dataInitializedSteps={dataInitializedSteps}
+            setDataInitializedSteps={() =>
+              setDataInitializedSteps((prev) => [...prev, 'kyc_agreement'])
+            } 
+          />
+        );
       case 'kyc_review':
         return (
           <KYCFinalReview
@@ -175,16 +173,6 @@ export default function Stepper() {
             }
           />
         );
-
-      // case 'kyc_psp':
-      //   return (
-      //     <PSPListView
-      //       percent={(p) => updateStepPercent('kyc_psp', p)}
-      //       setActiveStepId={() => router.push(paths.auth.kyc.kycPending)}
-      //       dataInitializedSteps={dataInitializedSteps}
-      //       setDataInitializedSteps={() => setDataInitializedSteps((prev) => [...prev, 'kyc_psp'])}
-      //     />
-      //   );
 
       default:
         return null;
@@ -206,7 +194,7 @@ export default function Stepper() {
 
       <ProgressStepper
         steps={steps}
-        activeStepId={activeStepId}
+        activeStepId={activeStepId} 
         stepsProgress={stepsProgress}
         onStepClick={handleStepClick}
       />

@@ -57,6 +57,9 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
   const theme = useTheme();
   const settings = useSettingsContext();
 
+  useEffect(() => {
+    percent(100);
+  }, [percent]);
 
   const complianceSchema = Yup.object().shape({
     country: Yup.string().required('Please Select the Country'),

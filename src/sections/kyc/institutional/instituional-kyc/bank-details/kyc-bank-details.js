@@ -65,7 +65,7 @@ export default function KYCBankDetails({
       documentType: 'cheque',
       bankName: '',
       branchName: '',
-      accountNumber: '',
+      accountNumber: null,
       ifscCode: '',
       accountType: 'CURRENT',
       addressProof: null,
