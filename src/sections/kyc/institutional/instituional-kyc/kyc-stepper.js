@@ -29,7 +29,7 @@ export default function Stepper() {
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
     { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
     { id: 'kyc_investment_mandate', number: 7, lines: ['Investment', 'Mandate'] },
-    // { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
+    { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
     { id: 'kyc_review', number: 9, lines: ['Final', 'Review'] },
   ];
 
@@ -43,7 +43,7 @@ export default function Stepper() {
     kyc_compliance_declarations: { percent: 0 },
     kyc_bank_details: { percent: 0 },
     kyc_investment_mandate: { percent: 0 },
-    // kyc_agreement: { percent: 0 },
+    kyc_agreement: { percent: 0 },
     kyc_review: { percent: 0 }
 
   });
@@ -144,7 +144,7 @@ export default function Stepper() {
         return (
           <OverviewMandateView
             percent={(p) => updateStepPercent('kyc_investment_mandate', p)}
-            setActiveStepId={() => setActiveStepId('kyc_agreementkyc_review')}
+            setActiveStepId={() => setActiveStepId('kyc_agreement')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_investment_mandate'])
@@ -162,17 +162,6 @@ export default function Stepper() {
             } 
           />
         );
-      // case 'kyc_agreement':
-      //   return (
-      //     <KycAgreement
-      //       percent={(p) => updateStepPercent('kyc_agreement', p)}
-      //       setActiveStepId={() => setActiveStepId('kyc_review')}
-      //       dataInitializedSteps={dataInitializedSteps}
-      //       setDataInitializedSteps={() =>
-      //         setDataInitializedSteps((prev) => [...prev, 'kyc_agreement'])
-      //       }
-      //     />
-      //   );
       case 'kyc_review':
         return (
           <KYCFinalReview
@@ -184,16 +173,6 @@ export default function Stepper() {
             }
           />
         );
-
-      // case 'kyc_psp':
-      //   return (
-      //     <PSPListView
-      //       percent={(p) => updateStepPercent('kyc_psp', p)}
-      //       setActiveStepId={() => router.push(paths.auth.kyc.kycPending)}
-      //       dataInitializedSteps={dataInitializedSteps}
-      //       setDataInitializedSteps={() => setDataInitializedSteps((prev) => [...prev, 'kyc_psp'])}
-      //     />
-      //   );
 
       default:
         return null;
