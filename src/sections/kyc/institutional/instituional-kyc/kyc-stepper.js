@@ -151,6 +151,7 @@ export default function Stepper() {
             }
           />
         );
+
       case 'kyc_agreement':
         return (
           <KYCAgreement

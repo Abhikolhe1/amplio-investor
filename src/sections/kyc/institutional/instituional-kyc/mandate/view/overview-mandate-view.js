@@ -46,7 +46,7 @@ export default function OverviewMandateView({ percent, setActiveStepId }) {
   const FormSchema = Yup.object().shape({
     minInvestment: Yup.number()
       .required('Minimum investment is required')
-      .min(1000, 'Minimum should be at least 1000'),
+      .min(100000, 'Minimum should be at least 100000'),
 
     maxExposure: Yup.number()
       .required('Maximum exposure is required')

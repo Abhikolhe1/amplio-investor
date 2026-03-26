@@ -82,12 +82,12 @@ export default function KYCAgreement({ percent, setActiveStepId }) {
           sx={{
             p: 3,
             borderRadius: 3,
-            boxShadow: '0px 8px 25px rgba(0,0,0,0.08)',
+            boxShadow: 'primary.main',
           }}
         >
           <Stack spacing={3}>
             {/* HEADER */}
-            <Box>
+            <Box textAlign="center">
               <Typography variant="h4" color="primary" fontWeight={700}>  
                 Platform Agreement
               </Typography>
@@ -148,7 +148,7 @@ export default function KYCAgreement({ percent, setActiveStepId }) {
                 <Box
                   component="iframe"
                   // src={data.documentUrl}
-                  src="/assets/Guarantor_Execution_Dummy.pdf"
+                  src="/assets/Platform-Agreement.pdf"
                   width="100%"
                   height="100%"
                   sx={{ border: 'none' }}
@@ -160,7 +160,6 @@ export default function KYCAgreement({ percent, setActiveStepId }) {
                 sx={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 2,
                   p: 2,
                   borderRadius: 2,
                   cursor: 'pointer',
@@ -178,7 +177,7 @@ export default function KYCAgreement({ percent, setActiveStepId }) {
               >
                 <RHFCheckbox name="consent" />
 
-                <Typography variant="h6" sx={{ color: 'primary.main'}}>
+                <Typography variant="body2" sx={{ color: 'primary.darker', mt:1 ,}}>
                   I have read, understood, and agree to the Platform Agreement and terms mentioned
                   in the document.
                 </Typography>
