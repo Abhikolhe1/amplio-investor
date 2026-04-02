@@ -210,7 +210,7 @@ export default function SignatoriesListView({
                         variant="contained"
                         startIcon={<Iconify icon="mingcute:add-line" />}
                     >
-                        New Signatories
+                        New Signatory
                     </Button>
                 </Stack>
 
