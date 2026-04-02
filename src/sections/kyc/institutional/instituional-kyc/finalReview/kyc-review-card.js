@@ -5,10 +5,10 @@ import {
     Grid,
     Stack,
     Typography,
-    Chip,
     Divider,
     useTheme,
 } from '@mui/material';
+import Label from 'src/components/label';
 
 export default function KycReviewCard({
     title,
@@ -22,19 +22,13 @@ export default function KycReviewCard({
         <Grid item xs={12} md={6}>
             <Card
                 sx={{
-                    px: 2.5,
-                    py: 2,
-                    minHeight: 220,
+                    px: 2,
+                    py: 1.75,
+                    width: '100%',
                     height: '100%',
                 }}
             >
-
-                <Stack
-                    direction="row"
-                    alignItems="center"
-                    sx={{ mb: 1 }}
-                >
-
+                <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
                     <Box
                         sx={{
                             width: 36,
@@ -51,19 +45,15 @@ export default function KycReviewCard({
                         {icon}
                     </Box>
 
-                    {/* Title */}
-                    <Typography variant="h6" >
+                    <Typography variant="subtitle1" fontWeight={600}>
                         {title}
                     </Typography>
 
-
                     <Box sx={{ flexGrow: 1 }} />
-                    {/* chip */}
+
                     {status && (
-                        <Chip
-                            label={status}
-                            size="small"
-                            variant="contained"
+                        <Label
+                            variant="soft"
                             color={
                                 (status === 'completed' && 'success') ||
                                 (status === 'verified' && 'success') ||
@@ -72,36 +62,26 @@ export default function KycReviewCard({
                                 'default'
                             }
                             sx={{
-                                // height: 22,
                                 px: 1,
-                                py: 1.5,
-                                // bgcolor: theme.palette.success.lighter,
-                                // color: theme.palette.success.main,
-                                // fontWeight: theme.typography.fontWeightMedium,
+                                py: 0.5,
+                                textTransform: 'capitalize',
                             }}
-                        />
+                        >
+                            {status}
+                        </Label>
                     )}
                 </Stack>
 
-                <Divider sx={{ m: 2 }} />
+                <Divider sx={{ my: 1.5 }} />
 
-                {/* Content */}
                 <Stack spacing={1}>
                     {data.map((item, index) => (
-                        <Stack
-                            key={index}
-                            direction="row"
-                            justifyContent="space-between"
-                        >
-                            <Typography
-                                variant="subtitle2"
-                                color="text.secondary"
-                            // sx={{ color: theme.palette.text.secondary }}
-                            >
+                        <Stack key={index} direction="row" justifyContent="space-between">
+                            <Typography variant="caption" color="text.secondary">
                                 {item.label}
                             </Typography>
 
-                            <Typography variant="body2" >
+                            <Typography variant="body2" fontWeight={500}>
                                 {item.value || '--'}
                             </Typography>
                         </Stack>

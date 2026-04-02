@@ -203,14 +203,14 @@ export default function SignatoriesListView({
                 </Stack>
 
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Typography variant="h4">Add Signatories</Typography>
+                    <Typography variant="h4">Add Signatory</Typography>
 
                     <Button
                         onClick={handleAdd}
                         variant="contained"
                         startIcon={<Iconify icon="mingcute:add-line" />}
                     >
-                        New Signatories
+                        New Signatory
                     </Button>
                 </Stack>
 

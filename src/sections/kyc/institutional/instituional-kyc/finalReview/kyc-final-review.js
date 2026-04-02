@@ -1,4 +1,4 @@
-import { Button, Container, Grid } from '@mui/material';
+import { Box, Button, Container, Grid } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import { useRouter } from 'src/routes/hook';
 import { paths } from 'src/routes/paths';
@@ -61,69 +61,82 @@ export const investmentMandateData = [
     // { label: 'Testing', value: '' },
 ];
 
+
+
 export default function KYCFinalReview() {
 
     const router = useRouter();
 
     return (
-        <Container maxWidth="lg">
-            <Grid container spacing={3}>
+        <Container >
+            <Box
+                sx={{
+                    maxWidth: 900,
+                    mx: 'auto',  
+                }}
+            >
+                <Grid container spacing={2} mb={3} >
 
-                {/* Investor profile */}
-                <KycReviewCard
-                    title="Investor Profile"
-                    status="completed"
-                    icon={<Iconify icon="mdi:office-building" width={24} />}
-                    data={investorProfileData}
-                />
+                    {/* Investor profile */}
+                    <KycReviewCard
+                        title="Investor Profile"
+                        status="completed"
+                        icon={<Iconify icon="mdi:office-building" width={24} />}
+                        data={investorProfileData}
+                    />
 
-                {/* adress details */}
-                <KycReviewCard
-                    title="Address Details"
-                    status="completed"
-                    icon={<Iconify icon="mdi:home" width={24} />}
-                    data={addressDetailsData}
-                />
+                    {/* adress details */}
+                    <KycReviewCard
+                        title="Address Details"
+                        status="completed"
+                        icon={<Iconify icon="mdi:home" width={24} />}
+                        data={addressDetailsData}
+                    />
 
-                {/* bank details */}
-                <KycReviewCard
-                    title="Bank Details"
-                    status="pending"
-                    icon={<Iconify icon="mdi:bank" width={24} />}
-                    data={bankDetailsData}
-                />
+                    {/* bank details */}
+                    <KycReviewCard
+                        title="Bank Details"
+                        status="pending"
+                        icon={<Iconify icon="mdi:bank" width={24} />}
+                        data={bankDetailsData}
+                    />
 
-                {/* UBO details */}
-                <KycReviewCard
-                    title="UBO Details"
-                    status="verified"
-                    icon={<Iconify icon="mdi:crown" width={24} />}
-                    data={uboListData}
-                />
+                    {/* UBO details */}
+                    <KycReviewCard
+                        title="UBO Details"
+                        status="verified"
+                        icon={<Iconify icon="mdi:crown" width={24} />}
+                        data={uboListData}
+                    />
 
-                {/* signatories */}
-                <KycReviewCard
-                    title="Signatories"
-                    status="completed"
-                    icon={<Iconify icon="mdi:account-check" width={24} />}
-                    data={signatoriesData}
-                />
+                    {/* signatories */}
+                    <KycReviewCard
+                        title="Signatories"
+                        status="completed"
+                        icon={<Iconify icon="mdi:account-check" width={24} />}
+                        data={signatoriesData}
+                    />
 
-                {/* invest mandate */}
-                <KycReviewCard
-                    title="Invest Mandate"
-                    status="completed"
-                    icon={<Iconify icon="mdi:hand-coin" width={24} />}
-                    data={investmentMandateData}
-                />
+                    {/* invest mandate */}
+                    <KycReviewCard
+                        title="Invest Mandate"
+                        status="completed"
+                        icon={<Iconify icon="mdi:hand-coin" width={24} />}
+                        data={investmentMandateData}
+                    />
+                    </Grid>
 
-                <Grid item xs={12} sx={{display:'flex', justifyContent:'flex-end'}}>
+                    <Grid container xs={12}  sx={{display:'flex', justifyContent:'flex-end'}}>
                    <Button variant='contained' onClick={() => router.push(paths.auth.jwt.institutionalPending)}>
                     Submit for Approval 
                    </Button>
                 </Grid>
 
-            </Grid>
+                    </Box>
+
+                
+
+            
         </Container>
     );
 }
