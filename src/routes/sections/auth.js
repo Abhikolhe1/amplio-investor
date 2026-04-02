@@ -25,6 +25,7 @@ const JwtRegisterMobilePage = lazy(() => import('src/pages/auth/jwt/register-mob
 const JwtRegisterInstitutionalPage = lazy(() => import('src/pages/kyc/register-institutional'));
 const OptionPage = lazy(() => import('src/pages/kyc/option'));
 const KycPendingPage = lazy(() => import('src/pages/kyc/kyc-pending'));
+const InstitutionalPendingPage = lazy(() => import('src/pages/kyc/institutional-pending'))
 
 // KYV Pages 
 const KYCBasicInfoPage = lazy(() => import('src/pages/kyc/kyc-basic-info'));
@@ -137,6 +138,12 @@ const authJwt = {
       path: 'kyc-pending',
       element: (
           <KycPendingPage />
+      ),
+    },
+    {
+      path: 'institutional-pending',
+      element: (
+          <InstitutionalPendingPage />
       ),
     }
   ],

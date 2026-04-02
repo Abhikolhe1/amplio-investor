@@ -23,7 +23,7 @@ export default function Stepper() {
   const router = useRouter();
   const steps = [
     { id: 'kyc_merchant_documents', number: 1, lines: ['Investor', 'Documents'] },
-    { id: 'kyc_address_details', number: 2, lines: ['Address', 'Details'] },
+     { id: 'kyc_address_details', number: 2, lines: ['Address', 'Details'] },
     { id: 'kyc_ubo_details', number: 3, lines: ['UBO', 'Details'] },
     { id: 'kyc_signatories', number: 4, lines: ['Signatories', ''] },
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
@@ -36,7 +36,7 @@ export default function Stepper() {
   const [activeStepId, setActiveStepId] = useState('kyc_merchant_documents');
   const [dataInitializedSteps, setDataInitializedSteps] = useState([]);
   const [stepsProgress, setStepsProgress] = useState({
-     kyc_merchant_documents: { percent: 0 },
+    kyc_merchant_documents: { percent: 0 },
     kyc_ubo_details: { percent: 0 },
     kyc_address_details: { percent: 0 },
     kyc_signatories: { percent: 0 },
@@ -80,7 +80,7 @@ export default function Stepper() {
           />
         );
 
-      case 'kyc_address_details':
+       case 'kyc_address_details':
         return (
           <KYCAddressDetails
             percent={(p) => updateStepPercent('kyc_address_details', p)}
@@ -163,6 +163,7 @@ export default function Stepper() {
             } 
           />
         );
+
       case 'kyc_review':
         return (
           <KYCFinalReview

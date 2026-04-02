@@ -1,6 +1,9 @@
-import { Container, Grid } from '@mui/material';
+import { Button, Container, Grid } from '@mui/material';
 import Iconify from 'src/components/iconify';
+import { useRouter } from 'src/routes/hook';
+import { paths } from 'src/routes/paths';
 import KycReviewCard from './kyc-review-card';
+
 
 
 const investorProfileData = [
@@ -59,6 +62,9 @@ export const investmentMandateData = [
 ];
 
 export default function KYCFinalReview() {
+
+    const router = useRouter();
+
     return (
         <Container maxWidth="lg">
             <Grid container spacing={3}>
@@ -110,6 +116,12 @@ export default function KYCFinalReview() {
                     icon={<Iconify icon="mdi:hand-coin" width={24} />}
                     data={investmentMandateData}
                 />
+
+                <Grid item xs={12} sx={{display:'flex', justifyContent:'flex-end'}}>
+                   <Button variant='contained' onClick={() => router.push(paths.auth.jwt.institutionalPending)}>
+                    Submit for Approval 
+                   </Button>
+                </Grid>
 
             </Grid>
         </Container>
