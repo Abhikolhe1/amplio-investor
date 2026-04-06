@@ -28,8 +28,9 @@ import { Card } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import Iconify from 'src/components/iconify';
 import PropTypes from 'prop-types';
-import { useGetDetails } from 'src/api/merchantKyc';
 import axiosInstance from 'src/utils/axios';
+import { useGetDetails } from 'src/api/investorKyc';
+
 // import KYCFooter from './kyc-footer';
 
 // import { NewKycBankDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
@@ -65,7 +66,7 @@ export default function KYCBankDetails({
       documentType: 'cheque',
       bankName: '',
       branchName: '',
-      accountNumber: null,
+      accountNumber: '',
       ifscCode: '',
       accountType: 'CURRENT',
       addressProof: null,
@@ -119,22 +120,22 @@ export default function KYCBankDetails({
 
   const existingProof = bankDetails?.bankAccountProof
     ? {
-        id: bankDetails.bankAccountProof.id,
-        name: bankDetails.bankAccountProof.fileOriginalName,
-        url: bankDetails.bankAccountProof.fileUrl,
-        status: bankDetails.status === 1 ? 'approved' : 'pending',
-        isServerFile: true,
-      }
+      id: bankDetails.bankAccountProof.id,
+      name: bankDetails.bankAccountProof.fileOriginalName,
+      url: bankDetails.bankAccountProof.fileUrl,
+      status: bankDetails.status === 1 ? 'approved' : 'pending',
+      isServerFile: true,
+    }
     : null;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // const usersId = sessionStorage.getItem('merchant_user_id');
+      const usersId = sessionStorage.getItem('investor_user_id');
 
-      // if (!usersId) {
-      //   enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
-      //   return;
-      // }
+      if (!usersId) {
+        enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
+        return;
+      }
 
       // const proofFile = data.addressProof;
       // let uploadedProofId = null;
@@ -175,7 +176,7 @@ export default function KYCBankDetails({
       }
 
       const payload = {
-        // usersId,
+        usersId,
         bankDetails: {
           bankName: data.bankName,
           bankShortCode: data.bankShortCode,
@@ -192,40 +193,31 @@ export default function KYCBankDetails({
 
       console.log('📤 FINAL BANK PAYLOAD:', payload);
 
-      // let res;
+      let res;
 
-      // if (bankDetails && bankDetails.length > 0) {
-      //   res = await axiosInstance.patch(
-      //     '/merchant-profiles/kyc-bank-details',
-      //     payload
-      //   );
-      // } else {
-      //   res = await axiosInstance.post(
-      //     '/merchant-profiles/kyc-bank-details',
-      //     payload
-      //   );
-      // }
+      if (bankDetails && bankDetails.length > 0) {
+        res = await axiosInstance.patch(
+          '/investor-profiles/kyc-bank-details',
+          payload
+        );
+      } else {
+        res = await axiosInstance.post(
+          '/investor-profiles/kyc-bank-details',
+          payload
+        );
+      }
 
-      // if (res?.data?.success) {
-      //   enqueueSnackbar('Bank details submitted successfully!', {
-      //     variant: 'success',
-      //   });
-      //   percent(100);
-      //   setActiveStepId();
-      // } else {
-      //   enqueueSnackbar(res?.data?.message || 'Something went wrong!', {
-      //     variant: 'error',
-      //   });
-      // }
-
-      console.log('Mock Payload:', payload);
-
-      enqueueSnackbar('Bank details submitted successfully! (Mock)', {
-        variant: 'success',
-      });
-
-      percent(100);
-      setActiveStepId('kyc_investment_mandate');
+      if (res?.data?.success) {
+        enqueueSnackbar('Bank details submitted successfully!', {
+          variant: 'success',
+        });
+        percent(100);
+        setActiveStepId();
+      } else {
+        enqueueSnackbar(res?.data?.message || 'Something went wrong!', {
+          variant: 'error',
+        });
+      }
     } catch (error) {
       console.error(error);
       enqueueSnackbar('Failed to submit bank details', { variant: 'error' });
@@ -315,7 +307,7 @@ export default function KYCBankDetails({
       });
       if (!dataInitializedSteps.includes('kyc_bank_details')) {
         setDataInitializedSteps?.((prev = []) => [...prev, 'kyc_bank_details']);
-        // setActiveStepId();
+        setActiveStepId();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,7 +329,7 @@ export default function KYCBankDetails({
         <Stack spacing={0.5} alignItems="flex-start" sx={{ mb: 4 }}>
           <Typography
             variant="h3"
-            color="primary"
+            color='primary'
             sx={{
               fontWeight: 700,
               textAlign: 'left',
@@ -567,6 +559,7 @@ export default function KYCBankDetails({
     </Container>
   );
 }
+
 
 KYCBankDetails.propTypes = {
   percent: PropTypes.func.isRequired,

@@ -1,100 +1,45 @@
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
-import { useRef, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
-// @mui
 import LoadingButton from '@mui/lab/LoadingButton';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import Box from '@mui/material/Box';
-// routes
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
-// auth
-import { useAuthContext } from 'src/auth/hooks';
-// components
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import { useRouter } from 'src/routes/hook';
 import { enqueueSnackbar } from 'notistack';
 import axiosInstance from 'src/utils/axios';
-import Iconify from 'src/components/iconify';
-import { useBoolean } from 'src/hooks/use-boolean';
 import OtpInput from './jwt-otp';
 
-// ----------------------------------------------------------------------
-
 export default function JwtRegisterEmailView() {
-  const { register } = useAuthContext();
   const router = useRouter();
-
-  const openInvestorType = useBoolean();
-  const [sessionIdForKyc, setSessionIdForKyc] = useState('');
-
-  const redirectBasedOnProgress = async (sessionId) => {
-    try {
-      const res = await axiosInstance.get(`/investor-profiles/kyc-progress/${sessionId}`);
-
-      const progress = res?.data?.currentProgress || [];
-      const profile = res?.data?.profile;
-
-      console.log('CURRENT PROGRESS:', progress);
-
-      if (profile?.usersId) {
-        sessionStorage.setItem('investor_user_id', profile.usersId);
-      }
-
-      if (profile?.id) {
-        sessionStorage.setItem('investor_profile_id', profile.id);
-      }
-
-      router.push(paths.auth.jwt.kyc);
-    } catch (err) {
-      console.error('KYC Progress Fetch Error:', err);
-      enqueueSnackbar('Unable to fetch KYC progress', { variant: 'error' });
-
-      router.push(paths.auth.jwt.kyc);
-    }
-  };
 
   const [errorMsg, setErrorMsg] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState(Array(4).fill(''));
-  const [otpStarted, setOtpStarted] = useState(false);
-  const [canResend, setCanResend] = useState(false);
-  const otpRefs = useRef([]);
 
-  const RegisterSchema = Yup.object().shape({
+  const registerSchema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('Enter a valid email'),
   });
 
-  const defaultValues = {
-    email: '',
-  };
-
   const methods = useForm({
-    resolver: yupResolver(RegisterSchema),
-    defaultValues,
+    resolver: yupResolver(registerSchema),
+    defaultValues: {
+      email: '',
+    },
   });
 
   const {
     handleSubmit,
-    reset,
     getValues,
     trigger,
     formState: { isSubmitting },
   } = methods;
-
-  // ---------------- OTP HANDLERS ----------------
-  
 
   const handleSendOtp = async () => {
     const validEmail = await trigger('email');
@@ -114,11 +59,10 @@ export default function JwtRegisterEmailView() {
         email,
       });
 
-      enqueueSnackbar(res.data.message || 'OTP Sent!', { variant: 'success' });
-
+      enqueueSnackbar(res.data.message || 'OTP sent!', { variant: 'success' });
+      setErrorMsg('');
       setIdentifier(email);
       setOtp(Array(4).fill(''));
-      setOtpStarted(false);
       setIsOtpSent(true);
     } catch (error) {
       const message =
@@ -128,11 +72,11 @@ export default function JwtRegisterEmailView() {
             error?.response?.data?.message ||
             error?.message ||
             'OTP verification failed';
-      enqueueSnackbar(message, {
-        variant: 'error',
-      });
+
+      enqueueSnackbar(message, { variant: 'error' });
     }
   };
+
   const handleVerifyOtp = async () => {
     const sessionId = localStorage.getItem('sessionId');
     const enteredOtp = otp.join('');
@@ -153,9 +97,9 @@ export default function JwtRegisterEmailView() {
         otp: enteredOtp,
       });
 
-      enqueueSnackbar(res.data.message, { variant: 'success' }); // router.push(paths.auth.jwt.kyc);
-      setSessionIdForKyc(sessionId);
-      openInvestorType.onTrue();
+      enqueueSnackbar(res.data.message, { variant: 'success' });
+      setErrorMsg('');
+      router.push(paths.auth.jwt.registerInstitutional);
     } catch (error) {
       const message =
         typeof error === 'string'
@@ -164,27 +108,11 @@ export default function JwtRegisterEmailView() {
             error?.response?.data?.message ||
             error?.message ||
             'OTP verification failed';
-      enqueueSnackbar(message, {
-        variant: 'error',
-      });
+
+      enqueueSnackbar(message, { variant: 'error' });
     }
   };
 
-  const handleSelectInvestorType = useCallback(
-    (type) => {
-      openInvestorType.onFalse();
-      sessionStorage.setItem('investor_type', type);
-      if (type === 'individual') {
-        redirectBasedOnProgress(sessionIdForKyc);
-      } else {
-        router.push(paths.auth.jwt.registerInstitutional);
-      }
-      },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [openInvestorType, sessionIdForKyc]
-  );
-
-  // ---------------- UI PARTS ----------------
   const renderHead = (
     <Stack spacing={2} alignItems="center" sx={{ mb: 3 }}>
       <Typography variant="h4">Set Up Your Investor Profile</Typography>
@@ -223,84 +151,23 @@ export default function JwtRegisterEmailView() {
     </Stack>
   );
 
-  const renderInvestorTypeDialog = (
-    <Dialog open={openInvestorType.value} onClose={() => {}} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>Make Your Profile As</DialogTitle>
-      <DialogContent sx={{ py: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <Card
-              sx={{
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                '&:hover': { transform: 'scale(1.02)' },
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-              }}
-            >
-              <Card onClick={() => handleSelectInvestorType('individual')} sx={{ p: 4 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Iconify icon="solar:user-bold" width={48} sx={{ color: 'primary.main' }} />
-                </Box>
-                <Typography variant="h6" gutterBottom>
-                  Individual
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Join as an individual investor
-                </Typography>
-              </Card>
-            </Card>
-          </Grid>
+  if (!isOtpSent) {
+    return (
+      <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
+        {renderHead}
+        {renderForm}
+        {renderBottom}
+      </FormProvider>
+    );
+  }
 
-          <Grid item xs={12} sm={6}>
-            <Card
-              sx={{
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                '&:hover': { transform: 'scale(1.02)' },
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-              }}
-            >
-              <Card onClick={() => handleSelectInvestorType('institutional')} sx={{ p: 4 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Iconify icon="solar:buildings-bold" width={48} sx={{ color: 'primary.main' }} />
-                </Box>
-                <Typography variant="h6" gutterBottom>
-                  Institutional
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Join as a organization
-                </Typography>
-              </Card>
-            </Card>
-          </Grid>
-      </Grid>
-      </DialogContent>
-    </Dialog>
-  );
-
-  // ---------------- RENDER ----------------
   return (
-    <>
-      {!isOtpSent ? (
-        <FormProvider methods={methods} onSubmit={handleSubmit(handleSendOtp)}>
-          {renderHead}
-          {renderForm}
-          {renderBottom}
-        </FormProvider>
-      ) : (
-        <OtpInput
-          emailOrMobile={identifier}
-          value={otp}
-          onChange={setOtp}
-          onVerify={handleVerifyOtp}
-          onResend={handleSendOtp}
-        />
-      )}
-
-      {renderInvestorTypeDialog}
-    </>
+    <OtpInput
+      emailOrMobile={identifier}
+      value={otp}
+      onChange={setOtp}
+      onVerify={handleVerifyOtp}
+      onResend={handleSendOtp}
+    />
   );
 }
-

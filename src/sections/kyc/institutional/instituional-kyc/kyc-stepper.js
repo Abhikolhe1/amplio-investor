@@ -14,7 +14,7 @@ import SignatoriesListView from './signatories/view/kyc-signatories-list-view';
 import InvestorCompliance from './compliance/kyc-investor-compliance';
 import KYCBankDetails from './bank-details/kyc-bank-details';
 import OverviewMandateView from './mandate/view/overview-mandate-view';
-import KYCAgreement from './agreement/KYCAgreement';
+import KYCAgreement from './agreement/kyc-agreement';
 import KYCFinalReview from './finalReview/kyc-final-review';
 
 
@@ -27,7 +27,7 @@ export default function Stepper() {
     { id: 'kyc_ubo_details', number: 3, lines: ['UBO', 'Details'] },
     { id: 'kyc_signatories', number: 4, lines: ['Signatories', ''] },
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
-    { id: 'kyc_bank_details', number: 6, lines: ['Bank', 'Details'] },
+    { id: 'investor_bank_details', number: 6, lines: ['Bank', 'Details'] },
     { id: 'kyc_investment_mandate', number: 7, lines: ['Investment', 'Mandate'] },
     { id: 'kyc_agreement', number: 8, lines: ['Platform', 'Agreement'] },
     { id: 'kyc_review', number: 9, lines: ['Final', 'Review'] },
@@ -41,7 +41,7 @@ export default function Stepper() {
     kyc_address_details: { percent: 0 },
     kyc_signatories: { percent: 0 },
     kyc_compliance_declarations: { percent: 0 },
-    kyc_bank_details: { percent: 0 },
+    investor_bank_details: { percent: 0 },
     kyc_investment_mandate: { percent: 0 },
     kyc_agreement: { percent: 0 },
     kyc_review: { percent: 0 }
@@ -120,7 +120,7 @@ export default function Stepper() {
         return (
           <InvestorCompliance
             percent={(p) => updateStepPercent('kyc_compliance_declarations', p)}
-            setActiveStepId={() => setActiveStepId('kyc_bank_details')}
+            setActiveStepId={() => setActiveStepId('investor_bank_details')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_compliance_declarations'])
@@ -128,14 +128,14 @@ export default function Stepper() {
           />
         );
 
-      case 'kyc_bank_details':
+      case 'investor_bank_details':
         return (
           <KYCBankDetails
-            percent={(p) => updateStepPercent('kyc_bank_details', p)}
+            percent={(p) => updateStepPercent('investor_bank_details', p)}
             setActiveStepId={() => setActiveStepId('kyc_investment_mandate')}
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
-              setDataInitializedSteps((prev) => [...prev, 'kyc_bank_details'])
+              setDataInitializedSteps((prev) => [...prev, 'investor_bank_details'])
             }
           />
         );

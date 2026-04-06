@@ -55,6 +55,9 @@ export const endpoints = {
     getDocuments: `/investor-profiles/documents`,
     getProfileData: `/investor-profiles/me`,
   },
+  investorType: {
+    list: '/investor-types'
+  },
   product: {
     list: '/api/product/list',
     details: '/api/product/details',

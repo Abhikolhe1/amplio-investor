@@ -27,22 +27,16 @@ import FormProvider, {
 // import dayjs from 'dayjs';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hook';
-import { indianStates } from 'src/_mock/_state';
+import { useGetinvestorTypes } from 'src/api/investorTypes';
 import Logo from 'src/components/logo';
+import { indianStates } from 'src/_mock/_state';
 import axiosInstance from 'src/utils/axios';
+import { useGetKycProgress } from 'src/api/investorKyc';
 // import KYCFooter from './kyc-footer';
 
 // import { NewCompanyBasicInfo } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
 // ----------------------------------------------------------------------
-
-const investorTypes = [
-  { id: 'family_office', label: 'Family Office' },
-  { id: 'nbfc', label: 'NBFC' },
-  { id: 'corporate', label: 'Corporate Treasury' },
-  { id: 'other', label: 'Other' },
-];
-
 
 export default function KYCBasicInfo() {
   const { enqueueSnackbar } = useSnackbar();
@@ -51,9 +45,10 @@ export default function KYCBasicInfo() {
   const storedCompanyProfileId = sessionStorage.getItem('investor_profile_id');
 
   const sessionId = localStorage.getItem('sessionId');
-  // const { kycProgress, profileId: fetchedProfileId } = useGetKycProgress(sessionId);
+  const { kycProgress, profileId: fetchedProfileId, usersId: fetchedUsersId } =
+    useGetKycProgress(sessionId);
 
-  const profileId = storedCompanyProfileId ;
+  const profileId = storedCompanyProfileId || fetchedProfileId;
   console.log('KYCBasicInfo profileId:', profileId);
 
   const [panExtractionStatus, setPanExtractionStatus] = useState('idle'); // 'idle' | 'success' | 'failed'
@@ -61,7 +56,8 @@ export default function KYCBasicInfo() {
   const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
 
   // State to store mapped API values
-
+  const [investorOptions, setinvestorOptions] = useState([]);
+  const { investorTypeTypes, investorTypeTypesEmpty } = useGetinvestorTypes();
 
   const [humanInteraction, setHumanInteraction] = useState({
     companyName: false,
@@ -115,7 +111,7 @@ export default function KYCBasicInfo() {
       .transform((value) => value?.toUpperCase())
       .required("PAN Holder's Name is required")
       .matches(/^[A-Za-z\s]+$/, 'Only alphabets allowed'),
-    investorType: Yup.string().required('Merchant type is required'),
+    investorTypeId: Yup.string().required('Investor type is required'),
   });
 
   const defaultValues = useMemo(
@@ -132,7 +128,7 @@ export default function KYCBasicInfo() {
       panNumber: '',
       panHoldersName: '',
       panCardDocumentId: '',
-      investorType: '',
+      investorTypeId: '',
       humanInteraction: { ...humanInteraction },
     }),
     [humanInteraction]
@@ -162,171 +158,177 @@ export default function KYCBasicInfo() {
 
   const isPanUploaded = Boolean(panFile?.id);
 
-  // const onSubmit = handleSubmit(async (formData) => {
-  //   try {
-  //     // eslint-disable-next-line no-shadow
-  //     const sessionId = localStorage.getItem('sessionId') || '';
+  const onSubmit = handleSubmit(async (formData) => {
+    try {
+      // eslint-disable-next-line no-shadow
+      const sessionId = localStorage.getItem('sessionId') || '';
 
-  //     const dateOfIncorporationStr = formData.dateOfIncorporation
-  //       ? new Date(formData.dateOfIncorporation).toISOString().split('T')[0]
-  //       : '';
-  //     // Detect if user changed PAN fields manually
-  //     let humanEdited = false;
+      const dateOfIncorporationStr = formData.dateOfIncorporation
+        ? new Date(formData.dateOfIncorporation).toISOString().split('T')[0]
+        : '';
+      // Detect if user changed PAN fields manually
+      let humanEdited = false;
 
-  //     if (extractedPanDetails) {
-  //       humanEdited =
-  //         extractedPanDetails.extractedMerchantName !== formData.panHoldersName ||
-  //         extractedPanDetails.extractedPanNumber !== formData.panNumber;
-  //     }
+      if (extractedPanDetails) {
+        humanEdited =
+          extractedPanDetails.extractedInvestorName !== formData.panHoldersName ||
+          extractedPanDetails.extractedPanNumber !== formData.panNumber;
+      }
 
-  //     // Build extracted PAN object
-  //     const extractedPan = extractedPanDetails
-  //       ? {
-  //           extractedMerchantName: extractedPanDetails.extractedMerchantName || '',
-  //           extractedPanNumber: extractedPanDetails.extractedPanNumber || '',
-  //         }
-  //       : undefined;
+      // Build extracted PAN object
+      const extractedPan = extractedPanDetails
+        ? {
+            extractedInvestorName: extractedPanDetails.extractedInvestorName || '',
+            extractedPanNumber: extractedPanDetails.extractedPanNumber || '',
+          }
+        : undefined;
 
-  //     // Build submitted PAN object
-  //     const submittedPan = humanEdited
-  //       ? {
-  //           submittedMerchantName: formData.panHoldersName,
-  //           submittedPanNumber: formData.panNumber,
-  //         }
-  //       : {
-  //           submittedMerchantName: formData.panHoldersName,
-  //           submittedPanNumber: formData.panNumber,
-  //         };
+      // Build submitted PAN object
+      const submittedPan = humanEdited
+        ? {
+            submittedInvestorName: formData.panHoldersName,
+            submittedPanNumber: formData.panNumber,
+          }
+        : {
+            submittedInvestorName: formData.panHoldersName,
+            submittedPanNumber: formData.panNumber,
+          };
 
-  //     // FINAL API PAYLOAD — 100% MATCHES THE API FORMAT YOU GAVE
-  //     const payload = {
-  //       sessionId,
-  //       ...(storedUsersId ? { usersId: storedUsersId } : {}),
-  //       companyName: formData.companyName,
-  //       CIN: formData.cin,
-  //       GSTIN: formData.gstin,
-  //       udyamRegistrationNumber: formData.msmeUdyamRegistrationNo,
-  //       dateOfIncorporation: dateOfIncorporationStr,
-  //       cityOfIncorporation: formData.city,
-  //       stateOfIncorporation: formData.state,
-  //       countryOfIncorporation: formData.country,
-  //       humanInteraction: humanEdited,
+      // FINAL API PAYLOAD — 100% MATCHES THE API FORMAT YOU GAVE
+      const payload = {
+        sessionId,
+        ...(storedUsersId ? { usersId: storedUsersId } : {}),
+        companyName: formData.companyName,
+        CIN: formData.cin,
+        GSTIN: formData.gstin,
+        udyamRegistrationNumber: formData.msmeUdyamRegistrationNo,
+        dateOfIncorporation: dateOfIncorporationStr,
+        cityOfIncorporation: formData.city,
+        stateOfIncorporation: formData.state,
+        countryOfIncorporation: formData.country,
+        humanInteraction: humanEdited,
 
-  //       extractedPanDetails: extractedPan,
-  //       submittedPanDetails: submittedPan,
+        extractedPanDetails: extractedPan,
+        submittedPanDetails: submittedPan,
 
-  //       panCardDocumentId: formData.panFile.id,
-  //       investorType: formData.investorType,
-  //     };
+        panCardDocumentId: formData.panFile.id,
+        investorTypeId: formData.investorTypeId,
+      };
 
-  //     console.log('FINAL Merchant Registration Payload:', payload);
+      console.log('FINAL Investor Registration Payload:', payload);
 
-  //     const response = await axiosInstance.post('/auth/merchant-registration', payload);
+      const response = await axiosInstance.post('/auth/investor-institutional-registration', payload);
 
-  //     if (response?.data?.success) {
-  //       const usersId = response?.data?.usersId;
+      if (response?.data?.success) {
+        const usersId = response?.data?.usersId;
 
-  //       // ✅ Store it so next page can access it
-  //       if (usersId) {
-  //         sessionStorage.setItem('investor_user_id', usersId);
-  //       } else {
-  //         console.warn('No usersId found in /merchant-registration response');
-  //       }
-  //       enqueueSnackbar(response.data.message || 'Merchant Registration Successful', {
-  //         variant: 'success',
-  //       });
+        // ✅ Store it so next page can access it
+        if (usersId) {
+          sessionStorage.setItem('investor_user_id', usersId);
+        } else {
+          console.warn('No usersId found in /investor-registration response');
+        }
+        enqueueSnackbar(response.data.message || 'investor Registration Successful', {
+          variant: 'success',
+        });
 
-  //       reset();
-  //       router.push(paths.auth.kyc.companyKyc);
-  //     } else {
-  //       throw new Error(response?.data?.message || 'Registration failed');
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     enqueueSnackbar(error?.error?.message || 'Something went wrong', {
-  //       variant: 'error',
-  //     });
-  //   }
-  // });
+        reset();
+        router.push(paths.auth.kyc.investorKyc);
+      } else {
+        throw new Error(response?.data?.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar(error?.error?.message || 'Something went wrong', {
+        variant: 'error',
+      });
+    }
+  });
 
-  // const existingPAN = useMemo(() => {
-  //   const p = kycProgress?.profile?.merchantPanCard;
-  //   const panDocument = p?.panCardDocument || p?.media;
-  //   if (!p || !panDocument) return null;
+  const existingPAN = useMemo(() => {
+    const p = kycProgress?.profile?.investorPanCards;
+    const panDocument = p?.panCardDocument || p?.media;
+    if (!p || !panDocument) return null;
 
-  //   return {
-  //     name: panDocument.fileOriginalName,
-  //     url: panDocument.fileUrl,
-  //     status: p.status,
-  //   };
-  // }, [kycProgress]);
+    return {
+      name: panDocument.fileOriginalName,
+      url: panDocument.fileUrl,
+      status: p.status,
+    };
+  }, [kycProgress]);
 
-  // useEffect(() => {
-  //   if (fetchedProfileId) {
-  //     sessionStorage.setItem('investor_profile_id', fetchedProfileId);
-  //   }
-  // }, [fetchedProfileId]);
+  useEffect(() => {
+    if (fetchedProfileId) {
+      sessionStorage.setItem('investor_profile_id', fetchedProfileId);
+    }
+  }, [fetchedProfileId]);
 
+  useEffect(() => {
+    if (fetchedUsersId) {
+      sessionStorage.setItem('investor_user_id', fetchedUsersId);
+    }
+  }, [fetchedUsersId]);
 
+  useEffect(() => {
+    if (investorTypeTypes && !investorTypeTypesEmpty) {
+      setinvestorOptions(investorTypeTypes);
+    } else {
+      setinvestorOptions([]);
+    }
+  }, [investorTypeTypes, investorTypeTypesEmpty]);
 
-  // useEffect(() => {
-  //   if (kycProgress?.profile) {
-  //     const p = kycProgress.profile;
-  //     const panDocument = p?.merchantPanCard?.panCardDocument || p?.merchantPanCard?.media;
+  useEffect(() => {
+    if (kycProgress?.profile) {
+      const p = kycProgress.profile;
+      const panDocument = p?.investorPanCards?.panCardDocument || p?.investorPanCards?.media;
 
-  //     reset({
-  //       cin: p.CIN || '',
-  //       companyName: p.companyName || '',
-  //       gstin: p.GSTIN || '',
-  //       dateOfIncorporation: p.dateOfIncorporation ? new Date(p.dateOfIncorporation) : null,
-  //       msmeUdyamRegistrationNo: p.udyamRegistrationNumber || '',
-  //       city: p.cityOfIncorporation || '',
-  //       state: p.stateOfIncorporation || '',
-  //       country: p.countryOfIncorporation || 'India',
-  //       // PAN fields — your GET API does NOT return them
-  //       panFile: panDocument || null,
-  //       panCardDocumentId: p?.merchantPanCard?.panCardDocumentId || '',
+      reset({
+        cin: p.CIN || '',
+        companyName: p.companyName || '',
+        gstin: p.GSTIN || '',
+        dateOfIncorporation: p.dateOfIncorporation ? new Date(p.dateOfIncorporation) : null,
+        msmeUdyamRegistrationNo: p.udyamRegistrationNumber || '',
+        city: p.cityOfIncorporation || '',
+        state: p.stateOfIncorporation || '',
+        country: p.countryOfIncorporation || 'India',
+        // PAN fields — your GET API does NOT return them
+        panFile: panDocument || null,
+        panCardDocumentId: p?.investorPanCards?.panCardDocumentId || '',
 
-  //       panNumber:
-  //         p?.merchantPanCard?.submittedPanNumber || p?.merchantPanCard?.extractedPanNumber || '',
+        panNumber:
+          p?.investorPanCards?.submittedPanNumber || p?.investorPanCards?.extractedPanNumber || '',
 
-  //       panHoldersName:
-  //         p?.merchantPanCard?.submittedMerchantName ||
-  //         p?.merchantPanCard?.extractedMerchantName ||
-  //         '',
+        panHoldersName:
+          p?.investorPanCards?.submittedInvestorName ||
+          p?.investorPanCards?.extractedInvestorName ||
+          '',
 
-  //       investorType: p?.investorType || '',
-  //     });
-  //     if (panDocument) {
-  //       const serverFile = {
-  //         fileOriginalName: panDocument.fileOriginalName,
-  //         fileUrl: panDocument.fileUrl,
-  //         id: panDocument.id,
-  //         fileType: panDocument.fileType,
-  //         isServerFile: true,
-  //       };
+        investorTypeId: p?.investorTypeId || '',
+      });
+      if (panDocument) {
+        const serverFile = {
+          fileOriginalName: panDocument.fileOriginalName,
+          fileUrl: panDocument.fileUrl,
+          id: panDocument.id,
+          fileType: panDocument.fileType,
+          isServerFile: true,
+        };
 
-  //       setValue('panFile', serverFile, { shouldValidate: true });
+        setValue('panFile', serverFile, { shouldValidate: true });
 
-  //       // Also hydrate extractedPanDetails for humanEdited comparison
-  //       setExtractedPanDetails({
-  //         extractedMerchantName:
-  //           p?.merchantPanCard?.extractedMerchantName ||
-  //           p?.merchantPanCard?.submittedMerchantName ||
-  //           '',
-  //         extractedPanNumber:
-  //           p?.merchantPanCard?.extractedPanNumber || p?.merchantPanCard?.submittedPanNumber || '',
-  //       });
-  //     }
-  //   }
-  // }, [kycProgress, reset, setValue]);
+        // Also hydrate extractedPanDetails for humanEdited comparison
+        setExtractedPanDetails({
+          extractedInvestorName:
+            p?.investorPanCards?.extractedInvestorName ||
+            p?.investorPanCards?.submittedInvestorName ||
+            '',
+          extractedPanNumber:
+            p?.investorPanCards?.extractedPanNumber || p?.investorPanCards?.submittedPanNumber || '',
+        });
+      }
+    }
+  }, [kycProgress, reset, setValue]);
 
- 
- const onSubmit = handleSubmit(async (formData)=> {
-  console.log('FormaData', formData)
-  router.push(paths.auth.kyc.investorKyc);
- })
- 
   useEffect(() => {
     if (!panFile?.id) return;
 
@@ -413,8 +415,8 @@ export default function KYCBasicInfo() {
   //   applyValue('panNumber', autoData.panNumber);
   //   applyValue('panHoldersName', autoData.companyName);
 
-  //   if (!getValues('investorType') && dealershipOptions.length > 0) {
-  //     applyValue('investorType', dealershipOptions[0].id);
+  //   if (!getValues('investorTypeId') && dealershipOptions.length > 0) {
+  //     applyValue('investorTypeId', dealershipOptions[0].id);
   //   }
 
   //   try {
@@ -445,7 +447,7 @@ export default function KYCBasicInfo() {
   //     setSkipPanExtractionOnce(true);
   //     applyValue('panFile', uploadedFile);
   //     setExtractedPanDetails({
-  //       extractedMerchantName: autoData.companyName,
+  //       extractedInvestorName: autoData.companyName,
   //       extractedPanNumber: autoData.panNumber,
   //     });
 
@@ -605,16 +607,15 @@ export default function KYCBasicInfo() {
               </Grid>
 
               <Grid xs={12} md={4}>
-              <RHFSelect name="investorType" label="Investor Type *">
-                <MenuItem value="">Select Investor Type</MenuItem>
-                {investorTypes.map((opt) => (
-                  <MenuItem key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </RHFSelect>
-            </Grid>
-
+                <RHFSelect name="investorTypeId" label="Investor Type *">
+                  <MenuItem value="">Select Investor Type</MenuItem>
+                  {investorOptions.map((opt) => (
+                    <MenuItem key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
+              </Grid>
 
               <Grid xs={12} md={4}>
                 <Controller

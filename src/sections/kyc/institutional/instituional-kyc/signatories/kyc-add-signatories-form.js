@@ -142,78 +142,93 @@ export default function KYCAddSignatoriesForm({
 
     // onSubmit function
 
-    // const onSubmit = handleSubmit(async (data) => {
-    //     try {
-    //         const usersId = sessionStorage.getItem('company_user_id');
+    const onSubmit = handleSubmit(async (data) => {
+        try {
+            const usersId = sessionStorage.getItem('investor_user_id');
 
-    //         if (!usersId) {
-    //             enqueueSnackbar('User ID missing. Restart KYC.', { variant: 'error' });
-    //             return;
-    //         }
+            if (!usersId) {
+                enqueueSnackbar('User ID missing. Restart KYC.', { variant: 'error' });
+                return;
+            }
 
-    //         const panCardFileId = getFileId(data.panCard);
-    //         const boardResolutionFileId = getFileId(data.boardResolution) || '';
+            const panCardFileId = getFileId(data.panCard);
+            const boardResolutionFileId = getFileId(data.boardResolution) || '';
 
-    //         if (!panCardFileId && !isEditMode) {
-    //             enqueueSnackbar('PAN card is required', { variant: 'error' });
-    //             return;
-    //         }
-    //         if (!boardResolutionFileId && !isEditMode) {
-    //             enqueueSnackbar('Board resolution is required', { variant: 'error' });
-    //             return;
-    //         }
+            if (!panCardFileId && !isEditMode) {
+                enqueueSnackbar('PAN card is required', { variant: 'error' });
+                return;
+            }
+            if (!boardResolutionFileId && !isEditMode) {
+                enqueueSnackbar('Board resolution is required', { variant: 'error' });
+                return;
+            }
 
-    //         const isCustom = data.role === 'OTHER';
+            const isCustom = data.role === 'OTHER';
 
-    //         const payload = {
-    //             usersId,
-    //             signatory: {
-    //                 fullName: data.name,
-    //                 email: data.email,
-    //                 phone: data.phoneNumber,
+            const payload = {
+                usersId,
+                signatory: {
+                    fullName: data.name,
+                    email: data.email,
+                    phone: data.phoneNumber,
 
-    //                 // Extracted PAN details (from OCR)
-    //                 extractedPanFullName: extractedPan?.extractedPanFullName || '',
-    //                 extractedPanNumber: extractedPan?.extractedPanNumber || '',
-    //                 extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
+                    // Extracted PAN details (from OCR)
+                    extractedPanFullName: extractedPan?.extractedPanFullName || '',
+                    extractedPanNumber: extractedPan?.extractedPanNumber || '',
+                    extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
 
-    //                 // Submitted PAN details (after human check / edit)
-    //                 submittedPanFullName: data.submittedPanFullName,
-    //                 submittedPanNumber: data.submittedPanNumber,
-    //                 submittedDateOfBirth: data.submittedDateOfBirth,
+                    // Submitted PAN details (after human check / edit)
+                    submittedPanFullName: data.submittedPanFullName,
+                    submittedPanNumber: data.submittedPanNumber,
+                    submittedDateOfBirth: data.submittedDateOfBirth,
 
-    //                 panCardFileId,
-    //                 boardResolutionFileId,
-    //                 designationType: data.role === 'other' ? 'custom' : 'dropdown',
-    //                 designationValue: data.role === 'other' ? data.customDesignation : data.role,
-    //             },
-    //         };
+                    panCardFileId,
+                    boardResolutionFileId,
+                    designationType: data.role === 'other' ? 'custom' : 'dropdown',
+                    designationValue: data.role === 'other' ? data.customDesignation : data.role,
+                },
+            };
 
-    //         const res = await axiosInstance.post('/company-profiles/kyc-authorize-signatory', payload);
+            let res;
 
-    //         if (res?.data?.success) {
-    //             enqueueSnackbar('Signatory added successfully', { variant: 'success' });
-    //             onSuccess?.(payload.signatory);
-    //             onClose();
-    //         } else {
-    //             enqueueSnackbar(res?.data?.message || 'Something went wrong', {
-    //                 variant: 'error',
-    //             });
-    //         }
-    //     } catch (err) {
-    //         console.error(err);
-    //         enqueueSnackbar('Failed to add signatory', { variant: 'error' });
-    //     }
-    // });
+            if (isEditMode) {
+                res = await axiosInstance.patch(
+                    `/investor-profiles/kyc-authorize-signatory/${currentUser?.id}`,
+                    payload
+                );
+            } else {
+                res = await axiosInstance.post(
+                    '/investor-profiles/kyc-authorize-signatory',
+                    payload
+                );
+            }
+
+            if (res?.data?.success) {
+                enqueueSnackbar(
+                    isEditMode ? 'Signatory updated successfully' : 'Signatory added successfully',
+                    { variant: 'success' }
+                );
+                onSuccess?.(payload.signatory);
+                onClose();
+            } else {
+                enqueueSnackbar(res?.data?.message || 'Something went wrong', {
+                    variant: 'error',
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            enqueueSnackbar('Failed to add signatory', { variant: 'error' });
+        }
+    });
 
     // Temporary onSubmit function
-    const onSubmit = handleSubmit(async (formData) => {
-        console.log('STEP 2 DATA ', formData);
+    // const onSubmit = handleSubmit(async (formData) => {
+    //     console.log('STEP 2 DATA ', formData);
 
-        enqueueSnackbar('Step 2 Completed', { variant: 'success' });
+    //     enqueueSnackbar('Step 2 Completed', { variant: 'success' });
 
-        // setActiveStepId();
-    });
+    //     // setActiveStepId();
+    // });
 
     useEffect(() => {
         if (open) {
@@ -232,72 +247,72 @@ export default function KYCAddSignatoriesForm({
         }
     }, [open, currentUser, reset]);
 
-    // useEffect(() => {
-    //     if (!panFile?.id) return;
-    //     if (skipPanExtractionOnce) {
-    //         setSkipPanExtractionOnce(false);
-    //         return;
-    //     }
+    useEffect(() => {
+        if (!panFile?.id) return;
+        if (skipPanExtractionOnce) {
+            setSkipPanExtractionOnce(false);
+            return;
+        }
 
-    //     const extractPanDetails = async () => {
-    //         try {
-    //             setPanExtractionStatus('loading');
+        const extractPanDetails = async () => {
+            try {
+                setPanExtractionStatus('loading');
 
-    //             const response = await axiosInstance.post('/extract/pan-info', {
-    //                 fileId: panFile.id,
-    //             });
+                const response = await axiosInstance.post('/extract/pan-info', {
+                    fileId: panFile.id,
+                });
 
-    //             const data = response?.data?.data || {};
+                const data = response?.data?.data || {};
 
-    //             const panNumber = data?.extractedPanNumber;
-    //             const panName = data?.extractedPanHolderName;
-    //             const panDob = data?.extractedDateOfBirth;
+                const panNumber = data?.extractedPanNumber;
+                const panName = data?.extractedPanHolderName;
+                const panDob = data?.extractedDateOfBirth;
 
-    //             if (!panNumber && !panName && !panDob) {
-    //                 setPanExtractionStatus('failed');
-    //                 enqueueSnackbar("Couldn't extract PAN details. Please fill manually.", {
-    //                     variant: 'error',
-    //                 });
-    //                 return;
-    //             }
+                if (!panNumber && !panName && !panDob) {
+                    setPanExtractionStatus('failed');
+                    enqueueSnackbar("Couldn't extract PAN details. Please fill manually.", {
+                        variant: 'error',
+                    });
+                    return;
+                }
 
-    //             if (panName) {
-    //                 setValue('panHoldersName', panName, {
-    //                     shouldValidate: true,
-    //                     shouldDirty: true,
-    //                 });
-    //             }
+                if (panName) {
+                    setValue('panHoldersName', panName, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                    });
+                }
 
-    //             if (panNumber) {
-    //                 setValue('panNumber', panNumber, {
-    //                     shouldValidate: true,
-    //                     shouldDirty: true,
-    //                 });
-    //             }
+                if (panNumber) {
+                    setValue('panNumber', panNumber, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                    });
+                }
 
-    //             if (panDob) {
-    //                 setValue('submittedDateOfBirth', panDob, {
-    //                     shouldValidate: true,
-    //                     shouldDirty: true,
-    //                 });
-    //             }
+                if (panDob) {
+                    setValue('submittedDateOfBirth', panDob, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                    });
+                }
 
-    //             setPanExtractionStatus('success');
-    //             enqueueSnackbar('PAN details extracted successfully', {
-    //                 variant: 'success',
-    //             });
-    //         } catch (error) {
-    //             console.error(error);
-    //             setPanExtractionStatus('failed');
-    //             enqueueSnackbar('Unable to extract PAN details. Please fill manually.', {
-    //                 variant: 'error',
-    //             });
-    //         }
-    //     };
+                setPanExtractionStatus('success');
+                enqueueSnackbar('PAN details extracted successfully', {
+                    variant: 'success',
+                });
+            } catch (error) {
+                console.error(error);
+                setPanExtractionStatus('failed');
+                enqueueSnackbar('Unable to extract PAN details. Please fill manually.', {
+                    variant: 'error',
+                });
+            }
+        };
 
-    //     extractPanDetails();
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [panFile?.id, skipPanExtractionOnce]);
+        extractPanDetails();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [panFile?.id, skipPanExtractionOnce]);
 
     // const handleAutoFill = async () => {
     //     setIsAutofilling(true);

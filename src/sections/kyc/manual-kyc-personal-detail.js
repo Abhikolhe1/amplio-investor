@@ -35,7 +35,8 @@ export default function PersonalDetailKyc() {
 
   const { activeStep, setActiveStep, progress, setStepProgress, nextStep } = useKycStepper();
   const sessionId = localStorage.getItem('sessionId');
-  const { kycProgress, profileId: fetchedProfileId } = useGetKycProgress(sessionId);
+  const { kycProgress, usersId: fetchedUsersId, profileId: fetchedProfileId } =
+    useGetKycProgress(sessionId);
 
   const PersonalKycSchema = Yup.object().shape({
     fullName: Yup.string()
@@ -126,8 +127,14 @@ export default function PersonalDetailKyc() {
   }, [kycProgress, reset, setValue, setActiveStep, setStepProgress]);
 
   useEffect(() => {
+    if (fetchedUsersId) {
+      sessionStorage.setItem('investor_user_id', fetchedUsersId);
+    }
+  }, [fetchedUsersId]);
+
+  useEffect(() => {
     if (fetchedProfileId) {
-      sessionStorage.setItem('investor_user_id', fetchedProfileId);
+      sessionStorage.setItem('investor_profile_id', fetchedProfileId);
     }
   }, [fetchedProfileId]);
 

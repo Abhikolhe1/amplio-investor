@@ -35,7 +35,7 @@ export default function SignatoriesTableRow({
   onSelectRow,
   onDeleteRow,
 }) {
-  const { fullName, email, phone, ownershipPercentage, designationValue, status } = row;
+  const { fullName, email, phone, status } = row;
 
   const { color, label } = getStatusMeta(row.status);
 
@@ -58,8 +58,7 @@ export default function SignatoriesTableRow({
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone}</TableCell>
 
-        {/* <TableCell sx={{ whiteSpace: 'nowrap' }}>{ownershipPercentage}</TableCell> */}
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{designationValue}</TableCell>
+        {/* <TableCell sx={{ whiteSpace: 'nowrap' }}>{dob}</TableCell> */}
 
         <TableCell>
           <Label color={color}>{label}</Label>

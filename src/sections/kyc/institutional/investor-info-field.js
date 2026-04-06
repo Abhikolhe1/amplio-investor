@@ -6,6 +6,7 @@ export default function InvestorInfoCard({ icon, title, description, color }) {
     <Card
       sx={{
         p: 3,
+        width: '100%',
         borderRadius: 3,
         boxShadow: 3,
         display: 'flex',

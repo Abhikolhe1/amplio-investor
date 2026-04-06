@@ -16,14 +16,9 @@ import { LoadingButton } from '@mui/lab';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useSnackbar } from 'notistack';
-import FormProvider, {
-  RHFTextField,
-  RHFSelect,
-  RHFCustomFileUploadBox,
-} from 'src/components/hook-form';
+import FormProvider, { RHFTextField, RHFSelect, RHFCustomFileUploadBox } from 'src/components/hook-form';
 import axiosInstance from 'src/utils/axios';
-// import { useGetKycAddressDetails } from 'src/api/merchantKyc';
-// import KYCFooter from 'src/sections/kyc/kyc-footer';
+import { useGetKycAddressDetails } from 'src/api/investorKyc';
 // import KYCFooter from './kyc-footer';
 // import { NewKycAddressDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
@@ -36,7 +31,7 @@ export default function KYCAddressDetails({
   const { enqueueSnackbar } = useSnackbar();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
-  // const { registeredAddress, correspondenceAddress, addressDetailsLoading } = useGetKycAddressDetails();
+  const { registeredAddress, correspondenceAddress, addressDetailsLoading } = useGetKycAddressDetails();
   const [registeredAddressData, setRegisteredAddressData] = useState(null);
   const [correspondenceAddressData, setCorrespondenceAddressData] = useState(null);
 
@@ -47,9 +42,7 @@ export default function KYCAddressDetails({
     registeredCountry: Yup.string().required('Required'),
     registeredCity: Yup.string().required('Required'),
     registeredState: Yup.string().required('Required'),
-    registeredPincode: Yup.string()
-      .required('Required')
-      .matches(/^[0-9]+$/, 'Invalid'),
+    registeredPincode: Yup.string().required('Required').matches(/^[0-9]+$/, 'Invalid'),
     sameAsRegistered: Yup.boolean(),
     correspondenceAddressLine1: Yup.string().when('sameAsRegistered', {
       is: false,
@@ -138,11 +131,11 @@ export default function KYCAddressDetails({
       ...(values.sameAsRegistered
         ? []
         : [
-            'correspondenceAddressLine1',
-            'correspondenceCity',
-            'correspondenceState',
-            'correspondencePincode',
-          ]),
+          'correspondenceAddressLine1',
+          'correspondenceCity',
+          'correspondenceState',
+          'correspondencePincode',
+        ]),
     ];
 
     let valid = 0;
@@ -156,74 +149,72 @@ export default function KYCAddressDetails({
     percent(calculatePercent());
   }, [calculatePercent, percent]);
 
-  // onSubmit function
+  const onSubmit = async (form) => {
+    try {
+      const usersId = sessionStorage.getItem('investor_user_id');
+      if (!usersId) {
+        enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
+        return;
+      }
 
-  // const onSubmit = async (form) => {
-  //     try {
-  //         const usersId = sessionStorage.getItem('merchant_user_id');
-  //         if (!usersId) {
-  //             enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
-  //             return;
-  //         }
+      setIsSubmitting(true);
 
-  //         setIsSubmitting(true);
+      const registeredAddressPayload = {
+        addressType: 'registered',
+        addressLineOne: form.registeredAddressLine1,
+        addressLineTwo: form.registeredAddressLine2 || '',
+        country: form.registeredCountry,
+        city: form.registeredCity,
+        state: form.registeredState,
+        pincode: form.registeredPincode,
+        documentType: form.documentType,
+        addressProofId: form.addressProof?.id,
+      };
 
-  //         const registeredAddressPayload = {
-  //             addressType: 'registered',
-  //             addressLineOne: form.registeredAddressLine1,
-  //             addressLineTwo: form.registeredAddressLine2 || '',
-  //             country: form.registeredCountry,
-  //             city: form.registeredCity,
-  //             state: form.registeredState,
-  //             pincode: form.registeredPincode,
-  //             documentType: form.documentType,
-  //             addressProofId: form.addressProof?.id,
-  //         };
+      const correspondenceAddressPayload = {
+        addressType: 'correspondence',
+        addressLineOne: form.sameAsRegistered
+          ? form.registeredAddressLine1
+          : form.correspondenceAddressLine1,
+        addressLineTwo: form.sameAsRegistered
+          ? form.registeredAddressLine2 || ''
+          : form.correspondenceAddressLine2 || '',
+        country: form.sameAsRegistered ? form.registeredCountry : form.correspondenceCountry,
+        city: form.sameAsRegistered ? form.registeredCity : form.correspondenceCity,
+        state: form.sameAsRegistered ? form.registeredState : form.correspondenceState,
+        pincode: form.sameAsRegistered ? form.registeredPincode : form.correspondencePincode,
+        documentType: form.documentType,
+        addressProofId: form.addressProof?.id,
+      };
 
-  //         const correspondenceAddressPayload = {
-  //             addressType: 'correspondence',
-  //             addressLineOne: form.sameAsRegistered
-  //                 ? form.registeredAddressLine1
-  //                 : form.correspondenceAddressLine1,
-  //             addressLineTwo: form.sameAsRegistered
-  //                 ? form.registeredAddressLine2 || ''
-  //                 : form.correspondenceAddressLine2 || '',
-  //             country: form.sameAsRegistered ? form.registeredCountry : form.correspondenceCountry,
-  //             city: form.sameAsRegistered ? form.registeredCity : form.correspondenceCity,
-  //             state: form.sameAsRegistered ? form.registeredState : form.correspondenceState,
-  //             pincode: form.sameAsRegistered ? form.registeredPincode : form.correspondencePincode,
-  //             documentType: form.documentType,
-  //             addressProofId: form.addressProof?.id,
-  //         };
+      let res;
 
-  //         let res;
-
-  //         if (registeredAddress) {
-  //             res = await axiosInstance.patch('/merchant-profiles/kyc-address-details', {
-  //                 usersId,
-  //                 registeredAddress: registeredAddressPayload,
-  //                 correspondenceAddress: correspondenceAddressPayload,
-  //             });
-  //         } else {
-  //             res = await axiosInstance.post('/merchant-profiles/kyc-address-details', {
-  //                 usersId,
-  //                 registeredAddress: registeredAddressPayload,
-  //                 correspondenceAddress: correspondenceAddressPayload,
-  //             });
-  //         }
-  //         enqueueSnackbar('Address details saved successfully', {
-  //             variant: 'success',
-  //         });
-  //         percent(100);
-  //         setActiveStepId();
-  //     } catch (error) {
-  //         enqueueSnackbar(error?.error?.message || 'Failed to save address', {
-  //             variant: 'error',
-  //         });
-  //     } finally {
-  //         setIsSubmitting(false);
-  //     }
-  // };
+      if (registeredAddress) {
+        res = await axiosInstance.patch('/investor-profiles/kyc-address-details', {
+          usersId,
+          registeredAddress: registeredAddressPayload,
+          correspondenceAddress: correspondenceAddressPayload,
+        });
+      } else {
+        res = await axiosInstance.post('/investor-profiles/kyc-address-details', {
+          usersId,
+          registeredAddress: registeredAddressPayload,
+          correspondenceAddress: correspondenceAddressPayload,
+        });
+      }
+      enqueueSnackbar('Address details saved successfully', {
+        variant: 'success',
+      });
+      percent(100);
+      setActiveStepId();
+    } catch (error) {
+      enqueueSnackbar(error?.error?.message || 'Failed to save address', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // const handleAutoFill = async () => {
   //   setIsAutofilling(true);
@@ -268,21 +259,12 @@ export default function KYCAddressDetails({
   //   }
   // };
 
-  // useEffect(() => {
-  //     if ((registeredAddress || correspondenceAddress) && !addressDetailsLoading) {
-  //         if (registeredAddress) setRegisteredAddressData(registeredAddress);
-  //         if (correspondenceAddress) setCorrespondenceAddressData(correspondenceAddress);
-  //     }
-  // }, [registeredAddress, correspondenceAddress, addressDetailsLoading]);
-
-  // Temporary onSubmit function
-  const onSubmit = handleSubmit(async (formData) => {
-    console.log('STEP 2 DATA ', formData);
-
-    enqueueSnackbar('Step 2 Completed', { variant: 'success' });
-
-    setActiveStepId();
-  });
+  useEffect(() => {
+    if ((registeredAddress || correspondenceAddress) && !addressDetailsLoading) {
+      if (registeredAddress) setRegisteredAddressData(registeredAddress);
+      if (correspondenceAddress) setCorrespondenceAddressData(correspondenceAddress);
+    }
+  }, [registeredAddress, correspondenceAddress, addressDetailsLoading]);
 
   useEffect(() => {
     if (registeredAddressData) {
@@ -293,7 +275,10 @@ export default function KYCAddressDetails({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registeredAddressData, reset]);
+  }, [
+    registeredAddressData,
+    reset
+  ]);
 
   return (
     <Container>
@@ -309,7 +294,7 @@ export default function KYCAddressDetails({
         }}
       >
         <Stack spacing={0.5} alignItems="flex-start" sx={{ mb: 4 }}>
-          <Typography variant="h3" color="primary" sx={{ fontWeight: 700, textAlign: 'left' }}>
+          <Typography variant="h3" color='primary' sx={{ fontWeight: 700, textAlign: 'left' }}>
             Address Details
           </Typography>
           <Typography variant="h5" sx={{ fontWeight: 500, color: '#000000', textAlign: 'left' }}>
@@ -330,10 +315,9 @@ export default function KYCAddressDetails({
 
               <RHFCustomFileUploadBox
                 name="addressProof"
-                label={`Upload ${
-                  (documentType === 'electricity_bill' && 'Electricity Bill') ||
+                label={`Upload ${(documentType === 'electricity_bill' && 'Electricity Bill') ||
                   (documentType === 'lease_agreement' && 'Lease Agreement')
-                }`}
+                  }`}
                 icon="mdi:file-document-outline"
               />
             </Stack>
@@ -358,14 +342,11 @@ export default function KYCAddressDetails({
 
               <Grid item xs={12} md={6}>
                 <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                  }}
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2}}
                 >
-                  <Typography variant="h5">Correspondence Address</Typography>
+                  <Typography variant="h5">
+                    Correspondence Address
+                  </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Checkbox
@@ -373,7 +354,9 @@ export default function KYCAddressDetails({
                       onChange={(e) => setValue('sameAsRegistered', e.target.checked)}
                       sx={{ p: 0.5 }}
                     />
-                    <Typography variant="body1">Same as Registered</Typography>
+                    <Typography variant="body1">
+                      Same as Registered
+                    </Typography>
                   </Box>
                 </Box>
 
@@ -421,12 +404,7 @@ export default function KYCAddressDetails({
               >
                 Autofill
               </LoadingButton> */}
-              <LoadingButton
-                type="submit"
-                variant="contained"
-                color="primary"
-                loading={isSubmitting}
-              >
+              <LoadingButton type="submit" variant="contained" color="primary" loading={isSubmitting}>
                 Next
               </LoadingButton>
             </Box>

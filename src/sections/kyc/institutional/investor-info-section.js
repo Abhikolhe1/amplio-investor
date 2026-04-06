@@ -4,8 +4,7 @@ import InvestorInfoCard from './investor-info-field';
 
 export default function InvestorInfoSection() {
   return (
-    <Stack spacing={3} alignItems="center"> {/* 👈 ADD THIS */}
-
+    <Stack spacing={3} alignItems="center" sx={{ width: '100%', maxWidth: 640 }}>
       <Typography variant="h5" fontWeight={600} textAlign="center">
         Why Smile Wave
       </Typography>
@@ -13,7 +12,7 @@ export default function InvestorInfoSection() {
       <InvestorInfoCard
         icon={<Iconify icon="mdi:chart-line" width={24} />}
         title="Daily PTC Opportunities"
-        description="1–7 day tenor instruments with predictable returns and daily settlement cycles"
+        description="1-7 day tenor instruments with predictable returns and daily settlement cycles"
         color="#E3F2FD"
       />
 
@@ -30,7 +29,6 @@ export default function InvestorInfoSection() {
         description="All collections routed through independent trustees for maximum security"
         color="#F3E5F5"
       />
-
     </Stack>
   );
 }

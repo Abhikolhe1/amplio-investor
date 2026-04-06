@@ -134,7 +134,7 @@ export default function KYCAddUBOsForm({
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const usersId = sessionStorage.getItem('merchant_user_id');
+      const usersId = sessionStorage.getItem('investor_user_id');
 
       if (!usersId) {
         enqueueSnackbar('User ID missing. Restart KYC.', { variant: 'error' });
@@ -183,7 +183,7 @@ export default function KYCAddUBOsForm({
         };
 
         res = await axiosInstance.post(
-          '/merchant-profiles/kyc-ubo-details',
+          '/investor-profiles/kyc-ubo-details',
           payload
         );
       }
@@ -198,7 +198,7 @@ export default function KYCAddUBOsForm({
           uboDetail
         };
 
-        res = await axiosInstance.patch('/merchant-profiles/kyc-ubo-details', payload);
+        res = await axiosInstance.patch('/investor-profiles/kyc-ubo-details', payload);
       }
 
       if (res?.data?.success) {

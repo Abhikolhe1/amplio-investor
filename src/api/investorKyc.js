@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { fetcher, endpoints } from 'src/utils/axios';
 
 export function useGetKycProgress(sessionId) {
@@ -8,8 +8,11 @@ export function useGetKycProgress(sessionId) {
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   useEffect(() => {
-    if (data?.profile?.id) {
+    if (data?.profile?.usersId) {
       sessionStorage.setItem('investor_user_id', data.profile.usersId);
+    }
+    if (data?.profile?.id) {
+      sessionStorage.setItem('investor_profile_id', data.profile.id);
     }
   }, [data]);
 
@@ -17,7 +20,8 @@ export function useGetKycProgress(sessionId) {
     () => ({
       kycProgress: data || null,
       hasProfile: Boolean(data?.currentProgress?.length),
-      profileId: data?.profile?.usersId || null,
+      profileId: data?.profile?.id || null,
+      usersId: data?.profile?.usersId || null,
       kycProgressLoading: isLoading,
       kycProgressError: error,
       kycProgressValidating: isValidating,
@@ -29,14 +33,27 @@ export function useGetKycProgress(sessionId) {
 }
 
 export function useGetKycSection(section, route = '') {
-  const profileId = sessionStorage.getItem('investor_user_id'); // ⬅️ get it directly
+  const profileId =
+    sessionStorage.getItem('investor_user_id') || sessionStorage.getItem('investor_profile_id');
 
   const URL =
     section && profileId ? endpoints.investorKyc.getSection(section, profileId, route) : null;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
     keepPreviousData: true,
   });
+
+  useEffect(() => {
+    if (section === 'investor_documents' && URL) {
+      console.log('[KYC documents] request id debug:', {
+        requestId: profileId,
+        investor_user_id: sessionStorage.getItem('investor_user_id'),
+        investor_profile_id: sessionStorage.getItem('investor_profile_id'),
+        section,
+        url: URL,
+      });
+    }
+  }, [section, URL, profileId]);
 
   return {
     kycSectionData: data || null,
@@ -44,11 +61,124 @@ export function useGetKycSection(section, route = '') {
     kycSectionError: error,
     kycSectionValidating: isValidating,
     kycSectionEmpty: !isLoading && !data,
+    refreshKycSection: () => mutate(),
+  };
+}
+
+
+export function useGetKycAddressDetails() {
+  const profileId = sessionStorage.getItem('investor_user_id');
+
+  const URL = profileId
+    ? endpoints.investorKyc.getSection('kyc_address_details', profileId, '')
+    : null;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const rawAddressData = data?.data;
+  const addressRows = Array.isArray(rawAddressData) ? rawAddressData : [];
+
+  const registeredAddress =
+    addressRows.find((item) => item?.addressType === 'registered') ||
+    rawAddressData?.registeredAddress ||
+    data?.registeredAddress ||
+    null;
+  const correspondenceAddress =
+    addressRows.find((item) => item?.addressType === 'correspondence') ||
+    rawAddressData?.correspondenceAddress ||
+    data?.correspondenceAddress ||
+    null;
+
+  return {
+    registeredAddress,
+    correspondenceAddress,
+    addressDetailsLoading: isLoading,
+    addressDetailsError: error,
+    addressDetailsValidating: isValidating,
+    refreshAddressDetails: () => mutate(),
+  };
+}
+
+
+export function useGetUBOs() {
+  const profileId = sessionStorage.getItem('investor_user_id');
+
+  const URL = profileId
+    ? endpoints.investorKyc.getSection('kyc_ubo_details', profileId, '')
+    : null;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const refreshUbos = useCallback(() => {
+    mutate();
+  }, [mutate]);
+
+  return {
+    ubos: data?.data || [],
+    loading: isLoading,
+    error,
+    validating: isValidating,
+    empty: !isLoading && !data?.data?.length,
+    refreshUbos,
+  };
+}
+
+export function useGetSignatories() {
+  const profileId = sessionStorage.getItem('investor_user_id');
+
+  const URL = profileId
+    ? endpoints.investorKyc.getSection('kyc_signatories', profileId, '')
+    : null;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const refreshSignatories = () => {
+    mutate();
+  };
+
+  return {
+    signatories: data?.data || [],
+    loading: isLoading,
+    error,
+    validating: isValidating,
+    empty: !isLoading && !data?.data?.length,
+    refreshSignatories,
+  };
+}
+
+export function useGetCompliances() {
+  const profileId = sessionStorage.getItem('investor_user_id');
+
+  const URL = profileId
+    ? endpoints.investorKyc.getSection('kyc_compliance_declarations', profileId, '')
+    : null;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const refreshCompliances = () => {
+    mutate();
+  };
+
+  return {
+    compliance: data?.data || [],
+    loading: isLoading,
+    error,
+    validating: isValidating,
+    empty: !isLoading && !data?.data?.length,
+    refreshCompliances,
   };
 }
 
 export function useGetDetails() {
-  const profileId = sessionStorage.getItem('investor_user_id'); // ⬅️ Directly read
+  const profileId = sessionStorage.getItem('investor_user_id');
 
   const URL = profileId
     ? endpoints.investorKyc.getSection('investor_bank_details', profileId, '')
@@ -73,30 +203,77 @@ export function useGetDetails() {
   };
 }
 
-export function useGetSignatories() {
+export function useGetInvestmentMandates() {
   const profileId = sessionStorage.getItem('investor_user_id');
 
   const URL = profileId
-    ? endpoints.investorKyc.getSection('investor_authorized_signatories', profileId, '')
+    ? endpoints.investorKyc.getSection('kyc_investment_mandate', profileId, '')
     : null;
 
   const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
     keepPreviousData: true,
   });
 
-  const refreshSignatories = () => {
+  const refreshInvestmentMandates = () => {
     mutate();
   };
 
   return {
-    signatories: data?.data || [],
+    investmentMandates: data?.data || [],
     loading: isLoading,
     error,
     validating: isValidating,
     empty: !isLoading && !data?.data?.length,
-    refreshSignatories,
+    refreshInvestmentMandates,
   };
 }
+
+export function useGetAgreement() {
+  const userId = sessionStorage.getItem('investor_user_id');
+
+  const URL = userId
+    ? endpoints.investorKyc.getSection('kyc_agreement', userId, '')
+    : null;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    keepPreviousData: true,
+  });
+
+  return {
+    agreements: data?.data ?? null,
+    loading: isLoading,
+    error,
+    validating: isValidating,
+    empty: !isLoading && !data?.data,
+    refreshAgreement: mutate,
+  };
+}
+
+
+// export function useGetSignatories() {
+//   const profileId = sessionStorage.getItem('investor_user_id');
+
+//   const URL = profileId
+//     ? endpoints.investorKyc.getSection('investor_authorized_signatories', profileId, '')
+//     : null;
+
+//   const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+//     keepPreviousData: true,
+//   });
+
+//   const refreshSignatories = () => {
+//     mutate();
+//   };
+
+//   return {
+//     signatories: data?.data || [],
+//     loading: isLoading,
+//     error,
+//     validating: isValidating,
+//     empty: !isLoading && !data?.data?.length,
+//     refreshSignatories,
+//   };
+// }
 
 export function useGetDocuments(investorId) {
   const URL = endpoints.investorKyc.getDocuments;
@@ -157,7 +334,6 @@ export function useGetBankDetail(id) {
     refreshBank: () => mutate(),
   };
 }
-
 
 export default function useGetProfileData() {
   const URL = endpoints.investorKyc.getProfileData;

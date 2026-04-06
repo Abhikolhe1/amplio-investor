@@ -1,93 +1,147 @@
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-
-// mui
 import { Box, Card, Container, Grid, MenuItem, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useSettingsContext } from 'src/components/settings';
+import { LoadingButton } from '@mui/lab';
 
-// components
 import FormProvider, {
   RHFCheckbox,
   RHFRadioGroup,
   RHFSelect,
   RHFTextField,
 } from 'src/components/hook-form';
-
 import { useSnackbar } from 'src/components/snackbar';
-import { LoadingButton } from '@mui/lab';
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import { useGetCompliances } from 'src/api/investorKyc';
+import axiosInstance from 'src/utils/axios';
 
-// Dummy data
-const Dummy_Country_Data = [
-  { value: 'IN', label: 'India' },
-  { value: 'EN', label: 'England' },
-  { value: 'UR', label: 'Urope' },
-  { value: 'US', label: 'United States' },
+const COUNTRY_OPTIONS = [
+  { value: 'India', label: 'India' },
+  { value: 'England', label: 'England' },
+  { value: 'Europe', label: 'Europe' },
+  { value: 'United States', label: 'United States' },
 ];
 
-// dummy data for source of funds
-const Source_Funds = [
-  { value: 1, label: 'Business Operations' },
-  { value: 2, label: 'Fund corpus' },
-  { value: 3, label: 'Treasury Surplus' },
-  { value: 4, label: 'Debt Financing' },
-  { value: 5, label: 'Family Wealth' },
+const SOURCE_FUNDS = [
+  { value: 'BUSINESS_OPERATIONS', label: 'Business Operations' },
+  { value: 'FUND_CORPUS', label: 'Fund corpus' },
+  { value: 'TREASURY_SURPLUS', label: 'Treasury Surplus' },
+  { value: 'DEBT_FINANCING', label: 'Debt Financing' },
+  { value: 'FAMILY_WEALTH', label: 'Family Wealth' },
 ];
 
 const PEP_OPTIONS = [
-  { value: 'no', label: 'No, entity is not a PEP' },
-  { value: 'yes', label: 'Yes, entity or beneficial owners are PEPs' },
+  { value: 'false', label: 'No, entity is not a PEP' },
+  { value: 'true', label: 'Yes, entity or beneficial owners are PEPs' },
 ];
 
 const INVEST_OPTIONS = [
-  { value: 'self', label: 'No, investing with own funds' },
-  { value: 'third_party', label: 'Yes, investing on behalf of clients/third parties' },
+  { value: 'OWN_FUNDS', label: 'No, investing with own funds' },
+  { value: 'THIRD_PARTY', label: 'Yes, investing on behalf of clients/third parties' },
 ];
 
 const CROSS_BORDER_OPTIONS = [
-  { value: 'domestic', label: 'No, purely domestic' },
-  { value: 'international', label: 'Yes, involves international transactions' },
+  { value: 'DOMESTIC', label: 'No, purely domestic' },
+  { value: 'INTERNATIONAL', label: 'Yes, involves international transactions' },
 ];
 
-export default function InvestorCompliance({ percent, setActiveStepId }) {
+const normalizeComplianceData = (compliance) => {
+  if (!compliance) return null;
+
+  if (Array.isArray(compliance)) {
+    return compliance[0] || null;
+  }
+
+  if (Array.isArray(compliance?.data)) {
+    return compliance.data[0] || null;
+  }
+
+  return compliance;
+};
+
+const getFirstDefinedValue = (source, keys, fallback = '') => {
+  const matchedKey = keys.find((key) => source?.[key] !== undefined && source?.[key] !== null);
+  return matchedKey ? source[matchedKey] : fallback;
+};
+
+const normalizeBoolean = (value) => value === true || value === 1 || value === 'true';
+
+const normalizePepStatus = (value) => (normalizeBoolean(value) ? 'true' : 'false');
+
+export default function InvestorCompliance({
+  percent,
+  setActiveStepId,
+  dataInitializedSteps,
+  setDataInitializedSteps,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const settings = useSettingsContext();
+  const [isSaving, setIsSaving] = useState(false);
+  const { compliance, refreshCompliances, loading: complianceLoading } = useGetCompliances();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    percent(100);
-  }, [percent]);
+  const existingCompliance = useMemo(() => normalizeComplianceData(compliance), [compliance]);
 
   const complianceSchema = Yup.object().shape({
-    country: Yup.string().required('Please Select the Country'),
-    tin_number: Yup.string().required('TIN Number is Required'),
-    // .matches(/^[a-z]{5}[0-9]{4}[a-z]{1}$/, 'Enter valid TIN (e.g. ABCDE1234F)'),
-
+    country: Yup.string().required('Please select the country'),
+    tin_number: Yup.string().required('TIN number is required'),
     funds: Yup.string().required('Select source of funds'),
-
     pep_status: Yup.string().required('Select PEP status'),
     investing_for: Yup.string().required('Select option'),
     cross_border: Yup.string().required('Select option'),
-
     risk_ack_1: Yup.boolean().oneOf([true], 'Required'),
     risk_ack_2: Yup.boolean().oneOf([true], 'Required'),
   });
 
-  const defaultValues = {
-    country: '',
-    tin_number: '',
-    funds: '',
-
-    pep_status: '',
-    investing_for: '',
-    cross_border: '',
-
-    risk_ack_1: false,
-    risk_ack_2: false,
-  };
+  const defaultValues = useMemo(
+    () => ({
+      country: getFirstDefinedValue(
+        existingCompliance,
+        ['country', 'taxResidencyCountry', 'taxCountry'],
+        ''
+      ),
+      tin_number: getFirstDefinedValue(
+        existingCompliance,
+        ['tin_number', 'tinNumber', 'tin', 'taxIdentificationNumber', 'taxNumber'],
+        ''
+      ),
+      funds: getFirstDefinedValue(
+        existingCompliance,
+        ['funds', 'sourceOfFunds', 'source_of_funds'],
+        ''
+      ),
+      pep_status: normalizePepStatus(
+        getFirstDefinedValue(existingCompliance, ['pep_status', 'pepStatus', 'isPEP'], false)
+      ),
+      investing_for: getFirstDefinedValue(
+        existingCompliance,
+        ['investing_for', 'investingFor', 'investmentOnBehalf'],
+        ''
+      ),
+      cross_border: getFirstDefinedValue(
+        existingCompliance,
+        ['cross_border', 'crossBorder', 'crossBorderFlow'],
+        ''
+      ),
+      risk_ack_1: normalizeBoolean(
+        getFirstDefinedValue(
+          existingCompliance,
+          ['risk_ack_1', 'riskAck1', 'riskDisclosureAccepted'],
+          false
+        )
+      ),
+      risk_ack_2: normalizeBoolean(
+        getFirstDefinedValue(
+          existingCompliance,
+          ['risk_ack_2', 'riskAck2', 'suitabilityConfirmed'],
+          false
+        )
+      ),
+    }),
+    [existingCompliance]
+  );
 
   const methods = useForm({
     resolver: yupResolver(complianceSchema),
@@ -95,24 +149,117 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
   });
 
   const {
+    reset,
     handleSubmit,
     watch,
     setValue,
-    formState: { isSubmitting },
+    formState: { errors },
   } = methods;
 
+  const values = watch();
   const risk1 = watch('risk_ack_1');
   const risk2 = watch('risk_ack_2');
-
   const isChecked = risk1 && risk2;
 
-  const onSubmit = handleSubmit((data) => {
-    console.log(data);
+  const calculatePercent = useCallback(() => {
+    const requiredFields = [
+      'country',
+      'tin_number',
+      'funds',
+      'pep_status',
+      'investing_for',
+      'cross_border',
+      'risk_ack_1',
+      'risk_ack_2',
+    ];
 
-    enqueueSnackbar('Data Saved');
+    let valid = 0;
 
-    percent(100);
-    setActiveStepId('kyc_bank_details');
+    requiredFields.forEach((field) => {
+      const value = values[field];
+
+      if (typeof value === 'boolean') {
+        if (value && !errors[field]) valid += 1;
+        return;
+      }
+
+      if (value && !errors[field]) valid += 1;
+    });
+
+    return Math.round((valid / requiredFields.length) * 100);
+  }, [errors, values]);
+
+  useEffect(() => {
+    percent(calculatePercent());
+  }, [calculatePercent, percent]);
+
+
+
+  useEffect(() => {
+    if (existingCompliance && !complianceLoading && !isInitialized) {
+      reset(defaultValues);
+      setIsInitialized(true);
+
+      if (!dataInitializedSteps?.includes('kyc_compliance_declarations')) {
+        setDataInitializedSteps?.();
+        setActiveStepId?.();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingCompliance, complianceLoading, isInitialized]);
+
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      const usersId = sessionStorage.getItem('investor_user_id');
+
+      if (!usersId ) {
+        enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
+        return;
+      }
+
+      setIsSaving(true);
+
+      const payload = {
+        usersId,
+        complianceDeclaration: {
+          taxCountry: data.country,
+          taxNumber: data.tin_number,
+          isPEP: data.pep_status === 'true',
+          investmentOnBehalf: data.investing_for,
+          crossBorderFlow: data.cross_border,
+          sourceOfFunds: data.funds,
+          riskDisclosureAccepted: data.risk_ack_1,
+          suitabilityConfirmed: data.risk_ack_2,
+
+        },
+      };
+
+      const response = existingCompliance
+        ? await axiosInstance.patch('/investor-profiles/kyc-compliance-declarations', payload)
+        : await axiosInstance.post('/investor-profiles/kyc-compliance-declarations', payload);
+
+      if (response?.data?.success === false) {
+        enqueueSnackbar(response?.data?.message || 'Failed to save compliance details', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      enqueueSnackbar('Compliance details saved successfully', {
+        variant: 'success',
+      });
+      percent(100);
+      setActiveStepId();
+      refreshCompliances();
+
+    } catch (error) {
+      enqueueSnackbar(error?.error?.message || 'Failed to save compliance details', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   });
 
   return (
@@ -121,19 +268,18 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
         <Card sx={{ p: 3 }}>
           <Stack spacing={3}>
             <Box>
-              <Typography variant="h4">Compliance & Declarations</Typography>
+              <Typography variant="h4" color='primary'>Compliance & Declarations</Typography>
               <Typography variant="body2">
                 Complete FATCA, AML/PMLA declarations and risk acknowledgements
               </Typography>
             </Box>
 
-            {/* FATCA */}
-            <Typography variant="h6">FATCA Declaration</Typography>
+            <Typography variant="h6" color='primary'>FATCA Declaration</Typography>
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <RHFSelect name="country" label="Tax Residency Country">
-                  {Dummy_Country_Data.map((option) => (
+                  {COUNTRY_OPTIONS.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
                     </MenuItem>
@@ -145,20 +291,18 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                 <RHFTextField
                   name="tin_number"
                   label="TIN / Tax Identification Number"
-                  inputProps={{ maxLength: 10, style: { textTransform: 'uppercase' } }}
+                  inputProps={{ style: { textTransform: 'uppercase' } }}
                 />
               </Grid>
             </Grid>
 
-            {/* PEP */}
             <RHFRadioGroup
               name="pep_status"
               label="PEP (Politically Exposed Person) Status"
               options={PEP_OPTIONS}
             />
 
-            {/* AML */}
-            <Typography variant="h6">AML / PMLA Questionnaire</Typography>
+            <Typography variant="h6" color='primary'>AML / PMLA Questionnaire</Typography>
 
             <RHFRadioGroup
               name="investing_for"
@@ -172,20 +316,17 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
               options={CROSS_BORDER_OPTIONS}
             />
 
-            {/* Source of funds */}
             <RHFSelect name="funds" label="Source of Funds">
-              {Source_Funds.map((option) => (
+              {SOURCE_FUNDS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>
               ))}
             </RHFSelect>
 
-            {/* Risk Consent */}
-            <Typography variant="h6">Risk Consent</Typography>
+            <Typography variant="h6" color='primary'>Risk Consent</Typography>
 
             <Stack spacing={2}>
-              {/* Card 1 */}
               <Box
                 onClick={() => setValue('risk_ack_1', !watch('risk_ack_1'))}
                 sx={{
@@ -195,12 +336,11 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                   p: 2,
                   borderRadius: 2,
                   cursor: 'pointer',
-
                   border: `1px solid ${watch('risk_ack_1') ? theme.palette.primary.main : theme.palette.divider
                     }`,
-
-                  bgcolor: watch('risk_ack_1') ? theme.palette.action.selected : 'transparent',
-
+                  bgcolor: watch('risk_ack_1')
+                    ? theme.palette.action.selected
+                    : 'transparent',
                   '&:hover': {
                     bgcolor: theme.palette.action.hover,
                   },
@@ -210,12 +350,11 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
 
                 <Typography variant="body2">
                   I acknowledge that I have read and understood the risk disclosure document. I
-                  understand that PTC investmens carry credit risk, liquidity risk, and settelement
-                  risk. Past performance is not indicative for future returns.
+                  understand that PTC investments carry credit risk, liquidity risk, and settlement
+                  risk. Past performance is not indicative of future returns.
                 </Typography>
               </Box>
 
-              {/* Card 2 */}
               <Box
                 onClick={() => setValue('risk_ack_2', !watch('risk_ack_2'))}
                 sx={{
@@ -225,12 +364,11 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                   p: 2,
                   borderRadius: 2,
                   cursor: 'pointer',
-
                   border: `1px solid ${watch('risk_ack_2') ? theme.palette.primary.main : theme.palette.divider
                     }`,
-
-                  bgcolor: watch('risk_ack_2') ? theme.palette.action.selected : 'transparent',
-
+                  bgcolor: watch('risk_ack_2')
+                    ? theme.palette.action.selected
+                    : 'transparent',
                   '&:hover': {
                     bgcolor: theme.palette.action.hover,
                   },
@@ -240,12 +378,11 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
 
                 <Typography variant="body2">
                   I confirm that PTC investments are suitable for my investment objectives, risk
-                  apetite, and financial situation. I am informed investor with requisite knowledge
-                  to evaluate these instruments.
+                  appetite, and financial situation. I am an informed investor with requisite
+                  knowledge to evaluate these instruments.
                 </Typography>
               </Box>
             </Stack>
-
           </Stack>
 
           <Grid item xs={12}>
@@ -255,7 +392,7 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
                 variant="contained"
                 size="medium"
                 disabled={!isChecked}
-                loading={isSubmitting}
+                loading={isSaving}
                 color="primary"
                 sx={{
                   '&:hover': {
@@ -277,4 +414,6 @@ export default function InvestorCompliance({ percent, setActiveStepId }) {
 InvestorCompliance.propTypes = {
   percent: PropTypes.func.isRequired,
   setActiveStepId: PropTypes.func.isRequired,
+  dataInitializedSteps: PropTypes.array,
+  setDataInitializedSteps: PropTypes.func,
 };

@@ -1,156 +1,85 @@
-// import * as Yup from 'yup';
-// import { useForm } from 'react-hook-form';
-// import { yupResolver } from '@hookform/resolvers/yup';
-
-// // MUI
-// import {
-//   Grid,
-//   Card,
-//   Stack,
-//   Typography,
-//   MenuItem,
-//   Checkbox,
-//   FormControlLabel,
-//   Box,
-// } from '@mui/material';
-// import LoadingButton from '@mui/lab/LoadingButton';
-
-// // hooks
-// import { useRouter } from 'src/routes/hook';
-// import { paths } from 'src/routes/paths';
-
-// // components
-// import FormProvider, {
-//   RHFTextField,
-//   RHFSelect,
-// } from 'src/components/hook-form';
-
-// import { enqueueSnackbar } from 'notistack';
-// import InvestorInfoSection from './investor-info-section';
-
-// // ----------------------
-
-// const ENTITY_TYPES = [
-//   { value: 'family_office', label: 'Family Office' },
-//   { value: 'nbfc', label: 'NBFC' },
-//   { value: 'corporate_treasury', label: 'Corporate Treasury' },
-//   { value: 'fund', label: 'AIF/Fund' },
-//   { value: 'hni', label: 'HNI' }
-// ];
-
-// export default function JwtRegisterInstitutionalView() {
-//   const router = useRouter();
-
-//   const RegisterSchema = Yup.object().shape({
-//     entityType: Yup.string().required('Entity type is required'),
-//     companyName: Yup.string().required('Company name is required'),
-//   });
-
-//   const methods = useForm({
-//     resolver: yupResolver(RegisterSchema),
-//     defaultValues: {
-//       entityType: '',
-//       companyName: '',
-//     },
-//   });
-
-//   const {
-//     handleSubmit,
-//     formState: { isSubmitting },
-//   } = methods;
-
-//   const onSubmit = handleSubmit(async (data) => {
-//     try {
-//       sessionStorage.setItem('institutional_data', JSON.stringify(data));
-//       enqueueSnackbar('Saved!', { variant: 'success' });
-//       router.push(paths.auth.jwt.kyc);
-//     } catch (err) {
-//       enqueueSnackbar('Error!', { variant: 'error' });
-//     }
-//   });
-
-//   return (
-//     <Box
-//       sx={{
-//         minHeight: '100vh',
-//         display: 'flex',
-//         alignItems: 'center',
-//         justifyContent: 'center',
-//         px: 2,
-//       }}
-//     >
-
-//       <Box sx={{ width: '100%', maxWidth: '1000px' }}>
-
-//         <Grid container spacing={6} alignItems="center">
-
-//           <Grid item xs={12} md={6}>
-//             <Card
-//               sx={{
-//                 p: 5,
-//                 borderRadius: 4,
-//                 boxShadow: 6,
-//               }}
-//             >
-//               <FormProvider methods={methods} onSubmit={onSubmit}>
-
-//   <InvestorInfoSection />
-//                   <LoadingButton
-//                     fullWidth
-//                     size="large"
-//                     type="submit"
-//                     variant="contained"
-//                     loading={isSubmitting}
-//                     sx={{
-//                       borderRadius: 999,
-//                       py: 1.5,
-//                     }}
-//                   >
-//                     Continue
-//                   </LoadingButton>
-
-//               </FormProvider>
-//             </Card>
-//           </Grid>
-
-//           {/* RIGHT */}
-//           <Grid item xs={12} md={6}>
-//             <InvestorInfoSection />
-//           </Grid>
-
-//         </Grid>
-//       </Box>
-//     </Box>
-//   );
-// }
-
-
-
-
-// components
-import {
-  Grid,
-  Card,
-  Stack,
-  Typography,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Box,
-} from '@mui/material';
-
-import LoadingButton from '@mui/lab/LoadingButton';
-import { useNavigate } from 'react-router-dom';
+import { Box, Card, Grid, Stack, Typography } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
+import Iconify from 'src/components/iconify';
+import { useRouter } from 'src/routes/hook';
+import { paths } from 'src/routes/paths';
+import axiosInstance from 'src/utils/axios';
 import InvestorInfoSection from './investor-info-section';
 
+const INVESTOR_OPTIONS = [
+  {
+    type: 'individual',
+    title: 'Individual',
+    description: 'Join as an individual investor',
+    icon: 'solar:user-bold',
+  },
+  {
+    type: 'institutional',
+    title: 'Institutional',
+    description: 'Join as an organization',
+    icon: 'solar:buildings-bold',
+  },
+];
+
 export default function JwtRegisterInstitutionalView() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
+  const handleSelectInvestorType = async (selectedType) => {
+    sessionStorage.setItem('investor_type', selectedType);
+    const sessionId = localStorage.getItem('sessionId');
 
+    if (!sessionId) {
+      enqueueSnackbar('Session expired. Please verify again.', { variant: 'error' });
+      router.push(paths.auth.jwt.registerEmail);
+      return;
+    }
 
-  const handleContinue = () => {
-    navigate('/auth/kyc/basic-info');
+    try {
+      const res = await axiosInstance.get(`/investor-profiles/kyc-progress/${sessionId}`);
+      const profile = res?.data?.profile;
 
+      if (profile) {
+        // Detect existing investor type
+        const isExistingInstitutional = Boolean(profile.companyName || profile.investorTypeId);
+        const isExistingIndividual = Boolean(profile.fullName && !profile.companyName);
+
+        // Validation: Block cross-type registration
+        if (selectedType === 'institutional' && isExistingIndividual) {
+          enqueueSnackbar('This email/phone is already registered as an Individual investor.', {
+            variant: 'error',
+          });
+          return;
+        }
+
+        if (selectedType === 'individual' && isExistingInstitutional) {
+          enqueueSnackbar('This email/phone is already registered as an Institutional investor.', {
+            variant: 'error',
+          });
+          return;
+        }
+
+        // Store IDs for resuming
+        if (profile.usersId) sessionStorage.setItem('investor_user_id', profile.usersId);
+        if (profile.id) sessionStorage.setItem('investor_profile_id', profile.id);
+
+        // Redirect based on selected (and matched) type
+        if (selectedType === 'individual') {
+          router.push(paths.auth.jwt.kyc);
+        } else {
+          router.push(paths.auth.kyc.investorKyc);
+        }
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking KYC progress:', error);
+    }
+
+    // Default redirection if no profile exists
+    if (selectedType === 'individual') {
+      router.push(paths.auth.jwt.kyc);
+    } else {
+      router.push(paths.auth.kyc.kycBasicInfo);
+    }
   };
 
   return (
@@ -167,32 +96,54 @@ export default function JwtRegisterInstitutionalView() {
       <Box
         sx={{
           width: '100%',
-          maxWidth: 600,
+          maxWidth: 720,
           mx: 'auto',
         }}
       >
         <Stack spacing={4} alignItems="center">
-
-
-
           <InvestorInfoSection />
 
+          <Stack spacing={1} alignItems="center">
+            <Typography variant="h5" fontWeight={600} textAlign="center">
+              Choose Your KYC Flow
+            </Typography>
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              Select the investor type that matches your profile.
+            </Typography>
+          </Stack>
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <LoadingButton
-              variant="contained"
-              onClick={handleContinue}
-              sx={{
-                borderRadius: 999,
-                px: 5,
-                py: 1.3,
-                fontWeight: 600,
-              }}
-            >
-              Continue
-            </LoadingButton>
-          </Box>
-
+          <Grid container spacing={3}>
+            {INVESTOR_OPTIONS.map((option) => (
+              <Grid item xs={12} sm={6} key={option.type}>
+                <Card
+                  onClick={() => handleSelectInvestorType(option.type)}
+                  sx={{
+                    p: 4,
+                    height: '100%',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                    boxShadow: 2,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: (theme) => theme.customShadows.z8,
+                    },
+                  }}
+                >
+                  <Box sx={{ mb: 2 }}>
+                    <Iconify icon={option.icon} width={48} sx={{ color: 'primary.main' }} />
+                  </Box>
+                  <Typography variant="h6" gutterBottom>
+                    {option.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {option.description}
+                  </Typography>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         </Stack>
       </Box>
     </Box>
