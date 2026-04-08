@@ -2,6 +2,56 @@ import useSWR from 'swr';
 import { useCallback, useEffect, useMemo } from 'react';
 import { fetcher, endpoints } from 'src/utils/axios';
 
+const tryParseJson = (value) => {
+  if (typeof value !== 'string') return value;
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return value;
+  }
+};
+
+const normalizeKycCollection = (value) => {
+  const parsed = tryParseJson(value);
+
+  if (Array.isArray(parsed)) {
+    return parsed.flatMap((entry) => normalizeKycCollection(entry));
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return [];
+  }
+
+  const nestedArrayKeys = [
+    'data',
+    'rows',
+    'items',
+    'records',
+    'uboDetails',
+    'ubos',
+    'signatories',
+    'signatoryDetails',
+    'result',
+  ];
+
+  const nestedArrayKey = nestedArrayKeys.find((key) => Array.isArray(tryParseJson(parsed?.[key])));
+
+  if (nestedArrayKey) {
+    return normalizeKycCollection(parsed[nestedArrayKey]);
+  }
+
+  const nestedObjectKeys = ['data', 'result'];
+
+  const nestedObjectKey = nestedObjectKeys.find((key) => parsed?.[key] && typeof parsed[key] === 'object');
+
+  if (nestedObjectKey) {
+    return normalizeKycCollection(parsed[nestedObjectKey]);
+  }
+
+  return [parsed];
+};
+
 export function useGetKycProgress(sessionId) {
   const URL = sessionId ? endpoints.investorKyc.kycProgress(sessionId) : null;
 
@@ -117,12 +167,14 @@ export function useGetUBOs() {
     mutate();
   }, [mutate]);
 
+  const ubos = useMemo(() => normalizeKycCollection(data?.data), [data?.data]);
+
   return {
-    ubos: data?.data || [],
+    ubos,
     loading: isLoading,
     error,
     validating: isValidating,
-    empty: !isLoading && !data?.data?.length,
+    empty: !isLoading && ubos.length === 0,
     refreshUbos,
   };
 }
@@ -138,16 +190,18 @@ export function useGetSignatories() {
     keepPreviousData: true,
   });
 
+  const signatories = useMemo(() => normalizeKycCollection(data?.data), [data?.data]);
+
   const refreshSignatories = () => {
     mutate();
   };
 
   return {
-    signatories: data?.data || [],
+    signatories,
     loading: isLoading,
     error,
     validating: isValidating,
-    empty: !isLoading && !data?.data?.length,
+    empty: !isLoading && signatories.length === 0,
     refreshSignatories,
   };
 }

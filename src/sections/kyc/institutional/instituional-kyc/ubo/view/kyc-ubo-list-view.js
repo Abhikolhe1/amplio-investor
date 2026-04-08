@@ -72,6 +72,9 @@ const getMerchantStorageId = () =>
 
 const getUboNextConfirmedKey = (merchantId) => `kyc_ubo_next_confirmed:${merchantId}`;
 
+const getRowKey = (row, index = 0) =>
+  row.id || `${row.submittedPanNumber || row.email || row.fullName || 'ubo'}-${index}`;
+
 // ----------------------------------------------------------------------
 
 export default function UbosListView({
@@ -334,7 +337,7 @@ export default function UbosListView({
               onSelectAllRows={(checked) =>
                 table.onSelectAllRows(
                   checked,
-                  tableData.map((row) => row.id)
+                  tableData.map((row, index) => getRowKey(row, index))
                 )
               }
               action={
@@ -358,7 +361,7 @@ export default function UbosListView({
                   onSelectAllRows={(checked) =>
                     table.onSelectAllRows(
                       checked,
-                      tableData.map((row) => row.id)
+                      tableData.map((row, index) => getRowKey(row, index))
                     )
                   }
                 />
@@ -369,12 +372,12 @@ export default function UbosListView({
                       table.page * table.rowsPerPage,
                       table.page * table.rowsPerPage + table.rowsPerPage
                     )
-                    .map((row) => (
+                    .map((row, index) => (
                       <UboTableRow
-                        key={row.id}
+                        key={getRowKey(row, index)}
                         row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
+                        selected={table.selected.includes(getRowKey(row, index))}
+                        onSelectRow={() => table.onSelectRow(getRowKey(row, index))}
                         onDeleteRow={() => handleDeleteRow(row.id)}
                         onEditRow={() => handleEdit(row)}
                         handleView={handleView}

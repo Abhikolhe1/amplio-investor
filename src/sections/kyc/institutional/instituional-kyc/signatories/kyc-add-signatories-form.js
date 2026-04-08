@@ -173,6 +173,7 @@ export default function KYCAddSignatoriesForm({
                     email: data.email,
                     phone: data.phoneNumber,
                     status: 0,
+                    mode: 1,
 
                     // Extracted PAN details (from OCR)
                     extractedPanFullName: extractedPan?.extractedPanFullName || '',

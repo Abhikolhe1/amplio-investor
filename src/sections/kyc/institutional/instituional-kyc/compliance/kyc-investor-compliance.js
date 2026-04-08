@@ -372,7 +372,7 @@ export default function InvestorCompliance({
             <Box display="flex" justifyContent="flex-end" gap={2} mt={2} flexWrap="wrap">
               <LoadingButton
                 type="button"
-                variant="outlined"
+                variant="contained"
                 size="medium"
                 loading={isAutofilling}
                 color="primary"

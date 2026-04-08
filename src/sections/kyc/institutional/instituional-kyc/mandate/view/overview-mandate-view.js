@@ -412,7 +412,7 @@ useEffect(() => {
             </Grid>
 
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button type="button" color='primary' variant="outlined" disabled={isAutofilling} onClick={handleAutoFill}>
+              <Button type="button" color='primary' variant="contained" disabled={isAutofilling} onClick={handleAutoFill}>
                 {isAutofilling ? 'Autofilling...' : 'Autofill'}
               </Button>
               <Button type="submit" color='primary' variant="contained" disabled={isSaving}>

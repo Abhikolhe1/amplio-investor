@@ -71,6 +71,9 @@ const getMerchantStorageId = () =>
 
 const getUboNextConfirmedKey = (merchantId) => `kyc_ubo_next_confirmed:${merchantId}`;
 
+const getRowKey = (row, index = 0) =>
+    row.id || `${row.submittedPanNumber || row.email || row.fullName || 'signatory'}-${index}`;
+
 // ----------------------------------------------------------------------
 
 export default function SignatoriesListView({
@@ -93,8 +96,6 @@ export default function SignatoriesListView({
 
 
     const {signatories= [], refreshSignatories, loading}= useGetSignatories();
-
-    console.log('signatories', signatories)
 
     const [tableData, setTableData] = useState([]);
 
@@ -336,7 +337,7 @@ export default function SignatoriesListView({
                             onSelectAllRows={(checked) =>
                                 table.onSelectAllRows(
                                     checked,
-                                    tableData.map((row) => row.id)
+                                    tableData.map((row, index) => getRowKey(row, index))
                                 )
                             }
                             action={
@@ -360,7 +361,7 @@ export default function SignatoriesListView({
                                     onSelectAllRows={(checked) =>
                                         table.onSelectAllRows(
                                             checked,
-                                            tableData.map((row) => row.id)
+                                            tableData.map((row, index) => getRowKey(row, index))
                                         )
                                     }
                                 />
@@ -371,12 +372,12 @@ export default function SignatoriesListView({
                                             table.page * table.rowsPerPage,
                                             table.page * table.rowsPerPage + table.rowsPerPage
                                         )
-                                        .map((row) => (
+                                        .map((row, index) => (
                                             <SignatoriesTableRow
-                                                key={row.id}
+                                                key={getRowKey(row, index)}
                                                 row={row}
-                                                selected={table.selected.includes(row.id)}
-                                                onSelectRow={() => table.onSelectRow(row.id)}
+                                                selected={table.selected.includes(getRowKey(row, index))}
+                                                onSelectRow={() => table.onSelectRow(getRowKey(row, index))}
                                                 onDeleteRow={() => handleDeleteRow(row.id)}
                                                 onEditRow={() => handleEdit(row)}
                                                 handleView={handleView}
