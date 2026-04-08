@@ -40,6 +40,7 @@ export default function OverviewMandateView({
   const { enqueueSnackbar } = useSnackbar();
   const [isSaving, setIsSaving] = useState(false);
   const { investmentMandates, loading: mandateLoading } = useGetInvestmentMandates();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const existingMandate = useMemo(
     () => normalizeInvestmentMandate(investmentMandates),
@@ -172,25 +173,28 @@ export default function OverviewMandateView({
     percent(calculatePercent());
   }, [calculatePercent, percent]);
 
-  useEffect(() => {
-    if (existingMandate && !mandateLoading) {
-      reset(defaultValues);
 
-      if (!dataInitializedSteps?.includes('kyc_investment_mandate')) {
-        setDataInitializedSteps?.();
-        setActiveStepId?.();
-      }
+
+useEffect(() => {
+  if (!isInitialized && existingMandate && !mandateLoading) {
+    reset(defaultValues);
+    setIsInitialized(true);
+
+    if (!dataInitializedSteps?.includes('kyc_investment_mandate')) {
+      setDataInitializedSteps?.();
+      setActiveStepId?.();
     }
-  }, [
-    dataInitializedSteps,
-    defaultValues,
-    existingMandate,
-    mandateLoading,
-    reset,
-    setActiveStepId,
-    setDataInitializedSteps,
-  ]);
-
+  }
+}, [
+  existingMandate,
+  mandateLoading,
+  reset,
+  defaultValues,
+  dataInitializedSteps,
+  setActiveStepId,
+  setDataInitializedSteps,
+  isInitialized,
+]);
   const onSubmit = handleSubmit(async (data) => {
     try {
       const usersId = sessionStorage.getItem('investor_user_id');
