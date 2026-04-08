@@ -98,6 +98,7 @@ export default function JwtRegisterInstitutionalView() {
           width: '100%',
           maxWidth: 720,
           mx: 'auto',
+          my: 2,
         }}
       >
         <Stack spacing={4} alignItems="center">

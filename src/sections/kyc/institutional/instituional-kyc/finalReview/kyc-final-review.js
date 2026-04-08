@@ -69,7 +69,7 @@ const mapStatus = (status, fallbackComplete = false) => {
 function SectionBlock({ title, children }) {
   return (
     <Stack spacing={2.5} sx={{ mb: 4 }}>
-      <Typography variant="h5" color="primary" fontWeight={700}>
+      <Typography variant="h5" color="primary" fontWeight={700} sx={{ textAlign: 'center' }}>
         {title}
       </Typography>
       {children}
@@ -361,7 +361,7 @@ export default function KYCFinalReview({
           </Grid>
         </SectionBlock>
 
-
+        <SectionBlock title="Bank & Address Details">
           <Grid container spacing={2}>
             <KycReviewCard
               title="Bank Details"
@@ -376,7 +376,7 @@ export default function KYCFinalReview({
               data={addressDetailsData}
             />
           </Grid>
-
+        </SectionBlock>
 
         <SectionBlock title="UBO Details">
           {uboCards.length ? (
@@ -418,7 +418,8 @@ export default function KYCFinalReview({
           )}
         </SectionBlock>
 
-          <Grid container spacing={2}>
+  
+          <Grid container spacing={2}  sx={{ mb: 4 }}>
             <KycReviewCard
               title="Compliance"
               status={mapStatus(complianceData?.status, Boolean(complianceData))}
@@ -432,7 +433,7 @@ export default function KYCFinalReview({
               data={investmentMandateData}
             />
           </Grid>
-
+       
 
           <Grid container spacing={2}>
             <KycReviewCard
@@ -445,6 +446,7 @@ export default function KYCFinalReview({
               data={agreementSummaryData}
             />
           </Grid>
+    
 
         <Box sx={{ mt: 3 }}>
           <FormControlLabel
