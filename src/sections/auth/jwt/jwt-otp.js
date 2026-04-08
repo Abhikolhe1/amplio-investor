@@ -126,7 +126,6 @@ export default function OtpInput({
             size="large"
             variant="contained"
             disabled={value.some((v) => !v)}
-            onClick={onVerify}
             sx={{ borderRadius: 999 }}
             type="submit"
           >
