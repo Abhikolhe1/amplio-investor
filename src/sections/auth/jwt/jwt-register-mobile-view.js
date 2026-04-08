@@ -25,6 +25,7 @@ import OtpInput from './jwt-otp';
 export default function JwtRegisterMobileView() {
   const { register } = useAuthContext();
   const router = useRouter();
+  const isVerifyingOtpRef = useRef(false);
 
   const [errorMsg, setErrorMsg] = useState('');
   const [sessionId, setSessionId] = useState('');
@@ -103,7 +104,12 @@ export default function JwtRegisterMobileView() {
       return;
     }
 
+    if (isVerifyingOtpRef.current) {
+      return;
+    }
+
     try {
+      isVerifyingOtpRef.current = true;
       const res = await axiosInstance.post('/auth/verify-phone-otp', {
         sessionId,
         otp: enteredOtp,
@@ -122,6 +128,8 @@ export default function JwtRegisterMobileView() {
       enqueueSnackbar(message, {
         variant: 'error',
       });
+    } finally {
+      isVerifyingOtpRef.current = false;
     }
   };
 
