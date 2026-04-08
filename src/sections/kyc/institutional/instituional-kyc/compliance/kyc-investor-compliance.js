@@ -15,6 +15,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 import { useSnackbar } from 'src/components/snackbar';
 import { useGetCompliances } from 'src/api/investorKyc';
+import { getInvestorInstitutionalComplianceAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
 import axiosInstance from 'src/utils/axios';
 
 const COUNTRY_OPTIONS = [
@@ -61,15 +62,6 @@ const normalizeComplianceData = (compliance) => {
   return compliance;
 };
 
-const getFirstDefinedValue = (source, keys, fallback = '') => {
-  const matchedKey = keys.find((key) => source?.[key] !== undefined && source?.[key] !== null);
-  return matchedKey ? source[matchedKey] : fallback;
-};
-
-const normalizeBoolean = (value) => value === true || value === 1 || value === 'true';
-
-const normalizePepStatus = (value) => (normalizeBoolean(value) ? 'true' : 'false');
-
 export default function InvestorCompliance({
   percent,
   setActiveStepId,
@@ -79,6 +71,7 @@ export default function InvestorCompliance({
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
   const { compliance, refreshCompliances, loading: complianceLoading } = useGetCompliances();
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -95,51 +88,24 @@ export default function InvestorCompliance({
     risk_ack_2: Yup.boolean().oneOf([true], 'Required'),
   });
 
+  const mapComplianceToForm = (data) => {
+    if (!data) return {};
+
+    return {
+      country: data.taxCountry || '',
+      tin_number: data.taxNumber || '',
+      funds: data.sourceOfFunds || '',
+      pep_status: data.isPEP ? 'true' : 'false',
+      investing_for: data.investmentOnBehalf || '',
+      cross_border: data.crossBorderFlow || '',
+      risk_ack_1: data.riskDisclosureAccepted || false,
+      risk_ack_2: data.suitabilityConfirmed || false,
+    };
+  };
+
+
   const defaultValues = useMemo(
-    () => ({
-      country: getFirstDefinedValue(
-        existingCompliance,
-        ['country', 'taxResidencyCountry', 'taxCountry'],
-        ''
-      ),
-      tin_number: getFirstDefinedValue(
-        existingCompliance,
-        ['tin_number', 'tinNumber', 'tin', 'taxIdentificationNumber', 'taxNumber'],
-        ''
-      ),
-      funds: getFirstDefinedValue(
-        existingCompliance,
-        ['funds', 'sourceOfFunds', 'source_of_funds'],
-        ''
-      ),
-      pep_status: normalizePepStatus(
-        getFirstDefinedValue(existingCompliance, ['pep_status', 'pepStatus', 'isPEP'], false)
-      ),
-      investing_for: getFirstDefinedValue(
-        existingCompliance,
-        ['investing_for', 'investingFor', 'investmentOnBehalf'],
-        ''
-      ),
-      cross_border: getFirstDefinedValue(
-        existingCompliance,
-        ['cross_border', 'crossBorder', 'crossBorderFlow'],
-        ''
-      ),
-      risk_ack_1: normalizeBoolean(
-        getFirstDefinedValue(
-          existingCompliance,
-          ['risk_ack_1', 'riskAck1', 'riskDisclosureAccepted'],
-          false
-        )
-      ),
-      risk_ack_2: normalizeBoolean(
-        getFirstDefinedValue(
-          existingCompliance,
-          ['risk_ack_2', 'riskAck2', 'suitabilityConfirmed'],
-          false
-        )
-      ),
-    }),
+    () => mapComplianceToForm(existingCompliance),
     [existingCompliance]
   );
 
@@ -213,7 +179,7 @@ export default function InvestorCompliance({
     try {
       const usersId = sessionStorage.getItem('investor_user_id');
 
-      if (!usersId ) {
+      if (!usersId) {
         enqueueSnackbar('User ID missing. Please restart KYC process.', { variant: 'error' });
         return;
       }
@@ -261,6 +227,23 @@ export default function InvestorCompliance({
       setIsSaving(false);
     }
   });
+
+  const handleAutoFill = () => {
+    setIsAutofilling(true);
+
+    const autoData = getInvestorInstitutionalComplianceAutofill();
+
+    Object.entries(autoData).forEach(([key, value]) => {
+      setValue(key, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    });
+
+    enqueueSnackbar('Compliance autofill completed', { variant: 'success' });
+    setIsAutofilling(false);
+  };
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -387,6 +370,16 @@ export default function InvestorCompliance({
 
           <Grid item xs={12}>
             <Box display="flex" justifyContent="flex-end" gap={2} mt={2} flexWrap="wrap">
+              <LoadingButton
+                type="button"
+                variant="outlined"
+                size="medium"
+                loading={isAutofilling}
+                color="primary"
+                onClick={handleAutoFill}
+              >
+                Autofill
+              </LoadingButton>
               <LoadingButton
                 type="submit"
                 variant="contained"

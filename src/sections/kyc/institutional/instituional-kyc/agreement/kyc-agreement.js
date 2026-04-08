@@ -10,6 +10,7 @@ import { LoadingButton } from '@mui/lab';
 import FormProvider, { RHFCheckbox } from 'src/components/hook-form';
 import { useSnackbar } from 'src/components/snackbar';
 import { useGetAgreement } from 'src/api/investorKyc';
+import { getInvestorInstitutionalAgreementAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
 import axiosInstance from 'src/utils/axios';
 
 const normalizeBoolean = (value) => value === true || value === 1 || value === 'true';
@@ -23,6 +24,7 @@ export default function KYCAgreement({
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
   const { agreements, loading: agreementLoading, refreshAgreement } = useGetAgreement();
 
   console.log('agreement', agreements)
@@ -144,6 +146,20 @@ export default function KYCAgreement({
     }
   });
 
+  const handleAutoFill = () => {
+    setIsAutofilling(true);
+    const autoData = getInvestorInstitutionalAgreementAutofill();
+
+    setValue('consent', Boolean(autoData.consent), {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+
+    enqueueSnackbar('Agreement autofill completed', { variant: 'success' });
+    setIsAutofilling(false);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -212,6 +228,17 @@ export default function KYCAgreement({
             </Box>
 
             <Box display="flex" justifyContent="flex-end">
+              <LoadingButton
+                type="button"
+                variant="outlined"
+                size="medium"
+                color="primary"
+                sx={{ px: 4, borderRadius: 2, mr: 2 }}
+                loading={isAutofilling}
+                onClick={handleAutoFill}
+              >
+                Autofill
+              </LoadingButton>
               <LoadingButton
                 type="submit"
                 variant="contained"

@@ -9,6 +9,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 
 import { useSnackbar } from 'src/components/snackbar';
 import { useGetInvestmentMandates } from 'src/api/investorKyc';
+import { getInvestorInstitutionalMandateAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
 import axiosInstance from 'src/utils/axios';
 import MandateExpectedYield from '../mandate-expected-yield';
 
@@ -39,6 +40,7 @@ export default function OverviewMandateView({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
   const { investmentMandates, loading: mandateLoading } = useGetInvestmentMandates();
 
   const existingMandate = useMemo(
@@ -140,6 +142,7 @@ export default function OverviewMandateView({
   const {
     reset,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors },
   } = methods;
@@ -240,6 +243,23 @@ export default function OverviewMandateView({
       setIsSaving(false);
     }
   });
+
+  const handleAutoFill = () => {
+    setIsAutofilling(true);
+
+    const autoData = getInvestorInstitutionalMandateAutofill();
+
+    Object.entries(autoData).forEach(([key, value]) => {
+      setValue(key, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    });
+
+    enqueueSnackbar('Mandate autofill completed', { variant: 'success' });
+    setIsAutofilling(false);
+  };
 
   return (
     <Container>
@@ -387,7 +407,10 @@ export default function OverviewMandateView({
               </Stack>
             </Grid>
 
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button type="button" color='primary' variant="outlined" disabled={isAutofilling} onClick={handleAutoFill}>
+                {isAutofilling ? 'Autofilling...' : 'Autofill'}
+              </Button>
               <Button type="submit" color='primary' variant="contained" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Next'}
               </Button>

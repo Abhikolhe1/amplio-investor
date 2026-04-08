@@ -30,10 +30,10 @@ import Iconify from 'src/components/iconify';
 import PropTypes from 'prop-types';
 import axiosInstance from 'src/utils/axios';
 import { useGetDetails } from 'src/api/investorKyc';
+import { getInvestorInstitutionalBankAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
+import { uploadAutofillAsset } from 'src/utils/kyc-autofill';
 
 // import KYCFooter from './kyc-footer';
-
-// import { NewKycBankDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
 // ----------------------------------------------------------------------
 
@@ -224,48 +224,40 @@ export default function KYCBankDetails({
     }
   });
 
-  // const handleAutoFill = async () => {
-  //   setIsAutofilling(true);
-  //   const autoData = NewKycBankDetails();
+  const handleAutoFill = async () => {
+    setIsAutofilling(true);
+    const autoData = getInvestorInstitutionalBankAutofill();
 
-  //   const applyValue = (name, value) =>
-  //     setValue(name, value, {
-  //       shouldValidate: true,
-  //       shouldDirty: true,
-  //       shouldTouch: true,
-  //     });
+    const applyValue = (name, value) =>
+      setValue(name, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
-  //   Object.entries(autoData).forEach(([key, value]) => applyValue(key, value));
+    Object.entries(autoData).forEach(([key, value]) => applyValue(key, value));
 
-  //   try {
-  //     const fileName = autoData.documentType === 'cheque' ? 'financial_statement_year_1.pdf' : 'gstr9_year_1.pdf';
-  //     const response = await fetch(`/pdfs/kyb/${fileName}`);
-  //     if (!response.ok) {
-  //       enqueueSnackbar('Bank data autofilled, proof upload failed', { variant: 'warning' });
-  //       return;
-  //     }
+    try {
+      const uploadedFile = await uploadAutofillAsset({
+        fileName:
+          autoData.documentType === 'cheque'
+            ? 'institutional-cheque.jpg'
+            : 'institutional-bank-statement.jpg',
+      });
 
-  //     const blob = await response.blob();
-  //     const file = new File([blob], fileName, { type: 'application/pdf' });
-  //     const formData = new FormData();
-  //     formData.append('file', file);
+      if (!uploadedFile?.id) {
+        enqueueSnackbar('Bank data autofilled, proof upload failed', { variant: 'warning' });
+        return;
+      }
 
-  //     const uploadRes = await axiosInstance.post('/files', formData);
-  //     const uploadedFile = uploadRes?.data?.files?.[0] || null;
-
-  //     if (!uploadedFile?.id) {
-  //       enqueueSnackbar('Bank data autofilled, proof upload failed', { variant: 'warning' });
-  //       return;
-  //     }
-
-  //     applyValue('addressProof', uploadedFile);
-  //     enqueueSnackbar('Bank autofill completed', { variant: 'success' });
-  //   } catch (error) {
-  //     enqueueSnackbar('Bank data autofilled, proof upload failed', { variant: 'warning' });
-  //   } finally {
-  //     setIsAutofilling(false);
-  //   }
-  // };
+      applyValue('addressProof', uploadedFile);
+      enqueueSnackbar('Bank autofill completed', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Bank data autofilled, proof upload failed', { variant: 'warning' });
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
 
   const requiredFields = useMemo(
     () => ['addressProof', 'bankName', 'branchName', 'accountNumber', 'ifscCode'],
@@ -539,7 +531,7 @@ export default function KYCBankDetails({
               Validate (Penny Drop)
             </LoadingButton>
 
-            {/* <Button
+            <Button
               variant="contained"
               color='primary'
               type="button"
@@ -547,7 +539,7 @@ export default function KYCBankDetails({
               disabled={isAutofilling}
             >
               {isAutofilling ? 'Autofilling...' : 'Autofill'}
-            </Button> */}
+            </Button>
             <Button variant="contained" color="primary" type="submit">
               Next
             </Button>

@@ -19,8 +19,9 @@ import { useSnackbar } from 'notistack';
 import FormProvider, { RHFTextField, RHFSelect, RHFCustomFileUploadBox } from 'src/components/hook-form';
 import axiosInstance from 'src/utils/axios';
 import { useGetKycAddressDetails } from 'src/api/investorKyc';
+import { getInvestorInstitutionalAddressAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
+import { uploadAutofillAsset } from 'src/utils/kyc-autofill';
 // import KYCFooter from './kyc-footer';
-// import { NewKycAddressDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
 export default function KYCAddressDetails({
   percent,
@@ -216,48 +217,37 @@ export default function KYCAddressDetails({
     }
   };
 
-  // const handleAutoFill = async () => {
-  //   setIsAutofilling(true);
-  //   const autoData = NewKycAddressDetails();
+  const handleAutoFill = async () => {
+    setIsAutofilling(true);
+    const autoData = getInvestorInstitutionalAddressAutofill();
 
-  //   const applyValue = (name, value) =>
-  //     setValue(name, value, {
-  //       shouldValidate: true,
-  //       shouldDirty: true,
-  //       shouldTouch: true,
-  //     });
+    const applyValue = (name, value) =>
+      setValue(name, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
-  //   Object.entries(autoData).forEach(([key, value]) => applyValue(key, value));
+    Object.entries(autoData).forEach(([key, value]) => applyValue(key, value));
 
-  //   try {
-  //     const fileName = 'income_tax_return_year_1.pdf';
-  //     const response = await fetch(`/pdfs/kyb/${fileName}`);
-  //     if (!response.ok) {
-  //       enqueueSnackbar('Address data autofilled, proof upload failed', { variant: 'warning' });
-  //       return;
-  //     }
+    try {
+      const uploadedFile = await uploadAutofillAsset({
+        fileName: 'institutional-address-proof.jpg',
+      });
 
-  //     const blob = await response.blob();
-  //     const file = new File([blob], fileName, { type: 'application/pdf' });
-  //     const formData = new FormData();
-  //     formData.append('file', file);
+      if (!uploadedFile?.id) {
+        enqueueSnackbar('Address data autofilled, proof upload failed', { variant: 'warning' });
+        return;
+      }
 
-  //     const uploadRes = await axiosInstance.post('/files', formData);
-  //     const uploadedFile = uploadRes?.data?.files?.[0] || null;
-
-  //     if (!uploadedFile?.id) {
-  //       enqueueSnackbar('Address data autofilled, proof upload failed', { variant: 'warning' });
-  //       return;
-  //     }
-
-  //     applyValue('addressProof', uploadedFile);
-  //     enqueueSnackbar('Address autofill completed', { variant: 'success' });
-  //   } catch (error) {
-  //     enqueueSnackbar('Address data autofilled, proof upload failed', { variant: 'warning' });
-  //   } finally {
-  //     setIsAutofilling(false);
-  //   }
-  // };
+      applyValue('addressProof', uploadedFile);
+      enqueueSnackbar('Address autofill completed', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Address data autofilled, proof upload failed', { variant: 'warning' });
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
 
   useEffect(() => {
     if ((registeredAddress || correspondenceAddress) && !addressDetailsLoading) {
@@ -394,7 +384,7 @@ export default function KYCAddressDetails({
             </Grid>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              {/* <LoadingButton
+              <LoadingButton
                 type="button"
                 variant="contained"
                 color="primary"
@@ -403,7 +393,7 @@ export default function KYCAddressDetails({
                 sx={{ mr: 2 }}
               >
                 Autofill
-              </LoadingButton> */}
+              </LoadingButton>
               <LoadingButton type="submit" variant="contained" color="primary" loading={isSubmitting}>
                 Next
               </LoadingButton>

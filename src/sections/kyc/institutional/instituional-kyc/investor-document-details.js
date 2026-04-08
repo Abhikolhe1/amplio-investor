@@ -19,6 +19,8 @@ import { enqueueSnackbar } from 'notistack';
 import { yupResolver } from '@hookform/resolvers/yup';
 import axiosInstance from 'src/utils/axios';
 import { useGetKycSection } from 'src/api/investorKyc';
+import { getInvestorInstitutionalDocumentsAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
+import { uploadAutofillAssets } from 'src/utils/kyc-autofill';
 // import KYCFooter from './kyc-footer';
 
 const FILE_ACCEPT = {
@@ -353,87 +355,68 @@ export default function KYCMerchantDetails({
     }
   });
 
-  // const handleAutoFill = async () => {
-  //   if (!documents.length) {
-  //     enqueueSnackbar('No document requirements found for autofill', { variant: 'warning' });
-  //     return;
-  //   }
+  const handleAutoFill = async () => {
+    if (!documents.length) {
+      enqueueSnackbar('No document requirements found for autofill', { variant: 'warning' });
+      return;
+    }
 
-  //   setIsAutofilling(true);
+    setIsAutofilling(true);
 
-  //   try {
-  //     const pdfPool = [
-  //       'financial_statement_year_1.pdf',
-  //       'financial_statement_year_2.pdf',
-  //       'income_tax_return_year_1.pdf',
-  //       'gstr9_year_1.pdf',
-  //     ];
+    try {
+      const autoData = getInvestorInstitutionalDocumentsAutofill();
 
-  //     let selectedType = moaAoaType || defaultMoaAoaType;
-  //     if (!selectedType) {
-  //       if (moaDoc) {
-  //         selectedType = 'moa';
-  //       } else if (aoaDoc) {
-  //         selectedType = 'aoa';
-  //       }
-  //     }
-  //     if (selectedType) {
-  //       setValue('moaAoaType', selectedType, { shouldValidate: true, shouldDirty: true });
-  //     }
+      let selectedType = moaAoaType || defaultMoaAoaType || autoData.moaAoaType;
+      if (!selectedType) {
+        if (moaDoc) {
+          selectedType = 'moa';
+        } else if (aoaDoc) {
+          selectedType = 'aoa';
+        }
+      }
 
-  //     let selectedDoc = null;
-  //     if (selectedType === 'aoa') {
-  //       selectedDoc = aoaDoc;
-  //     } else if (selectedType === 'moa') {
-  //       selectedDoc = moaDoc;
-  //     }
+      if (selectedType) {
+        setValue('moaAoaType', selectedType, { shouldValidate: true, shouldDirty: true });
+      }
 
-  //     const uniqueDocs = [
-  //       certificateDoc,
-  //       gstDoc,
-  //       selectedDoc,
-  //       ...remainingDocuments,
-  //     ].filter((item, index, arr) => item?.documentId && arr.findIndex((d) => d?.documentId === item.documentId) === index);
+      let selectedDoc = null;
+      if (selectedType === 'aoa') {
+        selectedDoc = aoaDoc;
+      } else if (selectedType === 'moa') {
+        selectedDoc = moaDoc;
+      }
 
-  //     const uploadedFiles = await Promise.all(
-  //       uniqueDocs.map(async (item, index) => {
-  //         const fileName = pdfPool[index % pdfPool.length];
-  //         try {
-  //           const response = await fetch(`/pdfs/kyb/${fileName}`);
-  //           if (!response.ok) return { item, file: null };
+      const uniqueDocs = [certificateDoc, gstDoc, selectedDoc, ...remainingDocuments].filter(
+        (item, index, arr) =>
+          item?.documentId && arr.findIndex((doc) => doc?.documentId === item.documentId) === index
+      );
 
-  //           const blob = await response.blob();
-  //           const file = new File([blob], fileName, { type: 'application/pdf' });
-  //           const formData = new FormData();
-  //           formData.append('file', file);
+      const uploadResults = await uploadAutofillAssets(
+        uniqueDocs.map((item, index) => ({
+          field: `doc_${item.documentId}`,
+          fileName: `${item.documentValue || 'document'}-${index + 1}.jpg`,
+        }))
+      );
 
-  //           const uploadRes = await axiosInstance.post('/files', formData);
-  //           return { item, file: uploadRes?.data?.files?.[0] || null };
-  //         } catch (error) {
-  //           return { item, file: null };
-  //         }
-  //       })
-  //     );
+      uploadResults.forEach(({ field, file }) => {
+        if (!file?.id) return;
+        setValue(field, file, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      });
 
-  //     uploadedFiles.forEach(({ item, file }) => {
-  //       if (!item?.documentId || !file?.id) return;
-  //       setValue(`doc_${item.documentId}`, file, {
-  //         shouldValidate: true,
-  //         shouldDirty: true,
-  //         shouldTouch: true,
-  //       });
-  //     });
-
-  //     const uploadedCount = uploadedFiles.filter((entry) => !!entry.file?.id).length;
-  //     if (uploadedCount > 0) {
-  //       enqueueSnackbar(`Autofill uploaded ${uploadedCount} document(s)`, { variant: 'success' });
-  //     } else {
-  //       enqueueSnackbar('Autofill could not upload documents', { variant: 'warning' });
-  //     }
-  //   } finally {
-  //     setIsAutofilling(false);
-  //   }
-  // };
+      const uploadedCount = uploadResults.filter((entry) => !!entry.file?.id).length;
+      if (uploadedCount > 0) {
+        enqueueSnackbar(`Autofill uploaded ${uploadedCount} document(s)`, { variant: 'success' });
+      } else {
+        enqueueSnackbar('Autofill could not upload documents', { variant: 'warning' });
+      }
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
 
   const renderDocumentField = (item, mandatory = false) => {
     if (!item?.documentId) return null;
@@ -552,7 +535,7 @@ export default function KYCMerchantDetails({
           </Paper>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-            {/* <LoadingButton
+            <LoadingButton
               type="button"
               color="primary"
               variant="contained"
@@ -560,7 +543,7 @@ export default function KYCMerchantDetails({
               onClick={handleAutoFill}
             >
               Autofill
-            </LoadingButton> */}
+            </LoadingButton>
             <LoadingButton type="submit" color="primary" variant="contained" loading={isSubmitting}>
               Next
             </LoadingButton>

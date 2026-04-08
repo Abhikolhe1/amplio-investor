@@ -30,11 +30,11 @@ import { useRouter } from 'src/routes/hook';
 import { useGetinvestorTypes } from 'src/api/investorTypes';
 import Logo from 'src/components/logo';
 import { indianStates } from 'src/_mock/_state';
+import { getInvestorInstitutionalBasicInfoAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
 import axiosInstance from 'src/utils/axios';
+import { uploadAutofillAsset } from 'src/utils/kyc-autofill';
 import { useGetKycProgress } from 'src/api/investorKyc';
 // import KYCFooter from './kyc-footer';
-
-// import { NewCompanyBasicInfo } from 'src/forms-autofilled-script/kyb-script/newkyb';
 
 // ----------------------------------------------------------------------
 
@@ -54,6 +54,7 @@ export default function KYCBasicInfo() {
   const [panExtractionStatus, setPanExtractionStatus] = useState('idle'); // 'idle' | 'success' | 'failed'
   const [extractedPanDetails, setExtractedPanDetails] = useState(null);
   const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
 
   // State to store mapped API values
   const [investorOptions, setinvestorOptions] = useState([]);
@@ -390,74 +391,70 @@ export default function KYCBasicInfo() {
     extractPanDetails();
   }, [panFile?.id, skipPanExtractionOnce, enqueueSnackbar, setValue]);
 
-  // const handleAutoFill = async () => {
-  //   const autoData = NewCompanyBasicInfo();
+  const handleAutoFill = async () => {
+    setIsAutofilling(true);
 
-  //   const applyValue = (name, value) =>
-  //     setValue(name, value, {
-  //       shouldValidate: true,
-  //       shouldDirty: true,
-  //       shouldTouch: true,
-  //     });
+    const autoData = getInvestorInstitutionalBasicInfoAutofill();
 
-  //   applyValue('cin', autoData.cin);
-  //   applyValue('companyName', autoData.companyName);
-  //   applyValue('gstin', autoData.gstin);
-  //   applyValue('dateOfIncorporation', autoData.dateOfIncorporation);
-  //   applyValue('msmeUdyamRegistrationNo', autoData.msmeUdyamRegistrationNo);
-  //   applyValue('city', autoData.city);
+    const applyValue = (name, value) =>
+      setValue(name, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
-  //   const stateObj = indianStates.find(
-  //     (s) => s.label === autoData.state
-  //   );
-  //   applyValue('state', stateObj ? stateObj.value : '');
-  //   applyValue('country', autoData.country);
-  //   applyValue('panNumber', autoData.panNumber);
-  //   applyValue('panHoldersName', autoData.companyName);
+    applyValue('cin', autoData.cin);
+    applyValue('companyName', autoData.companyName);
+    applyValue('gstin', autoData.gstin);
+    applyValue('dateOfIncorporation', autoData.dateOfIncorporation);
+    applyValue('msmeUdyamRegistrationNo', autoData.msmeUdyamRegistrationNo);
+    applyValue('city', autoData.city);
 
-  //   if (!getValues('investorTypeId') && dealershipOptions.length > 0) {
-  //     applyValue('investorTypeId', dealershipOptions[0].id);
-  //   }
+    const stateObj = indianStates.find(
+      (state) => state.label === autoData.state || state.value === autoData.state
+    );
 
-  //   try {
-  //     const fileName = 'financial_statement_year_1.pdf';
-  //     const response = await fetch(`/pdfs/kyb/${fileName}`);
-  //     if (!response.ok) {
-  //       enqueueSnackbar('Autofill data applied, but PAN document upload failed', {
-  //         variant: 'warning',
-  //       });
-  //       return;
-  //     }
+    applyValue('state', stateObj ? stateObj.value : autoData.state);
+    applyValue('country', autoData.country);
+    applyValue('panNumber', autoData.panNumber);
+    applyValue('panHoldersName', autoData.panHoldersName);
 
-  //     const blob = await response.blob();
-  //     const file = new File([blob], fileName, { type: 'application/pdf' });
-  //     const formData = new FormData();
-  //     formData.append('file', file);
+    if (!getValues('investorTypeId') && investorOptions.length > 0) {
+      const matchingInvestorType = investorOptions.find(
+        (option) => option.label === autoData.investorTypeLabel
+      );
 
-  //     const uploadRes = await axiosInstance.post('/files', formData);
-  //     const uploadedFile = uploadRes?.data?.files?.[0] || null;
+      applyValue('investorTypeId', matchingInvestorType?.id || investorOptions[0].id);
+    }
 
-  //     if (!uploadedFile?.id) {
-  //       enqueueSnackbar('Autofill data applied, but PAN document upload failed', {
-  //         variant: 'warning',
-  //       });
-  //       return;
-  //     }
+    try {
+      const uploadedFile = await uploadAutofillAsset({
+        fileName: 'institutional-pan-sample.jpg',
+      });
 
-  //     setSkipPanExtractionOnce(true);
-  //     applyValue('panFile', uploadedFile);
-  //     setExtractedPanDetails({
-  //       extractedInvestorName: autoData.companyName,
-  //       extractedPanNumber: autoData.panNumber,
-  //     });
+      if (!uploadedFile?.id) {
+        enqueueSnackbar('Autofill data applied, but PAN document upload failed', {
+          variant: 'warning',
+        });
+        return;
+      }
 
-  //     enqueueSnackbar('Autofill completed successfully', { variant: 'success' });
-  //   } catch (error) {
-  //     enqueueSnackbar('Autofill data applied, but PAN document upload failed', {
-  //       variant: 'warning',
-  //     });
-  //   }
-  // };
+      setSkipPanExtractionOnce(true);
+      applyValue('panFile', uploadedFile);
+      setExtractedPanDetails({
+        extractedInvestorName: autoData.panHoldersName,
+        extractedPanNumber: autoData.panNumber,
+      });
+
+      enqueueSnackbar('Autofill completed successfully', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Autofill data applied, but PAN document upload failed', {
+        variant: 'warning',
+      });
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 8 }}>
@@ -543,6 +540,7 @@ export default function KYCBasicInfo() {
                     endAdornment: (
                       <Button
                         size="small"
+                        color='primary'
                         variant="contained"
                         sx={{
                           textTransform: 'none',
@@ -725,11 +723,12 @@ export default function KYCBasicInfo() {
               textAlign="center"
               sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}
             >
-              {/* <Button
+              <Button
                 type="button"
                 variant="contained"
                 color="primary"
                 size="large"
+                disabled={isAutofilling}
                 sx={{
                   px: 6,
                   py: 1.6,
@@ -738,8 +737,8 @@ export default function KYCBasicInfo() {
                 }}
                 onClick={handleAutoFill}
               >
-                Autofill
-              </Button> */}
+                {isAutofilling ? 'Autofilling...' : 'Autofill'}
+              </Button>
               <LoadingButton
                 type="submit"
                 variant="contained"

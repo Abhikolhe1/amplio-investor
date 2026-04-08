@@ -27,7 +27,8 @@ import { useAuthContext } from 'src/auth/hooks';
 import { DatePicker } from '@mui/x-date-pickers';
 import axiosInstance from 'src/utils/axios';
 import { Typography } from '@mui/material';
-// import { NewKycSignatoryDetails } from 'src/forms-autofilled-script/kyb-script/newkyb';
+import { getInvestorInstitutionalSignatoryAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
+import { uploadAutofillAssets } from 'src/utils/kyc-autofill';
 
 const ROLES = [
     { value: 'director', label: 'Director' },
@@ -171,6 +172,7 @@ export default function KYCAddSignatoriesForm({
                     fullName: data.name,
                     email: data.email,
                     phone: data.phoneNumber,
+                    status: 0,
 
                     // Extracted PAN details (from OCR)
                     extractedPanFullName: extractedPan?.extractedPanFullName || '',
@@ -244,11 +246,13 @@ export default function KYCAddSignatoriesForm({
                 submittedPanNumber: '',
                 submittedDateOfBirth: '',
             });
+            setExtractedPan(null);
         }
     }, [open, currentUser, reset]);
 
     useEffect(() => {
-        if (!panFile?.id) return;
+        const uploadedPanId = panFile?.id || panFile?.files?.[0]?.id;
+        if (!uploadedPanId) return;
         if (skipPanExtractionOnce) {
             setSkipPanExtractionOnce(false);
             return;
@@ -259,7 +263,7 @@ export default function KYCAddSignatoriesForm({
                 setPanExtractionStatus('loading');
 
                 const response = await axiosInstance.post('/extract/pan-info', {
-                    fileId: panFile.id,
+                    fileId: uploadedPanId,
                 });
 
                 const data = response?.data?.data || {};
@@ -277,14 +281,14 @@ export default function KYCAddSignatoriesForm({
                 }
 
                 if (panName) {
-                    setValue('panHoldersName', panName, {
+                    setValue('submittedPanFullName', panName, {
                         shouldValidate: true,
                         shouldDirty: true,
                     });
                 }
 
                 if (panNumber) {
-                    setValue('panNumber', panNumber, {
+                    setValue('submittedPanNumber', panNumber, {
                         shouldValidate: true,
                         shouldDirty: true,
                     });
@@ -297,6 +301,11 @@ export default function KYCAddSignatoriesForm({
                     });
                 }
 
+                setExtractedPan({
+                    extractedPanFullName: panName || '',
+                    extractedPanNumber: panNumber || '',
+                    extractedDateOfBirth: panDob || '',
+                });
                 setPanExtractionStatus('success');
                 enqueueSnackbar('PAN details extracted successfully', {
                     variant: 'success',
@@ -312,75 +321,61 @@ export default function KYCAddSignatoriesForm({
 
         extractPanDetails();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panFile?.id, skipPanExtractionOnce]);
+    }, [panFile?.id, panFile?.files, skipPanExtractionOnce]);
 
-    // const handleAutoFill = async () => {
-    //     setIsAutofilling(true);
-    //     const autoData = NewKycSignatoryDetails();
+    const handleAutoFill = async () => {
+        setIsAutofilling(true);
+        const autoData = getInvestorInstitutionalSignatoryAutofill();
 
-    //     const applyValue = (name, value) =>
-    //         setValue(name, value, {
-    //             shouldValidate: true,
-    //             shouldDirty: true,
-    //             shouldTouch: true,
-    //         });
+        const applyValue = (name, value) =>
+            setValue(name, value, {
+                shouldValidate: true,
+                shouldDirty: true,
+                shouldTouch: true,
+            });
 
-    //     // First map everything except role
-    //     Object.entries(autoData).forEach(([key, value]) => {
-    //         if (key !== 'role') {
-    //             applyValue(key, value);
-    //         }
-    //     });
+        Object.entries(autoData).forEach(([key, value]) => {
+            if (key !== 'role') {
+                applyValue(key, value);
+            }
+        });
 
-    //     const matchedRole = ROLES.find(
-    //         (r) => r.label.toLowerCase() === autoData.role?.toLowerCase()
-    //     );
+        const matchedRole = ROLES.find(
+            (role) => role.label.toLowerCase() === autoData.role?.toLowerCase()
+        );
 
-    //     applyValue('role', matchedRole ? matchedRole.value : '');
+        applyValue('role', matchedRole ? matchedRole.value : '');
 
-    //     try {
-    //         const uploadTargets = [
-    //             { field: 'panCard', fileName: 'financial_statement_year_1.pdf' },
-    //             { field: 'boardResolution', fileName: 'income_tax_return_year_1.pdf' },
-    //         ];
+        try {
+            const uploadResults = await uploadAutofillAssets([
+                { field: 'panCard', fileName: 'institutional-signatory-pan.jpg' },
+                { field: 'boardResolution', fileName: 'institutional-board-resolution.jpg' },
+            ]);
 
-    //         const uploadResults = await Promise.all(
-    //             uploadTargets.map(async ({ field, fileName }) => {
-    //                 try {
-    //                     const response = await fetch(`/pdfs/kyb/${fileName}`);
-    //                     if (!response.ok) return { field, file: null };
+            setSkipPanExtractionOnce(true);
+            uploadResults.forEach(({ field, file }) => {
+                if (!file?.id) return;
+                applyValue(field, file);
+            });
 
-    //                     const blob = await response.blob();
-    //                     const file = new File([blob], fileName, { type: 'application/pdf' });
-    //                     const formData = new FormData();
-    //                     formData.append('file', file);
+            setExtractedPan({
+                extractedPanFullName: autoData.submittedPanFullName,
+                extractedPanNumber: autoData.submittedPanNumber,
+                extractedDateOfBirth: autoData.submittedDateOfBirth,
+            });
 
-    //                     const uploadRes = await axiosInstance.post('/files', formData);
-    //                     return { field, file: uploadRes?.data?.files?.[0] || null };
-    //                 } catch (error) {
-    //                     return { field, file: null };
-    //                 }
-    //             })
-    //         );
-
-    //         setSkipPanExtractionOnce(true);
-    //         uploadResults.forEach(({ field, file }) => {
-    //             if (!file?.id) return;
-    //             applyValue(field, file);
-    //         });
-
-    //         const uploadedCount = uploadResults.filter((entry) => !!entry.file?.id).length;
-    //         if (uploadedCount > 0) {
-    //             enqueueSnackbar(`Autofill uploaded ${uploadedCount} signatory document(s)`, {
-    //                 variant: 'success',
-    //             });
-    //         } else {
-    //             enqueueSnackbar('Signatory data autofilled, document upload failed', { variant: 'warning' });
-    //         }
-    //     } finally {
-    //         setIsAutofilling(false);
-    //     }
-    // };
+            const uploadedCount = uploadResults.filter((entry) => !!entry.file?.id).length;
+            if (uploadedCount > 0) {
+                enqueueSnackbar(`Autofill uploaded ${uploadedCount} signatory document(s)`, {
+                    variant: 'success',
+                });
+            } else {
+                enqueueSnackbar('Signatory data autofilled, document upload failed', { variant: 'warning' });
+            }
+        } finally {
+            setIsAutofilling(false);
+        }
+    };
 
     return (
         <Dialog
@@ -529,17 +524,17 @@ export default function KYCAddSignatoriesForm({
 
                         {/* Autofill Button  */}
 
-                        {/* {!isViewMode && (
+                        {!isViewMode && (
                             <Button
                                 type="button"
                                 variant="contained"
                                 color='primary'
-                                // onClick={handleAutoFill}
+                                onClick={handleAutoFill}
                                 disabled={isAutofilling}
                             >
                                 {isAutofilling ? 'Autofilling...' : 'Autofill'}
                             </Button>
-                        )} */}
+                        )}
 
                         {!isViewMode && (
                             <Button

@@ -22,6 +22,8 @@ import FormProvider, {
 import { DatePicker } from '@mui/x-date-pickers';
 import { Typography } from '@mui/material';
 import axiosInstance from 'src/utils/axios';
+import { getInvestorInstitutionalUboAutofill } from 'src/_mock/investor-institutional-kyc-autofill';
+import { uploadAutofillAsset } from 'src/utils/kyc-autofill';
 
 const UBO_ROLES = [
   { value: 'proprietor', label: 'Proprietor (Sole Owner)' },
@@ -45,6 +47,8 @@ export default function KYCAddUBOsForm({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [extractedPan, setExtractedPan] = useState(null);
+  const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
 
   const NewUserSchema = Yup.object().shape({
     name: Yup.string()
@@ -155,6 +159,7 @@ export default function KYCAddUBOsForm({
         fullName: data.name,
         email: data.email,
         phone: data.phoneNumber,
+        status: 0,
         ownershipPercentage: Number(data.ownershipPercentage),
 
         extractedPanFullName: extractedPan?.extractedPanFullName || '',
@@ -238,16 +243,23 @@ export default function KYCAddUBOsForm({
         submittedDateOfBirth: currentUser?.submittedDateOfBirth || '',
       });
       setExtractedPan(null);
+      setSkipPanExtractionOnce(false);
     }
   }, [open, currentUser, reset]);
 
   useEffect(() => {
-    if (!panFile?.id) return;
+    const uploadedPanId = panFile?.id || panFile?.files?.[0]?.id;
+    if (!uploadedPanId) return;
+
+    if (skipPanExtractionOnce) {
+      setSkipPanExtractionOnce(false);
+      return;
+    }
 
     const extractPanDetails = async () => {
       try {
         const response = await axiosInstance.post('/extract/pan-info', {
-          fileId: panFile.id,
+          fileId: uploadedPanId,
         });
 
         const data = response?.data?.data || {};
@@ -303,75 +315,56 @@ export default function KYCAddUBOsForm({
     };
 
     extractPanDetails();
-  }, [panFile?.id, enqueueSnackbar, setValue]);
+  }, [panFile?.id, panFile?.files, enqueueSnackbar, setValue, skipPanExtractionOnce]);
 
-  // const handleAutoFill = async () => {
-  //   setIsAutofilling(true);
-  //   const autoData = NewKycSignatoryDetails();
+  const handleAutoFill = async () => {
+    setIsAutofilling(true);
+    const autoData = getInvestorInstitutionalUboAutofill();
 
-  //   const applyValue = (name, value) =>
-  //     setValue(name, value, {
-  //       shouldValidate: true,
-  //       shouldDirty: true,
-  //       shouldTouch: true,
-  //     });
+    const applyValue = (name, value) =>
+      setValue(name, value, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
-  //   // First map everything except role
-  //   Object.entries(autoData).forEach(([key, value]) => {
-  //     if (key !== 'role') {
-  //       applyValue(key, value);
-  //     }
-  //   });
+    Object.entries(autoData).forEach(([key, value]) => {
+      if (key !== 'role') {
+        applyValue(key, value);
+      }
+    });
 
-  //   const matchedRole = ROLES.find(
-  //     (r) => r.label.toLowerCase() === autoData.role?.toLowerCase()
-  //   );
+    const matchedRole = UBO_ROLES.find(
+      (role) => role.label.toLowerCase() === autoData.role?.toLowerCase()
+    );
 
-  //   applyValue('role', matchedRole ? matchedRole.value : '');
+    applyValue('role', matchedRole ? matchedRole.value : '');
 
-  //   try {
-  //     const uploadTargets = [
-  //       { field: 'panCard', fileName: 'financial_statement_year_1.pdf' },
-  //       { field: 'boardResolution', fileName: 'income_tax_return_year_1.pdf' },
-  //     ];
+    try {
+      const uploadedFile = await uploadAutofillAsset({
+        fileName: 'institutional-ubo-pan.jpg',
+      });
 
-  //     const uploadResults = await Promise.all(
-  //       uploadTargets.map(async ({ field, fileName }) => {
-  //         try {
-  //           const response = await fetch(`/pdfs/kyb/${fileName}`);
-  //           if (!response.ok) return { field, file: null };
+      if (uploadedFile?.id) {
+        setSkipPanExtractionOnce(true);
+        applyValue('panCard', uploadedFile);
+      }
 
-  //           const blob = await response.blob();
-  //           const file = new File([blob], fileName, { type: 'application/pdf' });
-  //           const formData = new FormData();
-  //           formData.append('file', file);
+      setExtractedPan({
+        extractedPanFullName: autoData.submittedPanFullName,
+        extractedPanNumber: autoData.submittedPanNumber,
+        extractedDateOfBirth: autoData.submittedDateOfBirth,
+      });
 
-  //           const uploadRes = await axiosInstance.post('/files', formData);
-  //           return { field, file: uploadRes?.data?.files?.[0] || null };
-  //         } catch (error) {
-  //           return { field, file: null };
-  //         }
-  //       })
-  //     );
-
-  //     setSkipPanExtractionOnce(true);
-  //     uploadResults.forEach(({ field, file }) => {
-  //       if (!file?.id) return;
-  //       applyValue(field, file);
-  //     });
-
-  //     const uploadedCount = uploadResults.filter((entry) => !!entry.file?.id).length;
-  //     if (uploadedCount > 0) {
-  //       enqueueSnackbar(`Autofill uploaded ${uploadedCount} signatory document(s)`, {
-  //         variant: 'success',
-  //       });
-  //     } else {
-  //       enqueueSnackbar('Signatory data autofilled, document upload failed', { variant: 'warning' });
-  //     }
-  //   } finally {
-  //     setIsAutofilling(false);
-  //   }
-  // };
+      if (uploadedFile?.id) {
+        enqueueSnackbar('UBO autofill completed successfully', { variant: 'success' });
+      } else {
+        enqueueSnackbar('UBO data autofilled, document upload failed', { variant: 'warning' });
+      }
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
 
   return (
     <Dialog
@@ -501,7 +494,7 @@ export default function KYCAddUBOsForm({
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
 
-            {/* {!isViewMode && (
+            {!isViewMode && (
               <Button
                 type="button"
                 variant="contained"
@@ -511,7 +504,7 @@ export default function KYCAddUBOsForm({
               >
                 {isAutofilling ? 'Autofilling...' : 'Autofill'}
               </Button>
-            )} */}
+            )}
 
             {!isViewMode && (
               <Button
