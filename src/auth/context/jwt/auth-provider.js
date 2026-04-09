@@ -19,6 +19,27 @@ const initialState = {
   loading: true,
 };
 
+const getAuthUser = (data) => data?.profile || data?.user || null;
+
+const persistAuthMetadata = (data) => {
+  const user = getAuthUser(data);
+  const sessionId = data?.sessionId || data?.profile?.sessionId || data?.user?.sessionId;
+
+  if (sessionId) {
+    localStorage.setItem('sessionId', sessionId);
+  }
+
+  if (user?.usersId) {
+    sessionStorage.setItem('investor_user_id', user.usersId);
+  }
+
+  if (user?.id) {
+    sessionStorage.setItem('investor_profile_id', user.id);
+  }
+
+  return user;
+};
+
 const reducer = (state, action) => {
   if (action.type === 'INITIAL') {
     return {
@@ -74,7 +95,7 @@ export function AuthProvider({ children }) {
         //   }
         // }
 
-       const user = response.data?.profile;
+        const user = persistAuthMetadata(response.data);
 
         dispatch({
           type: 'INITIAL',
@@ -119,7 +140,8 @@ export function AuthProvider({ children }) {
       rememberMe,
     });
 
-    const { accessToken, user } = response.data;
+    const { accessToken } = response.data;
+    const user = persistAuthMetadata(response.data);
 
     sessionStorage.setItem(STORAGE_KEY, accessToken);
     setSession(accessToken);
@@ -128,6 +150,8 @@ export function AuthProvider({ children }) {
       type: 'LOGIN',
       payload:{user},
     });
+
+    return user;
   },[]);
 
   // LOGIN
@@ -153,7 +177,8 @@ export function AuthProvider({ children }) {
     //   }
     // }
 
-    const { accessToken, user } = response.data;
+    const { accessToken } = response.data;
+    const user = persistAuthMetadata(response.data);
 
     setSession(accessToken);
 
@@ -163,6 +188,8 @@ export function AuthProvider({ children }) {
         user,
       },
     });
+
+    return user;
   }, []);
 
   // REGISTER
@@ -176,7 +203,8 @@ export function AuthProvider({ children }) {
 
     const response = await axios.post(endpoints.auth.register, data);
 
-    const { accessToken, user } = response.data;
+    const { accessToken } = response.data;
+    const user = persistAuthMetadata(response.data);
 
     sessionStorage.setItem(STORAGE_KEY, accessToken);
 
@@ -186,6 +214,8 @@ export function AuthProvider({ children }) {
         user,
       },
     });
+
+    return user;
   }, []);
 
   // LOGOUT
