@@ -49,6 +49,7 @@ export default function KYCAddUBOsForm({
   const [extractedPan, setExtractedPan] = useState(null);
   const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
+  const [isAutofillPan, setIsAutofillPan] = useState(false);
 
   const NewUserSchema = Yup.object().shape({
     name: Yup.string()
@@ -155,6 +156,18 @@ export default function KYCAddUBOsForm({
       const designationValue =
         data.role === 'other' ? data.customDesignation : data.role;
 
+      const extractedPanPayload = isAutofillPan
+        ? {
+            extractedPanFullName: '',
+            extractedPanNumber: '',
+            extractedDateOfBirth: '',
+          }
+        : {
+            extractedPanFullName: extractedPan?.extractedPanFullName || '',
+            extractedPanNumber: extractedPan?.extractedPanNumber || '',
+            extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
+          };
+
       const uboDetail = {
         fullName: data.name,
         email: data.email,
@@ -163,9 +176,7 @@ export default function KYCAddUBOsForm({
         mode: 1,
         ownershipPercentage: Number(data.ownershipPercentage),
 
-        extractedPanFullName: extractedPan?.extractedPanFullName || '',
-        extractedPanNumber: extractedPan?.extractedPanNumber || '',
-        extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
+        ...extractedPanPayload,
 
         submittedPanFullName: data.submittedPanFullName,
         submittedPanNumber: data.submittedPanNumber,
@@ -245,6 +256,7 @@ export default function KYCAddUBOsForm({
       });
       setExtractedPan(null);
       setSkipPanExtractionOnce(false);
+      setIsAutofillPan(false);
     }
   }, [open, currentUser, reset]);
 
@@ -256,6 +268,8 @@ export default function KYCAddUBOsForm({
       setSkipPanExtractionOnce(false);
       return;
     }
+
+    setIsAutofillPan(false);
 
     const extractPanDetails = async () => {
       try {
@@ -347,15 +361,11 @@ export default function KYCAddUBOsForm({
       });
 
       if (uploadedFile?.id) {
+        setIsAutofillPan(true);
         setSkipPanExtractionOnce(true);
         applyValue('panCard', uploadedFile);
       }
-
-      setExtractedPan({
-        extractedPanFullName: autoData.submittedPanFullName,
-        extractedPanNumber: autoData.submittedPanNumber,
-        extractedDateOfBirth: autoData.submittedDateOfBirth,
-      });
+      setExtractedPan(null);
 
       if (uploadedFile?.id) {
         enqueueSnackbar('UBO autofill completed successfully', { variant: 'success' });
