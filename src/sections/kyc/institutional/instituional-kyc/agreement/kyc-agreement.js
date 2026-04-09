@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Alert, Box, Card, Container, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, Container, Grid, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { LoadingButton } from '@mui/lab';
 
@@ -210,9 +210,8 @@ export default function KYCAgreement({
                 p: 2,
                 borderRadius: 2,
                 cursor: 'pointer',
-                border: `1px solid ${
-                  watch('consent') ? theme.palette.primary.main : theme.palette.divider
-                }`,
+                border: `1px solid ${watch('consent') ? theme.palette.primary.main : theme.palette.divider
+                  }`,
                 bgcolor: watch('consent') ? theme.palette.action.selected : 'transparent',
                 '&:hover': {
                   bgcolor: theme.palette.action.hover,
@@ -227,29 +226,26 @@ export default function KYCAgreement({
               </Typography>
             </Box>
 
-            <Box display="flex" justifyContent="flex-end">
-              <LoadingButton
-                type="button"
-                variant="outlined"
-                size="medium"
-                color="primary"
-                sx={{ px: 4, borderRadius: 2, mr: 2 }}
-                loading={isAutofilling}
-                onClick={handleAutoFill}
-              >
-                Autofill
-              </LoadingButton>
-              <LoadingButton
-                type="submit"
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button type="button"
                 variant="contained"
                 size="medium"
                 color="primary"
-                sx={{ px: 4, borderRadius: 2 }}
-                loading={isSaving || isSubmitting}
-              >
+
+                loading={isAutofilling}
+                onClick={handleAutoFill}>
+                Autofill
+              </Button>
+              <Button type="submit"
+                variant="contained"
+                size="medium"
+                color="primary"
+
+                loading={isSaving || isSubmitting}>
+
                 Next
-              </LoadingButton>
-            </Box>
+              </Button>
+            </Grid>
           </Stack>
         </Card>
       </FormProvider>

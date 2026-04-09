@@ -160,6 +160,7 @@ export default function KYCAddUBOsForm({
         email: data.email,
         phone: data.phoneNumber,
         status: 0,
+        mode: 1,
         ownershipPercentage: Number(data.ownershipPercentage),
 
         extractedPanFullName: extractedPan?.extractedPanFullName || '',
