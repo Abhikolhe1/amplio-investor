@@ -44,6 +44,7 @@ export default function KYCAddUBOsForm({
   currentUser,
   isViewMode,
   isEditMode,
+  existingUbos = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [extractedPan, setExtractedPan] = useState(null);
@@ -67,7 +68,11 @@ export default function KYCAddUBOsForm({
       .required('Phone number is required')
       .matches(/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number'),
     role: Yup.string().required('Role is required'),
-    ownershipPercentage: Yup.number().required('Ownership percentage is required'),
+    ownershipPercentage: Yup.number()
+      .typeError('Ownership percentage is required')
+      .moreThan(0, 'Ownership percentage must be more than 0')
+      .max(100, 'Ownership percentage cannot be more than 100')
+      .required('Ownership percentage is required'),
     customDesignation: Yup.string().when('role', (role, schema) =>
       role === 'other' ? schema.required('Please enter designation') : schema.notRequired()
     ),
@@ -119,7 +124,6 @@ export default function KYCAddUBOsForm({
     control: methods.control,
     name: 'panCard',
   });
-  const isPanUploaded = Boolean(panFile?.id || panFile?.files?.[0]?.id);
 
   const watchRole = methods.watch('role');
 
@@ -137,6 +141,16 @@ export default function KYCAddUBOsForm({
     return null;
   };
 
+  const getExistingOwnershipTotal = (excludeUboId = null) =>
+    existingUbos.reduce((sum, ubo) => {
+      if (!ubo) return sum;
+      if (excludeUboId && String(ubo.id) === String(excludeUboId)) {
+        return sum;
+      }
+
+      return sum + (Number(ubo.ownershipPercentage) || 0);
+    }, 0);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       const usersId = sessionStorage.getItem('investor_user_id');
@@ -150,6 +164,17 @@ export default function KYCAddUBOsForm({
 
       if (!panCardId && !isEditMode) {
         enqueueSnackbar('PAN card is required', { variant: 'error' });
+        return;
+      }
+
+      const currentOwnership = Number(data.ownershipPercentage) || 0;
+      const existingOwnershipTotal = getExistingOwnershipTotal(isEditMode ? currentUser?.id : null);
+      const proposedOwnershipTotal = existingOwnershipTotal + currentOwnership;
+
+      if (proposedOwnershipTotal > 100) {
+        enqueueSnackbar('Ownership percentage cannot be more than 100%', {
+          variant: 'error',
+        });
         return;
       }
 
@@ -537,6 +562,7 @@ export default function KYCAddUBOsForm({
 
 KYCAddUBOsForm.propTypes = {
   currentUser: PropTypes.object,
+  existingUbos: PropTypes.array,
   onClose: PropTypes.func.isRequired,
   onSuccess: PropTypes.func,
   open: PropTypes.bool.isRequired,
