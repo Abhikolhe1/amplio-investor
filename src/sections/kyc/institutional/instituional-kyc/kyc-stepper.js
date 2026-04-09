@@ -23,7 +23,7 @@ export default function Stepper() {
   const router = useRouter();
   const steps = [
     { id: 'kyc_merchant_documents', number: 1, lines: ['Investor', 'Documents'] },
-     { id: 'kyc_address_details', number: 2, lines: ['Address', 'Details'] },
+    { id: 'kyc_address_details', number: 2, lines: ['Address', 'Details'] },
     { id: 'kyc_ubo_details', number: 3, lines: ['UBO', 'Details'] },
     { id: 'kyc_signatories', number: 4, lines: ['Signatories', ''] },
     { id: 'kyc_compliance_declarations', number: 5, lines: ['Compliance', '&', 'Declarations'] },
@@ -80,7 +80,7 @@ export default function Stepper() {
           />
         );
 
-       case 'kyc_address_details':
+      case 'kyc_address_details':
         return (
           <KYCAddressDetails
             percent={(p) => updateStepPercent('kyc_address_details', p)}
@@ -160,7 +160,7 @@ export default function Stepper() {
             dataInitializedSteps={dataInitializedSteps}
             setDataInitializedSteps={() =>
               setDataInitializedSteps((prev) => [...prev, 'kyc_agreement'])
-            } 
+            }
           />
         );
 
@@ -189,17 +189,20 @@ export default function Stepper() {
           top: 16,
           left: 16,
           zIndex: 1300,
+          mb: 10
         }}
       >
         <Logo />
       </Box>
+      <Box sx={{ pt: 4 }}>
+        <ProgressStepper
+          steps={steps}
+          activeStepId={activeStepId}
+          stepsProgress={stepsProgress}
+          onStepClick={handleStepClick}
 
-      <ProgressStepper
-        steps={steps}
-        activeStepId={activeStepId} 
-        stepsProgress={stepsProgress}
-        onStepClick={handleStepClick}
-      />
+        />
+      </Box>
 
       <Stack sx={{ mt: 3 }}>
         <AnimatePresence mode="wait">

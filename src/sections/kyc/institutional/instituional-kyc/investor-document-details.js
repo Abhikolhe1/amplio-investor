@@ -484,7 +484,7 @@ export default function KYCMerchantDetails({
               textAlign: 'left',
             }}
           >
-            Merchant Details
+            Investor Details
           </Typography>
           <Typography
             variant="h5"
@@ -494,7 +494,7 @@ export default function KYCMerchantDetails({
               textAlign: 'left',
             }}
           >
-            Submit required merchant documents.
+            Submit required investor documents.
           </Typography>
         </Stack>
 
