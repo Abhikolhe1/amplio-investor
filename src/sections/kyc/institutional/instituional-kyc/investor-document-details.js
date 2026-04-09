@@ -243,7 +243,7 @@ export default function KYCMerchantDetails({
 
     const isStepComplete = mandatoryDocumentIds.every((id) => Boolean(values?.[`doc_${id}`]?.id));
 
-    if (isStepComplete && !dataInitializedSteps?.includes('investor_documents')) {
+    if (isStepComplete && !dataInitializedSteps?.includes('kyc_merchant_documents')) {
       setDataInitializedSteps();
       setActiveStepId();
     }

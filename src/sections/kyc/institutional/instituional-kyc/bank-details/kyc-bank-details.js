@@ -305,8 +305,8 @@ export default function KYCBankDetails({
         bankAddress: bankDetails[0]?.bankAddress || '',
         bankShortCode: bankDetails[0]?.bankShortCode || '',
       });
-      if (!dataInitializedSteps.includes('kyc_bank_details')) {
-        setDataInitializedSteps?.((prev = []) => [...prev, 'kyc_bank_details']);
+      if (!dataInitializedSteps.includes('investor_bank_details')) {
+        setDataInitializedSteps?.((prev = []) => [...prev, 'investor_bank_details']);
         setActiveStepId();
       }
     }
