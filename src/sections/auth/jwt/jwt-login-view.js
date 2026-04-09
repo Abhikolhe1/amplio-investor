@@ -7,9 +7,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
 // routes
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -17,11 +15,9 @@ import { useSearchParams, useRouter } from 'src/routes/hook';
 // config
 import { PATH_AFTER_LOGIN } from 'src/config-global';
 // hooks
-import { useBoolean } from 'src/hooks/use-boolean';
 // auth
 import { useAuthContext } from 'src/auth/hooks';
 // components
-import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import { enqueueSnackbar } from 'notistack';
 import OtpInput from './jwt-otp';
@@ -41,8 +37,6 @@ export default function JwtLoginView() {
   const searchParams = useSearchParams();
 
   const returnTo = searchParams.get('returnTo');
-
-  const password = useBoolean();
 
   const LoginSchema = Yup.object().shape({
     emailOrMobile: Yup.string().required('Email or Mobile is required'),
@@ -212,23 +206,25 @@ export default function JwtLoginView() {
     }
   };
 
-  return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      {!showOtp ? (
+  if (!showOtp) {
+    return (
+      <FormProvider methods={methods} onSubmit={onSubmit}>
         <>
           {renderHead}
           {renderForm}
           {renderBottom}
         </>
-      ) : (
-        <OtpInput
-          emailOrMobile={identifier}
-          value={otp}
-          onChange={setOtp}
-          onVerify={handleVerifyOtp}
-          onResend={handleResendOtp}
-        />
-      )}
-    </FormProvider>
+      </FormProvider>
+    );
+  }
+
+  return (
+    <OtpInput
+      emailOrMobile={identifier}
+      value={otp}
+      onChange={setOtp}
+      onVerify={handleVerifyOtp}
+      onResend={handleResendOtp}
+    />
   );
 }
