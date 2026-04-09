@@ -93,8 +93,14 @@ export default function UbosListView({
   const [editMode, setEditMode] = useState(false);
 
   const { ubos = [], refreshUbos, loading } = useGetUBOs();
-  
+
   const [tableData, setTableData] = useState([]);
+
+  const totalOwnershipPercentage = ubos.reduce(
+    (sum, ubo) => sum + (Number(ubo?.ownershipPercentage) || 0),
+    0
+  );
+  const isOwnershipLimitReached = totalOwnershipPercentage >= 100;
 
   useEffect(() => {
     setTableData(ubos);
@@ -259,6 +265,7 @@ export default function UbosListView({
             variant="contained"
             color="primary"
             startIcon={<Iconify icon="mingcute:add-line" />}
+            disabled={isOwnershipLimitReached}
           >
             New UBO
           </Button>
@@ -419,6 +426,7 @@ export default function UbosListView({
       <KYCAddUBOsForm
         open={open}
         currentUser={selectedUBO}
+        existingUbos={ubos}
         isViewMode={viewMode}
         isEditMode={editMode}
         onClose={handleClose}
