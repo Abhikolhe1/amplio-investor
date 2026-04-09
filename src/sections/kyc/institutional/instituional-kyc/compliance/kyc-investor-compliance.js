@@ -19,10 +19,10 @@ import { getInvestorInstitutionalComplianceAutofill } from 'src/_mock/investor-i
 import axiosInstance from 'src/utils/axios';
 
 const COUNTRY_OPTIONS = [
-  { value: 'India', label: 'India' },
-  { value: 'England', label: 'England' },
-  { value: 'Europe', label: 'Europe' },
-  { value: 'United States', label: 'United States' },
+  { value: 'india', label: 'India' },
+  // { value: 'England', label: 'England' },
+  // { value: 'Europe', label: 'Europe' },
+  // { value: 'United States', label: 'United States' },
 ];
 
 const SOURCE_FUNDS = [
@@ -62,6 +62,8 @@ const normalizeComplianceData = (compliance) => {
   return compliance;
 };
 
+const TIN_NUMBER_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+
 export default function InvestorCompliance({
   percent,
   setActiveStepId,
@@ -79,7 +81,10 @@ export default function InvestorCompliance({
 
   const complianceSchema = Yup.object().shape({
     country: Yup.string().required('Please select the country'),
-    tin_number: Yup.string().required('TIN number is required'),
+    tin_number: Yup.string()
+      .transform((value) => value?.trim().toUpperCase() || '')
+      .matches(TIN_NUMBER_REGEX, 'TIN number must be in format ABCDE1234F')
+      .required('TIN number is required'),
     funds: Yup.string().required('Select source of funds'),
     pep_status: Yup.string().required('Select PEP status'),
     investing_for: Yup.string().required('Select option'),
@@ -274,7 +279,7 @@ export default function InvestorCompliance({
                 <RHFTextField
                   name="tin_number"
                   label="TIN / Tax Identification Number"
-                  inputProps={{ style: { textTransform: 'uppercase' } }}
+                  inputProps={{ maxLength: 10, style: { textTransform: 'uppercase' } }}
                 />
               </Grid>
             </Grid>
