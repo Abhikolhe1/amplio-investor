@@ -54,6 +54,7 @@ export default function KYCAddSignatoriesForm({
     const [panExtractionStatus, setPanExtractionStatus] = useState('idle');
     const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
     const [isAutofilling, setIsAutofilling] = useState(false);
+    const [isAutofillPan, setIsAutofillPan] = useState(false);
 
     const NewUserSchema = Yup.object().shape({
         name: Yup.string()
@@ -166,6 +167,18 @@ export default function KYCAddSignatoriesForm({
 
             const isCustom = data.role === 'OTHER';
 
+            const extractedPanPayload = isAutofillPan
+                ? {
+                    extractedPanFullName: '',
+                    extractedPanNumber: '',
+                    extractedDateOfBirth: '',
+                }
+                : {
+                    extractedPanFullName: extractedPan?.extractedPanFullName || '',
+                    extractedPanNumber: extractedPan?.extractedPanNumber || '',
+                    extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
+                };
+
             const payload = {
                 usersId,
                 signatory: {
@@ -176,9 +189,7 @@ export default function KYCAddSignatoriesForm({
                     mode: 1,
 
                     // Extracted PAN details (from OCR)
-                    extractedPanFullName: extractedPan?.extractedPanFullName || '',
-                    extractedPanNumber: extractedPan?.extractedPanNumber || '',
-                    extractedDateOfBirth: extractedPan?.extractedDateOfBirth || '',
+                    ...extractedPanPayload,
 
                     // Submitted PAN details (after human check / edit)
                     submittedPanFullName: data.submittedPanFullName,
@@ -248,6 +259,7 @@ export default function KYCAddSignatoriesForm({
                 submittedDateOfBirth: '',
             });
             setExtractedPan(null);
+            setIsAutofillPan(false);
         }
     }, [open, currentUser, reset]);
 
@@ -258,6 +270,8 @@ export default function KYCAddSignatoriesForm({
             setSkipPanExtractionOnce(false);
             return;
         }
+
+        setIsAutofillPan(false);
 
         const extractPanDetails = async () => {
             try {
@@ -353,17 +367,16 @@ export default function KYCAddSignatoriesForm({
                 { field: 'boardResolution', fileName: 'institutional-board-resolution.jpg' },
             ]);
 
-            setSkipPanExtractionOnce(true);
+            if (uploadResults.some(({ field, file }) => field === 'panCard' && file?.id)) {
+                setIsAutofillPan(true);
+                setSkipPanExtractionOnce(true);
+            }
             uploadResults.forEach(({ field, file }) => {
                 if (!file?.id) return;
                 applyValue(field, file);
             });
 
-            setExtractedPan({
-                extractedPanFullName: autoData.submittedPanFullName,
-                extractedPanNumber: autoData.submittedPanNumber,
-                extractedDateOfBirth: autoData.submittedDateOfBirth,
-            });
+            setExtractedPan(null);
 
             const uploadedCount = uploadResults.filter((entry) => !!entry.file?.id).length;
             if (uploadedCount > 0) {
