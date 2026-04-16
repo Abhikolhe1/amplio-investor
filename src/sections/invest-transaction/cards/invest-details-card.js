@@ -26,12 +26,11 @@ export default function InvestDetails({ currentDetails }) {
               width: 56,
               height: 56,
               borderRadius: '50%',
-              bgcolor: '#F3FCF7',
-              color: '#73C69A',
+              bgcolor: 'grey.200',
+              color: 'success.main',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexShrink: 0,
             }}
           >
       
@@ -40,21 +39,12 @@ export default function InvestDetails({ currentDetails }) {
 
           <Stack spacing={0.25}>
             <Typography
-              sx={{
-                fontSize: { xs: 18, md: 20 },
-                lineHeight: 1.25,
-                fontWeight: 600,
-              }}
+              variant='h6'
             >
               {product.title}
             </Typography>
             <Typography
-            variant='caption'
-              sx={{
-                lineHeight: 1.3,
-                fontWeight: 400,
-              
-              }}
+            variant='caption' color='grey.500'
             >
               {product.subtitle }
             </Typography>
@@ -66,22 +56,13 @@ export default function InvestDetails({ currentDetails }) {
             <Grid item xs={12} md={6} sx={{ px: 3, py: 3 }}>
               <Stack spacing={0.5}>
                 <Typography
-                  sx={{
-                    fontSize: { xs: 18, md: 20 },
-                    lineHeight: 1.2,
-                    fontWeight: 700,
-                    color: '#1C9C62',
-                  }}
+                 variant='h6'color='success.main'
+
                 >
                   {product.interestRateLabel}
                 </Typography>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.2,
-                    fontWeight: 400,
-                    color: '#9CA3AF',
-                  }}
+                  variant='subtitle2' color='grey.500'
                 >
                   Rate of Interest
                 </Typography>
@@ -101,22 +82,12 @@ export default function InvestDetails({ currentDetails }) {
             >
               <Stack spacing={0.5} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
                 <Typography
-                  sx={{
-                    fontSize: { xs: 18, md: 20 },
-                    lineHeight: 1.2,
-                    fontWeight: 700,
-                    color: '#111827',
-                  }}
+                    variant='h6'
                 >
                   {product.lockIn}
                 </Typography>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.2,
-                    fontWeight: 400,
-                    color: '#9CA3AF',
-                  }}
+                   variant='subtitle2' color='grey.500'
                 >
                   Lock-in
                 </Typography>
@@ -130,22 +101,12 @@ export default function InvestDetails({ currentDetails }) {
             <Grid item xs={12} md={6} sx={{ px: 3, py: 3 }}>
               <Stack spacing={0.5}>
                 <Typography
-                  sx={{
-                    fontSize: { xs: 18, md: 20 },
-                    lineHeight: 1.2,
-                    fontWeight: 700,
-                    color: '#111827',
-                  }}
+                 variant='h6'
                 >
-                  {product.minimumAmountFormatted}
+                  {product.unitCost}
                 </Typography>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.2,
-                    fontWeight: 400,
-                    color: '#9CA3AF',
-                  }}
+                  variant='subtitle2' color='grey.500'
                 >
                   Minimum Amount
                 </Typography>
@@ -165,22 +126,12 @@ export default function InvestDetails({ currentDetails }) {
             >
               <Stack spacing={0.5} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
                 <Typography
-                  sx={{
-                    fontSize: { xs: 18, md: 20 },
-                    lineHeight: 1.2,
-                    fontWeight: 700,
-                    color: '#111827',
-                  }}
+                   variant='h6'
                 >
                   {product.payoutCycle?.replace(' Repayment Cycle', '') || 'Weekly'}
                 </Typography>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.2,
-                    fontWeight: 400,
-                    color: '#9CA3AF',
-                  }}
+                  variant='subtitle2' color='grey.500'
                 >
                   {product.payoutLabel}
                 </Typography>

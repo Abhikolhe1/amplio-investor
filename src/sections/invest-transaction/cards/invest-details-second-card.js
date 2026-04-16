@@ -10,15 +10,33 @@ import {
   Chip,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { paths } from 'src/routes/paths';
+import { useParams, useRouter } from 'src/routes/hook';
 import Iconify from 'src/components/iconify';
 
+const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
+
+const formatAmount = (value) =>
+  `₹${Number(value || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 export default function InvestDetailsSecondCard({ currentDetails }) {
+  const router = useRouter();
+  const params = useParams();
+  const { id } = params;
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(parseAmount(currentDetails?.walletAmount));
+
+  useEffect(() => {
+    setWalletBalance(parseAmount(currentDetails?.walletAmount));
+  }, [currentDetails]);
 
   const handleIncrease = () => {
-    const maxUnits = Number(currentDetails?.units?.available) || 100;
+    const maxUnits = Number(currentDetails?.units?.available) || 10;
 
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
@@ -46,45 +64,42 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
     });
   };
 
+  const handleAddFunds = () => {
+    setWalletBalance((prev) => prev + (calculatedValues.shortfallAmount || 0));
+  };
+
+  const handleOpenAgreement = () => {
+    router.push(paths.dashboard.invest.agreement(id));
+  };
+
   // Calculate dynamic values based on units
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
 
-    const unitPrice = parseFloat(currentDetails?.unitPrice?.replace(/[^0-9.]/g, '') || 0);
-    const accruedInterestPerUnit = parseFloat(
-      currentDetails?.accruedInterest?.replace(/[^0-9.]/g, '') || 0
-    );
-    const liquidityEventPerUnit = parseFloat(
-      currentDetails?.liquidityEventAmount?.replace(/[^0-9.]/g, '') || 0
-    );
-    const maturityAmountPerUnit = parseFloat(
-      currentDetails?.expectedMaturityAmount?.replace(/[^0-9.]/g, '') || 0
-    );
-
+    const unitPrice = parseAmount(currentDetails?.unitPrice);
+    const accruedInterestPerUnit = parseAmount(currentDetails?.accruedInterest);
+    const liquidityEventPerUnit = parseAmount(currentDetails?.liquidityEventAmount);
+    const maturityAmountPerUnit = parseAmount(currentDetails?.expectedMaturityAmount);
     const investmentValue = unitPrice * units;
     const totalAccruedInterest = accruedInterestPerUnit * units;
     const totalLiquidityAmount = liquidityEventPerUnit * units;
     const totalMaturityAmount = maturityAmountPerUnit * units;
+    const shortfallAmount = Math.max(investmentValue - walletBalance, 0);
+    const hasSufficientBalance = walletBalance >= investmentValue;
 
     return {
-      investmentValue: `₹${investmentValue.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      accruedInterest: `₹${totalAccruedInterest.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      liquidityEventAmount: `₹${totalLiquidityAmount.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      expectedMaturityAmount: `₹${totalMaturityAmount.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      investmentValueAmount: investmentValue,
+      walletBalanceAmount: walletBalance,
+      shortfallAmount,
+      hasSufficientBalance,
+      investmentValue: formatAmount(investmentValue),
+      walletAmount: formatAmount(walletBalance),
+      shortfallAmountFormatted: formatAmount(shortfallAmount),
+      accruedInterest: formatAmount(totalAccruedInterest),
+      liquidityEventAmount: formatAmount(totalLiquidityAmount),
+      expectedMaturityAmount: formatAmount(totalMaturityAmount),
     };
-  }, [currentDetails, units]);
+  }, [currentDetails, units, walletBalance]);
 
   if (!currentDetails) {
     return null;
@@ -103,7 +118,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       <Grid container spacing={3} sx={{ px: 2, pb: 3 }}>
         {/* Units Selector */}
         <Grid item xs={12}>
-          <Typography fontSize={14} color="text.secondary">
+          <Typography  color="text.secondary">
             No. of Units
           </Typography>
 
@@ -164,14 +179,14 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
                 label={`${value} Unit`}
                 onClick={() => handleQuickSelect(value)}
                 sx={{
-                  bgcolor: units === value ? '#F0F0F0' : '#F0F0F0',
+                  bgcolor: 'grey.300',
                   color: 'text.primary',
                   fontSize: 13,
                   fontWeight: 500,
                   borderRadius: 20,
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: '#F0F0F0',
+                    bgcolor: 'grey.400',
                   },
                 }}
               />
@@ -359,29 +374,33 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
                   Bibalplus pocket
                 </Typography>
                 <Typography fontSize={16} fontWeight={700} mt={1}>
-                  ₹0.25
+                  {calculatedValues.walletAmount}
                 </Typography>
               </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={11} color="error.main">
-                  Amount insufficient in your account. Please add funds to the current wallet.
-                </Typography>
-                <Button
-                  variant="contained"
-                  sx={{
-                    minWidth: 100,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    borderRadius: 1,
-                    bgcolor: 'primary.dark',
-                    '&:hover': {
+              {!calculatedValues.hasSufficientBalance && (
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography fontSize={11} color="error.main" sx={{ maxWidth: '70%' }}>
+                    Amount insufficient in your account. Please add{' '}
+                    {calculatedValues.shortfallAmountFormatted} to the current wallet.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={handleAddFunds}
+                    sx={{
+                      minWidth: 100,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      borderRadius: 1,
                       bgcolor: 'primary.dark',
-                    },
-                  }}
-                >
-                  Add Funds
-                </Button>
-              </Stack>
+                      '&:hover': {
+                        bgcolor: 'primary.dark',
+                      },
+                    }}
+                  >
+                    Add Funds
+                  </Button>
+                </Stack>
+              )}
             </Stack>
           </Box>
         </Grid>
@@ -442,7 +461,8 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             fullWidth
             size="large"
             variant="contained"
-            disabled={!agree}
+            disabled={!agree || !calculatedValues.hasSufficientBalance}
+            onClick={handleOpenAgreement}
             sx={{
               py: 1.5,
               borderRadius: 1,

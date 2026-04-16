@@ -95,7 +95,7 @@ export default function InvestTableRow({ row, onViewRow }) {
                     color: '#161C24',
                   }}
                 >
-                  {product.minimumAmountFormatted}
+                  {product.unitCost}
                 </Typography>
               </Stack>
             </Grid>

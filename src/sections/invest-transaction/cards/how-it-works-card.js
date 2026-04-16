@@ -16,12 +16,7 @@ export default function HowItWorksCard() {
       <Grid container spacing={{ xs: 2.5, md: 3 }}>
         <Grid item xs={12}>
           <Typography
-            sx={{
-              fontSize: { xs: 20, md: 22 },
-              lineHeight: 1.2,
-              fontWeight: 700,
-              color: '#1F2937',
-            }}
+          variant='h6'
           >
             How it works
           </Typography>
@@ -30,9 +25,7 @@ export default function HowItWorksCard() {
         <Grid item xs={12}>
           <Box
             sx={{
-              bgcolor: '#FAFBFC',
               borderRadius: 3,
-             
             }}
           >
             <Box
@@ -49,16 +42,7 @@ export default function HowItWorksCard() {
 
         <Grid item xs={12}>
           <Typography
-            sx={{
-              maxWidth: 760,
-              mx: 'auto',
-              px: { xs: 1, md: 2 },
-              textAlign: 'center',
-              fontSize: { xs: 16, md: 17 },
-              lineHeight: 1.55,
-              fontWeight: 500,
-              color: '#2B3445',
-            }}
+           textAlign='center' variant='subtitle2'
           >
             Merchant approaches payment gateway for same day settlement, to receive funds
             instantly from successful transactions.
@@ -72,17 +56,6 @@ export default function HowItWorksCard() {
             endIcon={<Iconify icon="eva:chevron-down-fill" width={20} />}
             sx={{
               py: 1.55,
-              borderRadius: 999,
-              fontSize: 16,
-              fontWeight: 700,
-              textTransform: 'none',
-              color: '#111827',
-              borderColor: '#DDE3E8',
-              bgcolor: '#FFFFFF',
-              '&:hover': {
-                bgcolor: '#F8FAFC',
-                borderColor: '#DDE3E8',
-              },
             }}
           >
             View More

@@ -8,7 +8,6 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useParams } from 'src/routes/hook';
 import { useSettingsContext } from 'src/components/settings';
 import { Trasaction_DUMMY_DATA } from 'src/_mock/_invest_trasaction';
-import { INVESTMENTS } from 'src/_mock/_invest';
 import InvestDetails from '../cards/invest-details-card';
 import InvestDetailsSecondCard from '../cards/invest-details-second-card';
 import HowItWorksCard from '../cards/how-it-works-card';
@@ -19,7 +18,6 @@ export default function InvestDetailsView() {
   const settings = useSettingsContext();
   const params = useParams();
   const { id } = params;
-  const currentInvest = INVESTMENTS.find((invest) => invest.id === String(id));
   const currentTransaction = Trasaction_DUMMY_DATA.find((invest) => invest.id === String(id));
 
   return (
@@ -76,7 +74,7 @@ export default function InvestDetailsView() {
             },
           }}
         >
-          <InvestDetailsSecondCard currentDetails={currentInvest?.investmentDetails} />
+          <InvestDetailsSecondCard currentDetails={currentTransaction?.investmentDetails} />
         </Grid>
       </Grid>
     </Container>
