@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Box, Button, Card, Stack, Typography } from '@mui/material';
 
@@ -15,16 +16,16 @@ const AGREEMENT_SECTIONS = [
   'The Investor agrees to the terms and conditions, the terms of use, and the privacy policy, and confirms that proceeding with payment constitutes consent to the execution of the relevant transaction documentation.',
 ];
 
-export default function InvestAgreementDialog() {
+export default function InvestAgreementDialog({ onSign }) {
   const [hasReachedBottom, setHasReachedBottom] = useState(false);
 
-  const handleScroll = (event) => {
-    const scrollTop = event.target.scrollTop;
-    const visibleHeight = event.target.clientHeight;
-    const totalHeight = event.target.scrollHeight;
-  
+  const handleScroll = (event) => { 
+     const scrollTop = event.target.scrollTop;
+     const visibleHeight = event.target.clientHeight;
+     const totalHeight = event.target.scrollHeight;
+
     const isBottom = scrollTop + visibleHeight >= totalHeight - 8;
-  
+
     if (isBottom) {
       setHasReachedBottom(true);
     }
@@ -76,7 +77,7 @@ export default function InvestAgreementDialog() {
           }}
         >
           <Stack spacing={2.25}>
-            <Typography sx={{ fontSize: 14, lineHeight: 1.75, color: '#2B3445' }}>
+            <Typography variant='body2'>
               This Investor Registration Agreement is entered into between the investor and the
               platform entity for the purpose of enabling investment onboarding, transaction
               execution, agreement acknowledgement, and related payment flows.
@@ -85,11 +86,7 @@ export default function InvestAgreementDialog() {
             {AGREEMENT_SECTIONS.map((section, index) => (
               <Typography
                 key={section}
-                sx={{
-                  fontSize: 14,
-                  lineHeight: 1.75,
-                  color: '#2B3445',
-                }}
+                variant='body2'
               >
                 {index + 1}. {section}
               </Typography>
@@ -101,11 +98,11 @@ export default function InvestAgreementDialog() {
                 px: 2,
                 py: 2.5,
                 borderRadius: 2,
-                bgcolor: '#FAFBFC',
+                bgcolor: 'grey.200',
                 textAlign: 'center',
               }}
             >
-              <Typography sx={{ fontSize: 15, lineHeight: 1.7, color: '#5B6577' }}>
+              <Typography variant='body2' >
                 I agree to the{' '}
                 <Box component="span" sx={{ color: 'primary.main', textDecoration: 'underline' }}>
                   terms & conditions
@@ -125,40 +122,27 @@ export default function InvestAgreementDialog() {
             fullWidth
             variant="contained"
             disabled={!hasReachedBottom}
-            // onClick={onSign}
+            onClick={onSign}
             sx={{
               py: 1.5,
               borderRadius: 999,
               fontSize: 15,
               fontWeight: 700,
               textTransform: 'none',
-              bgcolor: hasReachedBottom ? 'primary.dark' : '#EEF2F6',
-              color: hasReachedBottom ? '#FFFFFF' : '#7B8794',
+              bgcolor: 'primary.dark',
               '&:hover': {
-                bgcolor: hasReachedBottom ? 'primary.dark' : '#EEF2F6',
+                bgcolor: 'primary.dark' ,
               },
             }}
           >
             Scroll to sign
           </Button>
-
-          {!hasReachedBottom && (
-            <Typography
-              sx={{
-                textAlign: 'center',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#5B8DEF',
-                bgcolor: '#EEF4FF',
-                borderRadius: 1.5,
-                py: 1.25,
-              }}
-            >
-              Please scroll to the bottom to sign
-            </Typography>
-          )}
         </Stack>
       </Stack>
     </Card>
   );
 }
+
+InvestAgreementDialog.propTypes = {
+  onSign: PropTypes.func,
+};

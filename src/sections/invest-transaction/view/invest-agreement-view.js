@@ -1,37 +1,77 @@
+import { useState } from 'react';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
+import { enqueueSnackbar } from 'notistack';
+
 import { paths } from 'src/routes/paths';
 import { useParams, useRouter } from 'src/routes/hook';
-import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
-import { useSettingsContext } from 'src/components/settings';
 import InvestAgreementDialog from '../cards/invest-agreement-dialog';
+import InvestOtpDialog from '../cards/invest-otp-dialog';
+import InvestSuccessDialog from '../cards/invest-success-dialog';
 
 export default function InvestAgreementView() {
-  const settings = useSettingsContext();
   const router = useRouter();
   const params = useParams();
   const { id } = params;
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [otp, setOtp] = useState(Array(4).fill(''));
 
-  // const handleSign = () => {
-  //   router.push(paths.dashboard.invest.details(id));
-  // };
+  const handleStartOtp = () => {
+    setOtp(Array(4).fill(''));
+    setOtpOpen(true);
+    enqueueSnackbar('OTP sent successfully. Please verify to sign the agreement.', {
+      variant: 'success',
+    });
+  };
+
+  const handleVerifyOtp = () => {
+    enqueueSnackbar('Agreement signed successfully.', {
+      variant: 'success',
+    });
+    setOtpOpen(false);
+    setSuccessOpen(true);
+  };
+ 
+  const handleResendOtp = () => {
+    enqueueSnackbar('OTP sent successfully.', {
+      variant: 'success',
+    });
+  };
+
+  const handleCloseOtp = () => {
+    setOtpOpen(false);
+    setOtp(Array(4).fill(''));
+  };
+
+  const handleCloseSuccess = () => {
+    setSuccessOpen(false);
+  };
+
+  const handleDone = () => {
+    setSuccessOpen(false);
+    router.push(paths.dashboard.invest.details(id));
+  };
 
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'md'}>
-      <CustomBreadcrumbs
-        heading="Sign Agreement"
-        links={[
-          { name: 'Dashboard', href: '/' },
-          { name: 'Invest', href: paths.dashboard.invest.view },
-          { name: 'Invest Details', href: paths.dashboard.invest.details(id) },
-          { name: 'Sign Agreement' },
-        ]}
-        sx={{ mb: 3 }}
-      />
+    <Container >
+
 
       <Stack spacing={3}>
-        <InvestAgreementDialog />
+        <InvestAgreementDialog onSign={handleStartOtp} />
       </Stack>
+
+      <InvestOtpDialog
+        open={otpOpen}
+        onClose={handleCloseOtp}
+        emailOrMobile="your registered mobile number"
+        value={otp}
+        onChange={setOtp}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
+      />
+
+      <InvestSuccessDialog open={successOpen} onClose={handleCloseSuccess} onDone={handleDone} />
     </Container>
   );
 }
