@@ -32,6 +32,7 @@ export default function InvestSuccessDialog({ open, onClose, onDone }) {
             position: 'absolute',
             top: 16,
             right: 16,
+      
           }}
         >
           <Iconify icon="mingcute:close-line" width={20} />
@@ -75,6 +76,9 @@ export default function InvestSuccessDialog({ open, onClose, onDone }) {
               fontSize: 15,
               fontWeight: 700,
               bgcolor: 'primary.main',
+              '&:hover': {
+                bgcolor: 'primary.main',
+              },
             }}
           >
             Done

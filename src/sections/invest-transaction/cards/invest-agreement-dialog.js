@@ -45,16 +45,12 @@ export default function InvestAgreementDialog({ onSign }) {
     >
       <Stack spacing={0}>
         <Stack spacing={1.5} sx={{ px: 3, pt: 3, pb: 2.5, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>
+          <Typography variant='h5'>
             Sign your agreements
           </Typography>
           <Typography
-            sx={{
-              fontSize: 17,
-              fontWeight: 700,
-              textDecoration: 'underline',
-              color: '#1F2937',
-            }}
+          variant='h6'
+           sx={{textDecoration: 'underline'}}
           >
             INVESTOR REGISTRATION AGREEMENT
           </Typography>

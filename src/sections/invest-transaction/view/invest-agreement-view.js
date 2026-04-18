@@ -50,7 +50,7 @@ export default function InvestAgreementView() {
 
   const handleDone = () => {
     setSuccessOpen(false);
-    router.push(paths.dashboard.invest.details(id));
+    router.push(paths.dashboard.invest.view);
   };
 
   return (

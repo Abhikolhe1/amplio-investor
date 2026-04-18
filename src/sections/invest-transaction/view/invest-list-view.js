@@ -39,7 +39,8 @@ import Scrollbar from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 //
-import { Trasaction_DUMMY_DATA } from 'src/_mock/_invest_trasaction';
+import axios from 'axios';
+
 import InvestTableToolbar from '../invest-table-toolbar';
 import InvestTableFiltersResult from '../invest-table-filters-result';
 import InvestTableRow from '../invest-table-row';
@@ -71,7 +72,7 @@ const defaultFilters = {
 export default function InvestListView() {
   const router = useRouter();
 
-  const table = useTable();
+  const table = useTable({ defaultRowsPerPage: 6 });
 
   const settings = useSettingsContext();
 
@@ -80,7 +81,19 @@ export default function InvestListView() {
   const [filters, setFilters] = useState(defaultFilters);
 
   const { products, productsLoading, productsEmpty } = useGetProducts();
-  const [selectedRow, setSelectedRow] = useState(null);
+
+
+  useEffect(() => {
+    const TrasactionDATA = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/investor_data');
+        setTableData(response.data)
+      } catch (err) {
+        console.log('API Error', err);
+      }
+    }
+    TrasactionDATA();
+  }, []);
 
   const confirm = useBoolean();
 
@@ -160,34 +173,34 @@ export default function InvestListView() {
 
   return (
     // <>
-      <Container maxWidth={settings.themeStretch ? false : 'lg'}>
-        <CustomBreadcrumbs
-          heading="Invest"
-          links={[{ name: 'Dashboard', href: '/' }, { name: 'Invest' }]}
-          sx={{ mb: 3 }}
-        />
+    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+      <CustomBreadcrumbs
+        heading="Invest"
+        links={[{ name: 'Dashboard', href: '/' }, { name: 'Invest' }]}
+        sx={{ mb: 3 }}
+      />
 
-        <InvestTableToolbar
+      <InvestTableToolbar
+        filters={filters}
+        onFilters={handleFilters}
+        //
+        stockOptions={PRODUCT_STOCK_OPTIONS}
+        publishOptions={PUBLISH_OPTIONS}
+      />
+
+      {canReset && (
+        <InvestTableFiltersResult
           filters={filters}
           onFilters={handleFilters}
           //
-          stockOptions={PRODUCT_STOCK_OPTIONS}
-          publishOptions={PUBLISH_OPTIONS}
+          onResetFilters={handleResetFilters}
+          //
+          results={dataFiltered.length}
+          sx={{ p: 2.5, pt: 0 }}
         />
+      )}
 
-        {canReset && (
-          <InvestTableFiltersResult
-            filters={filters}
-            onFilters={handleFilters}
-            //
-            onResetFilters={handleResetFilters}
-            //
-            results={dataFiltered.length}
-            sx={{ p: 2.5, pt: 0 }}
-          />
-        )}
-
-        {/* <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
+      {/* <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
             <TableSelectedAction
               dense={table.dense}
               numSelected={table.selected.length}
@@ -249,41 +262,42 @@ export default function InvestListView() {
             </Scrollbar>
           </TableContainer> */}
 
-        <Grid container spacing={2}>
-          {Trasaction_DUMMY_DATA.map((row) => (
-            <Grid item xs={12} sm={6} md={4} key={row.id}>
-              <InvestTableRow
-                row={row}
-                selected={table.selected.includes(row.id)}
-                // onSelectRow={() => table.onSelectRow(row.id)}
-                // onDeleteRow={() => handleDeleteRow(row.id)}
-                // onEditRow={() => handleEditRow(row.id)}
-                onViewRow={() => handleViewRow(row.id)}
-              />
-            </Grid>
-          ))}
-        </Grid>
+      <Grid container spacing={2}>
+        {dataInPage.map((row) => (
+          <Grid item xs={12} sm={6} md={4} key={row.id}>
+            <InvestTableRow
+              row={row}
+              selected={table.selected.includes(row.id)}
+              // onSelectRow={() => table.onSelectRow(row.id)}
+              // onDeleteRow={() => handleDeleteRow(row.id)}
+              // onEditRow={() => handleEditRow(row.id)}
+              onViewRow={() => handleViewRow(row.id)}
+            />
+          </Grid>
+        ))}
+      </Grid>
 
-{/* 
+      
         <TableEmptyRows
           height={denseHeight}
           emptyRows={emptyRows(table.page, table.rowsPerPage, tableData.length)}
-        /> */}
+        />
 
-        {/* <TableNoData notFound={notFound} /> */}
+     {/* <TableNoData notFound={notFound} />  */}
 
-        {/* <TablePaginationCustom
+   <TablePaginationCustom
           count={dataFiltered.length}
           page={table.page}
           rowsPerPage={table.rowsPerPage}
+          rowsPerPageOptions={[6, 15, 30]}
           onPageChange={table.onChangePage}
           onRowsPerPageChange={table.onChangeRowsPerPage}
           //
           dense={table.dense}
           onChangeDense={table.onChangeDense}
-        /> */}
+        /> 
 
-      </Container>
+    </Container>
 
     // </>
   );

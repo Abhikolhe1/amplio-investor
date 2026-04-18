@@ -255,7 +255,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       </Grid>
       <Box
         sx={{
-          bgcolor: '#F2F6FF',
+          bgcolor: 'grey.200',
           py: 2,
           mb: 3,
         }}
@@ -365,7 +365,6 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 1.5,
-              bgcolor: 'background.paper',
             }}
           >
             <Stack direction="column" spacing={1}>
@@ -410,17 +409,17 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center" // ✅ vertical centering
+            alignItems="center"
           >
             <Checkbox
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
-              size="large" // ✅ better with caption text
+              size="large" 
               sx={{ p: 0, borderColor: 'primary' }}
             />
 
             <Typography
-              variant="caption" // ✅ correct typography
+              variant="caption" 
               color="text.secondary"
               lineHeight={1.6}
             >

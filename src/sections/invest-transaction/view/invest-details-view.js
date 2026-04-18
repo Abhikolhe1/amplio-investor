@@ -4,10 +4,11 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 // components
+import { useState, useEffect } from 'react';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useParams } from 'src/routes/hook';
+import axios from 'axios';
 import { useSettingsContext } from 'src/components/settings';
-import { Trasaction_DUMMY_DATA } from 'src/_mock/_invest_trasaction';
 import InvestDetails from '../cards/invest-details-card';
 import InvestDetailsSecondCard from '../cards/invest-details-second-card';
 import HowItWorksCard from '../cards/how-it-works-card';
@@ -18,7 +19,23 @@ export default function InvestDetailsView() {
   const settings = useSettingsContext();
   const params = useParams();
   const { id } = params;
-  const currentTransaction = Trasaction_DUMMY_DATA.find((invest) => invest.id === String(id));
+  const [currentTransaction,setCurrentTransaction]=useState(null);
+ 
+  useEffect(()=>{
+    const Trasaction_DUMMY_DATA = async () =>{
+      try{
+        const response = await axios.get(`http://localhost:3001/investor_data/${id}`);
+        setCurrentTransaction(response.data)
+      }
+      catch (err){
+    console.log(err)
+      }
+    }
+    Trasaction_DUMMY_DATA();
+  },[id]);
+
+
+
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>

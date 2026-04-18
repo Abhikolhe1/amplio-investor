@@ -12,12 +12,12 @@ export default function InvestTableRow({ row, onViewRow }) {
     <Card
       onClick={onViewRow}
       sx={{
+        height: '100%',
         borderRadius: '24px',
         border: '1px solid #E6E6E6',
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         cursor: 'pointer',
         overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -26,11 +26,11 @@ export default function InvestTableRow({ row, onViewRow }) {
       }}
     >
       <Stack>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ px: 3, py: 3.5 }}>
+        <Stack direction="row" spacing={1.75} alignItems="center" sx={{ px: 2.5, py: 2.25 }}>
           <Box
             sx={{
-              width: 54,
-              height: 54,
+              width: 48,
+              height: 28,
               borderRadius: '50%',
               bgcolor: '#F2FCF6',
               display: 'flex',
@@ -45,20 +45,15 @@ export default function InvestTableRow({ row, onViewRow }) {
                 component="img"
                 src={product.icon}
                 alt={product.title}
-                sx={{ width: 32, height: 32, objectFit: 'contain' }}
+                sx={{ width: 26, height: 26, objectFit: 'contain' }}
               />
             ) : (
-              <Iconify icon={product.icon || 'solar:card-recive-bold-duotone'} width={32} />
+              <Iconify icon={product.icon || 'solar:card-recive-bold-duotone'} width={26} />
             )}
           </Box>
 
           <Typography
-            sx={{
-              fontSize: 20,
-              lineHeight: 1.3,
-              fontWeight: 500,
-              color: '#161C24',
-            }}
+            variant='subtitle1'
           >
             {product.title || 'Online Payments'}
           </Typography>
@@ -66,9 +61,9 @@ export default function InvestTableRow({ row, onViewRow }) {
 
         <Box
           sx={{
-            px: 3,
-            py: 3.25,
-            backgroundColor: '#FCFCFC',
+            px: 2.5,
+            py: 2.25,
+            backgroundColor: 'grey.100',
             borderTop: '1px solid #F1F1F1',
             borderBottom: '1px solid #F1F1F1',
           }}
@@ -77,23 +72,14 @@ export default function InvestTableRow({ row, onViewRow }) {
             <Grid item xs={12} sm={4}>
               <Stack spacing={0.75}>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.4,
-                    fontWeight: 400,
-                    color: '#8B9198',
-                  }}
+                  variant='body2'
+                  color='grey.500'
                 >
                   Minimum
                 </Typography>
 
                 <Typography
-                  sx={{
-                    fontSize: 15,
-                    lineHeight: 1.35,
-                    fontWeight: 700,
-                    color: '#161C24',
-                  }}
+                  variant='subtitle2'
                 >
                   {product.unitCost}
                 </Typography>
@@ -103,23 +89,15 @@ export default function InvestTableRow({ row, onViewRow }) {
             <Grid item xs={12} sm={4}>
               <Stack spacing={0.75} sx={{ textAlign: { xs: 'left', sm: 'center' } }}>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.4,
-                    fontWeight: 400,
-                    color: '#8B9198',
-                  }}
+                  variant='body2'
+                  color='grey.500'
                 >
                   Lock-in
                 </Typography>
 
                 <Typography
-                  sx={{
-                    fontSize: 15,
-                    lineHeight: 1.35,
-                    fontWeight: 700,
-                    color: '#161C24',
-                  }}
+                  variant='subtitle2'
+
                 >
                   {product.lockIn || '--'}
                 </Typography>
@@ -129,23 +107,16 @@ export default function InvestTableRow({ row, onViewRow }) {
             <Grid item xs={12} sm={4}>
               <Stack spacing={0.75} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                 <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.4,
-                    fontWeight: 400,
-                    color: '#8B9198',
-                  }}
+                  variant='body2'
+                  color='grey.500'
+                  sx={{ whiteSpace: 'nowrap'}}
                 >
                   Rate of Interest
                 </Typography>
 
                 <Typography
-                  sx={{
-                    fontSize: 15,
-                    lineHeight: 1.35,
-                    fontWeight: 700,
-                    color: '#161C24',
-                  }}
+                  variant='subtitle2'
+
                 >
                   {product.interestRate || '--'}
                 </Typography>
@@ -154,26 +125,22 @@ export default function InvestTableRow({ row, onViewRow }) {
           </Grid>
         </Box>
 
-        <Box sx={{ px: 3, py: 3 }}>
+        <Box sx={{ px: 2.5, py: 2 }}>
           <Box
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 1.25,
-              px: 2.25,
-              py: 1.25,
+              gap: 1,
+              px: 2,
+              py: 1,
               borderRadius: '999px',
               backgroundColor: 'primary.main',
               color: 'primary.contrastText',
             }}
           >
-            <Iconify icon="solar:refresh-outline" width={22} />
+            <Iconify icon="solar:refresh-outline" width={20} />
             <Typography
-              sx={{
-                fontSize: 15,
-                lineHeight: 1.2,
-                fontWeight: 500,
-              }}
+          variant='body2'
             >
               {product.payoutCycle || 'Weekly Repayment Cycle'}
             </Typography>

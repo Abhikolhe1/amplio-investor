@@ -22,6 +22,7 @@ export default function InvestOtpDialog({
 }) {
   const [timer, setTimer] = useState(60);
   const otpRefs = useRef([]);
+  const isOtpComplete = value.every((digit) => digit);
 
   useEffect(() => {
     setTimer(60);
@@ -39,7 +40,7 @@ export default function InvestOtpDialog({
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (value.some((digit) => !digit)) return;
+    if (!isOtpComplete) return;
     onVerify?.();
   };
 
@@ -78,7 +79,7 @@ export default function InvestOtpDialog({
       <DialogContent sx={{ p: 4 }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={3} alignItems="center">
-            <Typography variant="h5" fontWeight={600}>
+            <Typography variant="h5" >
               Verify OTP
             </Typography>
 
@@ -127,8 +128,19 @@ export default function InvestOtpDialog({
               fullWidth
               size="large"
               variant="contained"
-              disabled={value.some((digit) => !digit)}
-              sx={{ borderRadius: 999 }}
+              disabled={!isOtpComplete}
+              sx={{
+                borderRadius: 999,
+                bgcolor: isOtpComplete ? 'primary.main' : 'grey.400',
+                color: isOtpComplete ? 'primary.contrastText' : 'common.white',
+                '&:hover': {
+                  bgcolor: isOtpComplete ? 'primary.main' : 'grey.400',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'grey.400',
+                  color: 'common.white',
+                },
+              }}
               type="submit"
             >
               Verify OTP
