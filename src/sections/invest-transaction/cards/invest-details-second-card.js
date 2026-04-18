@@ -17,6 +17,22 @@ import Iconify from 'src/components/iconify';
 
 const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 
+const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
+
+const parseUnitsValue = (value) => {
+  if (typeof value === 'number') return value;
+
+  const rawValue = String(value || '').trim();
+
+  if (!rawValue) return 0;
+
+  if (rawValue.includes('/')) {
+    return parseInt(rawValue.split('/')[0], 10) || 0;
+  }
+
+  return parseInt(rawValue, 10) || 0;
+};
+
 const formatAmount = (value) =>
   `₹${Number(value || 0).toLocaleString('en-IN', {
     minimumFractionDigits: 2,
@@ -32,11 +48,15 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   const [walletBalance, setWalletBalance] = useState(parseAmount(currentDetails?.walletAmount));
 
   useEffect(() => {
+    const selectedUnits = parseUnitsValue(currentDetails?.units?.selected) || 1;
+    const availableUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
+
+    setUnits(Math.min(selectedUnits, availableUnits));
     setWalletBalance(parseAmount(currentDetails?.walletAmount));
   }, [currentDetails]);
 
   const handleIncrease = () => {
-    const maxUnits = Number(currentDetails?.units?.available) || 10;
+    const maxUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
 
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
@@ -52,7 +72,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   };
 
   const handleQuickSelect = (value) => {
-    const maxUnits = Number(currentDetails?.units?.available) || 100;
+    const maxUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
 
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
@@ -77,13 +97,14 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
     if (!currentDetails) return {};
 
     const unitPrice = parseAmount(currentDetails?.unitPrice);
+    const couponRate = parsePercentage(currentDetails?.couponRate);
     const accruedInterestPerUnit = parseAmount(currentDetails?.accruedInterest);
     const liquidityEventPerUnit = parseAmount(currentDetails?.liquidityEventAmount);
-    const maturityAmountPerUnit = parseAmount(currentDetails?.expectedMaturityAmount);
-    const investmentValue = unitPrice * units;
+    const investmentValuePerUnit = unitPrice + accruedInterestPerUnit;
+    const investmentValue = investmentValuePerUnit * units;
     const totalAccruedInterest = accruedInterestPerUnit * units;
     const totalLiquidityAmount = liquidityEventPerUnit * units;
-    const totalMaturityAmount = maturityAmountPerUnit * units;
+    const totalMaturityAmount = unitPrice * units + ((unitPrice * units) * couponRate) / 100;
     const shortfallAmount = Math.max(investmentValue - walletBalance, 0);
     const hasSufficientBalance = walletBalance >= investmentValue;
 
@@ -228,7 +249,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Stack>
         </Grid>
 
-        <Grid item xs={6}>
+        {/* <Grid item xs={6}>
           <Typography fontSize={14} color="text.secondary">
             Unit Price
           </Typography>
@@ -237,7 +258,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           <Typography fontSize={14} fontWeight={600} textAlign="right">
             {currentDetails?.unitPrice}
           </Typography>
-        </Grid>
+        </Grid> */}
 
         <Grid item xs={6}>
           <Stack direction="row" alignItems="center" spacing={0.5}>

@@ -29,8 +29,8 @@ export default function InvestTableRow({ row, onViewRow }) {
         <Stack direction="row" spacing={1.75} alignItems="center" sx={{ px: 2.5, py: 2.25 }}>
           <Box
             sx={{
-              width: 48,
-              height: 28,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
               bgcolor: '#F2FCF6',
               display: 'flex',
