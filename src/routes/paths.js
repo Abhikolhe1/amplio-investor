@@ -150,7 +150,8 @@ export const paths = {
       invest: {
       root: `${ROOTS.DASHBOARD}/invest`,
       view: `${ROOTS.DASHBOARD}/invest/investPage`,
-      details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`
+      details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`,
+      agreement: (id) => `${ROOTS.DASHBOARD}/invest/${id}/agreement`,
     },
       portfolio: {
       root: `${ROOTS.DASHBOARD}/portfolio`,

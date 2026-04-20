@@ -48,6 +48,7 @@ const NeedHelpPage = lazy(() => import('src/pages/dashboard/help/help'));
 // INVEST 
 const InvestViewPage = lazy(() => import('src/pages/dashboard/invest/view'));
 const InvestDetailsPage = lazy(() => import('src/pages/dashboard/invest/details'));
+const InvestAgreementPage = lazy(() => import('src/pages/dashboard/invest/agreement'));;
 // Portfolio
 const PortfolioViewPage = lazy(() => import('src/pages/dashboard/portfolio/view'));
 const PortfolioOnlinePaymentsPage = lazy(() => import('src/pages/dashboard/portfolio/online-payments'));
@@ -168,7 +169,8 @@ export const dashboardRoutes = [
         children: [
           { element: <InvestViewPage />, index: true },
           { path: 'investPage', element: <InvestViewPage /> },
-          { path: ':id', element: <InvestDetailsPage /> }
+          { path: ':id', element: <InvestDetailsPage /> },
+          { path: ':id/agreement', element: <InvestAgreementPage /> },
 
         ],
       },
