@@ -24,7 +24,7 @@ export default function InvestDetailsView() {
   useEffect(()=>{
     const Trasaction_DUMMY_DATA = async () =>{
       try{
-        const response = await axios.get(`http://localhost:3001/investor_data/${id}`);
+        const response = await axios.get(`http://localhost:3005/investor_data/${id}`);
         setCurrentTransaction(response.data)
       }
       catch (err){

@@ -86,7 +86,7 @@ export default function InvestListView() {
   useEffect(() => {
     const TrasactionDATA = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/investor_data');
+        const response = await axios.get('http://localhost:3005/investor_data');
         setTableData(response.data)
       } catch (err) {
         console.log('API Error', err);
