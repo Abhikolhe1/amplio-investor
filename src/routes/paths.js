@@ -152,6 +152,12 @@ export const paths = {
       view: `${ROOTS.DASHBOARD}/invest/investPage`,
       details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`
     },
+      portfolio: {
+      root: `${ROOTS.DASHBOARD}/portfolio`,
+      view: `${ROOTS.DASHBOARD}/portfolio/portfolioPage`,
+      onlinePayments: `${ROOTS.DASHBOARD}/portfolio/online-payments`,
+      onlineTransactions: `${ROOTS.DASHBOARD}/portfolio/online-transactions`,
+    },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,
       new: `${ROOTS.DASHBOARD}/invoice/new`,

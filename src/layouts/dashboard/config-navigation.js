@@ -44,7 +44,8 @@ const ICONS = {
   ecommerce: icon('ic_ecommerce'),
   analytics: icon('ic_analytics'),
   dashboard: icon('ic_dashboard'),
-  invest: icon('ic_invest')
+  invest: icon('ic_invest'),
+  portfolio: icon('ic_portfolio'),
 };
 
 // ----------------------------------------------------------------------
@@ -61,6 +62,7 @@ export function useNavData() {
           // { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
           { title: t('Activity'), path: paths.dashboard.general.banking, icon: ICONS.banking },
           { title: t('Invest'), path: paths.dashboard.invest.view, icon: ICONS.invest },
+          { title: t('Portfolio'), path: paths.dashboard.portfolio.view, icon: ICONS.portfolio },
         ],
       },
 

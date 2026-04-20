@@ -65,5 +65,8 @@ export const endpoints = {
   },
   bankDetail: {
     list: '/investor-profiles/bank-details',
-  }
+  },
+  portfolio: {
+    data: '/portfolio-data',
+  },
 };
