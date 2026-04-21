@@ -5,6 +5,9 @@ import { paths } from 'src/routes/paths';
 import { useParams, useRouter } from 'src/routes/hook';
 import Iconify from 'src/components/iconify';
 
+const INDIA_TIME_ZONE = 'Asia/Kolkata';
+const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24;
+
 const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 
@@ -46,6 +49,27 @@ const formatAmount = (value) =>
     maximumFractionDigits: 2,
   })}`;
 
+const createUtcDate = (year, month, day) => {
+  const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
+const getIndiaToday = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: INDIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  return createUtcDate(year, month, day);
+};
+
 const parseDate = (value) => {
   if (!value) return null;
 
@@ -55,31 +79,37 @@ const parseDate = (value) => {
 
   if (rawValue.includes('/')) {
     const [day, month, year] = rawValue.split('/');
-    const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return createUtcDate(year, month, day);
+  }
 
-    if (Number.isNaN(parsedDate.getTime())) return null;
-
-    parsedDate.setHours(0, 0, 0, 0);
-    return parsedDate;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    const [year, month, day] = rawValue.split('-');
+    return createUtcDate(year, month, day);
   }
 
   const parsedDate = new Date(rawValue);
 
   if (Number.isNaN(parsedDate.getTime())) return null;
 
-  parsedDate.setHours(0, 0, 0, 0);
-  return parsedDate;
+  return createUtcDate(
+    parsedDate.getUTCFullYear(),
+    parsedDate.getUTCMonth() + 1,
+    parsedDate.getUTCDate()
+  );
 };
 
-const getFutureDaysFromToday = (value) => {
+const getExactDays = (value) => {
   const eventDate = parseDate(value);
+  if (!eventDate) return 0;
 
-  if (!eventDate) return null;
+  const today = getIndiaToday();
+  if (!today) return 0;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const diff = eventDate.getTime() - today.getTime();
 
-  return Math.max((eventDate - today) / (1000 * 60 * 60 * 24), 0);
+  if (diff <= 0) return 0;
+
+  return Math.ceil(diff / MILLISECONDS_IN_A_DAY);
 };
 
 export default function InvestDetailsSecondCard({ currentDetails }) {
@@ -136,53 +166,47 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   };
 
 
-
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
-
-    const unitValuePerUnit = getFirstAmount(currentDetails?.unitValue, currentDetails?.unitPrice);
-    const couponRate = parsePercentage(currentDetails?.couponRate) / 100;
-    const liquidityDays = getFutureDaysFromToday(currentDetails?.nextLiquidityEvent);
-    const maturityDays = getFutureDaysFromToday(currentDetails?.finalMaturityDate);
-
-    const formulaLiquidityPerUnit =
-      liquidityDays !== null ? unitValuePerUnit + (unitValuePerUnit * couponRate * liquidityDays) / 365 : null;
-    const formulaMaturityPerUnit =
-      maturityDays !== null ? unitValuePerUnit + (unitValuePerUnit * couponRate * maturityDays) / 365 : null;
-
-    const investmentValuePerUnit = getFirstAmount(currentDetails?.investmentValue, unitValuePerUnit);
-    const liquidityEventAmountPerUnit =
-      formulaLiquidityPerUnit && formulaLiquidityPerUnit > unitValuePerUnit
-        ? formulaLiquidityPerUnit
-        : getFirstAmount(currentDetails?.liquidityEventAmount, investmentValuePerUnit);
-    const expectedMaturityAmountPerUnit =
-      formulaMaturityPerUnit && formulaMaturityPerUnit > unitValuePerUnit
-        ? formulaMaturityPerUnit
-        : getFirstAmount(currentDetails?.expectedMaturityAmount, liquidityEventAmountPerUnit);
-
-    const investmentValue = investmentValuePerUnit * units;
-    const liquidityEventAmount = liquidityEventAmountPerUnit * units;
-    const expectedMaturityAmount = expectedMaturityAmountPerUnit * units;
-    const shortfallAmount = Math.max(investmentValue - walletBalance, 0);
-    const hasSufficientBalance = walletBalance >= investmentValue;
-
+  
+    // 1. Basic values
+    const unitValue = parseAmount(currentDetails?.unitValue);
+    const rate = parsePercentage(currentDetails?.couponRate);
+    const unitsCount = units;
+  
+    // 2. Principal
+    const principal = unitValue * unitsCount;
+  
+    // 3. Time calculation
+    const liquidityDays = getExactDays(currentDetails?.nextLiquidityEvent);
+    const maturityDays = getExactDays(currentDetails?.finalMaturityDate);
+  
+    const timeLiquidity = liquidityDays / 365;
+    const timeMaturity = maturityDays / 365;
+  
+    // 4. Interest calculations
+    const accruedInterest = (principal * rate * timeLiquidity) / 100;
+    const maturityInterest = (principal * rate * timeMaturity) / 100;
+  
+    // 5. Final amounts
+    const liquidityAmount = principal + accruedInterest;
+    const maturityAmount = principal + maturityInterest;
+  
+    // 6. Wallet logic
+    const shortfallAmount = Math.max(principal - walletBalance, 0);
+    const hasSufficientBalance = walletBalance >= principal;
+  
     return {
-      investmentValueAmount: investmentValue,
-      liquidityEventAmount,
-      expectedMaturityAmount,
-      walletBalanceAmount: walletBalance,
+      investmentValue: formatAmount(principal),
+      accruedInterest: formatAmount(accruedInterest),
+      liquidityEventAmount: formatAmount(liquidityAmount),
+      expectedMaturityAmount: formatAmount(maturityAmount),
       shortfallAmount,
-      hasSufficientBalance,
-
-      unitValue: formatAmount(unitValuePerUnit),
-      investmentValue: formatAmount(investmentValue),
-      liquidityEventAmountFormatted: formatAmount(liquidityEventAmount),
-      expectedMaturityAmountFormatted: formatAmount(expectedMaturityAmount),
       walletAmount: formatAmount(walletBalance),
       shortfallAmountFormatted: formatAmount(shortfallAmount),
+      hasSufficientBalance,
     };
   }, [currentDetails, units, walletBalance]);
-
   if (!currentDetails) {
     return null;
   }
@@ -238,7 +262,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               size="small"
               sx={{
                 bgcolor: 'primary.main',
-                color: 'white',
+                color: 'primary.contrastText',
                 borderRadius: 0.5,
                 width: 45,
                 height: 32,
@@ -284,7 +308,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
         </Grid>
         <Grid item xs={6}>
           <Typography fontSize={14} fontWeight={600} textAlign="right">
-            {calculatedValues.unitValue}
+            {currentDetails?.unitValue}
           </Typography>
         </Grid>
 
@@ -306,6 +330,21 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             </Typography>
             <Typography fontSize={20} fontWeight={700} color="primary.main">
               {calculatedValues.investmentValue}
+            </Typography>
+          </Stack>
+        </Grid>
+        <Grid item xs={12}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+
+            <Typography fontSize={14} color="primary.dark">
+              Accrued Interest
+            </Typography>
+            <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
+            </Stack>
+
+            <Typography fontSize={14} fontWeight={600} >
+              {calculatedValues.accruedInterest}
             </Typography>
           </Stack>
         </Grid>
@@ -343,7 +382,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {calculatedValues.liquidityEventAmountFormatted}
+              {calculatedValues.liquidityEventAmount}
             </Typography>
           </Grid>
 
@@ -371,7 +410,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right" color="success.main">
-              {calculatedValues.expectedMaturityAmountFormatted}
+              {calculatedValues.expectedMaturityAmount}
             </Typography>
           </Grid>
 
