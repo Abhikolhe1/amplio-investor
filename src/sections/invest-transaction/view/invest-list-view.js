@@ -19,6 +19,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 // api
 import { useGetProducts } from 'src/api/product';
+import { useGetInvestTransactions } from 'src/api/invest-transaction';
 // components
 import { useSettingsContext } from 'src/components/settings';
 import {
@@ -83,25 +84,28 @@ export default function InvestListView() {
   const { products, productsLoading, productsEmpty } = useGetProducts();
 
 
-  useEffect(() => {
-    const TrasactionDATA = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/investor_data');
-        setTableData(response.data)
-      } catch (err) {
-        console.log('API Error', err);
-      }
-    }
-    TrasactionDATA();
-  }, []);
-
+  // useEffect(() => {
+  //   const TrasactionDATA = async () => {
+  //     try {
+  //       const response = await axios.get('http://localhost:3005/investor_data');
+  //       setTableData(response.data)
+  //     } catch (err) {
+  //       console.log('API Error', err);
+  //     }
+  //   }
+  //   TrasactionDATA();
+  // }, []);
+ const { investTransactions,investTransactionsEmpty}=useGetInvestTransactions();
   const confirm = useBoolean();
 
-  useEffect(() => {
-    if (products.length) {
-      setTableData(products);
-    }
-  }, [products]);
+  // useEffect(() => {
+  //   if (products.length) {
+  //     setTableData(products);
+  //   }
+  // }, [products]);
+   useEffect(() => {
+    setTableData(investTransactions);
+   }, [investTransactions]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,

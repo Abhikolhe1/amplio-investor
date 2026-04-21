@@ -1,23 +1,33 @@
-import {
-  Box,
-  Card,
-  Grid,
-  Typography,
-  Stack,
-  Checkbox,
-  IconButton,
-  Button,
-  Chip,
-} from '@mui/material';
+import { Box, Card, Grid, Typography, Stack, Checkbox, IconButton, Button, Chip, } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';
 import { paths } from 'src/routes/paths';
 import { useParams, useRouter } from 'src/routes/hook';
 import Iconify from 'src/components/iconify';
 
-const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
+const INDIA_TIME_ZONE = 'Asia/Kolkata';
+const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24;
 
+const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
+
+const parseOptionalAmount = (value) => {
+  if (value === null || value === undefined) return null;
+
+  const rawValue = String(value).trim();
+
+  if (!rawValue) return null;
+
+  return parseAmount(rawValue);
+};
+
+const getFirstAmount = (...values) => {
+  const parsedValue = values
+    .map((value) => parseOptionalAmount(value))
+    .find((value) => value !== null);
+
+  return parsedValue ?? 0;
+};
 
 const parseUnitsValue = (value) => {
   if (typeof value === 'number') return value;
@@ -38,6 +48,69 @@ const formatAmount = (value) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+
+const createUtcDate = (year, month, day) => {
+  const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
+const getIndiaToday = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: INDIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  return createUtcDate(year, month, day);
+};
+
+const parseDate = (value) => {
+  if (!value) return null;
+
+  const rawValue = String(value).trim();
+
+  if (!rawValue) return null;
+
+  if (rawValue.includes('/')) {
+    const [day, month, year] = rawValue.split('/');
+    return createUtcDate(year, month, day);
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    const [year, month, day] = rawValue.split('-');
+    return createUtcDate(year, month, day);
+  }
+
+  const parsedDate = new Date(rawValue);
+
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return createUtcDate(
+    parsedDate.getUTCFullYear(),
+    parsedDate.getUTCMonth() + 1,
+    parsedDate.getUTCDate()
+  );
+};
+
+const getExactDays = (value) => {
+  const eventDate = parseDate(value);
+  if (!eventDate) return 0;
+
+  const today = getIndiaToday();
+  if (!today) return 0;
+
+  const diff = eventDate.getTime() - today.getTime();
+
+  if (diff <= 0) return 0;
+
+  return Math.ceil(diff / MILLISECONDS_IN_A_DAY);
+};
 
 export default function InvestDetailsSecondCard({ currentDetails }) {
   const router = useRouter();
@@ -92,36 +165,48 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
     router.push(paths.dashboard.invest.agreement(id));
   };
 
-  // Calculate dynamic values based on units
+
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
-
-    const unitPrice = parseAmount(currentDetails?.unitPrice);
-    const couponRate = parsePercentage(currentDetails?.couponRate);
-    const accruedInterestPerUnit = parseAmount(currentDetails?.accruedInterest);
-    const liquidityEventPerUnit = parseAmount(currentDetails?.liquidityEventAmount);
-    const investmentValuePerUnit = unitPrice + accruedInterestPerUnit;
-    const investmentValue = investmentValuePerUnit * units;
-    const totalAccruedInterest = accruedInterestPerUnit * units;
-    const totalLiquidityAmount = liquidityEventPerUnit * units;
-    const totalMaturityAmount = unitPrice * units + ((unitPrice * units) * couponRate) / 100;
-    const shortfallAmount = Math.max(investmentValue - walletBalance, 0);
-    const hasSufficientBalance = walletBalance >= investmentValue;
-
+  
+    // 1. Basic values
+    const unitValue = parseAmount(currentDetails?.unitValue);
+    const rate = parsePercentage(currentDetails?.couponRate);
+    const unitsCount = units;
+  
+    // 2. Principal
+    const principal = unitValue * unitsCount;
+  
+    // 3. Time calculation
+    const liquidityDays = getExactDays(currentDetails?.nextLiquidityEvent);
+    const maturityDays = getExactDays(currentDetails?.finalMaturityDate);
+  
+    const timeLiquidity = liquidityDays / 365;
+    const timeMaturity = maturityDays / 365;
+  
+    // 4. Interest calculations
+    const accruedInterest = (principal * rate * timeLiquidity) / 100;
+    const maturityInterest = (principal * rate * timeMaturity) / 100;
+  
+    // 5. Final amounts
+    const liquidityAmount = principal + accruedInterest;
+    const maturityAmount = principal + maturityInterest;
+  
+    // 6. Wallet logic
+    const shortfallAmount = Math.max(principal - walletBalance, 0);
+    const hasSufficientBalance = walletBalance >= principal;
+  
     return {
-      investmentValueAmount: investmentValue,
-      walletBalanceAmount: walletBalance,
+      investmentValue: formatAmount(principal),
+      accruedInterest: formatAmount(accruedInterest),
+      liquidityEventAmount: formatAmount(liquidityAmount),
+      expectedMaturityAmount: formatAmount(maturityAmount),
       shortfallAmount,
-      hasSufficientBalance,
-      investmentValue: formatAmount(investmentValue),
       walletAmount: formatAmount(walletBalance),
       shortfallAmountFormatted: formatAmount(shortfallAmount),
-      accruedInterest: formatAmount(totalAccruedInterest),
-      liquidityEventAmount: formatAmount(totalLiquidityAmount),
-      expectedMaturityAmount: formatAmount(totalMaturityAmount),
+      hasSufficientBalance,
     };
   }, [currentDetails, units, walletBalance]);
-
   if (!currentDetails) {
     return null;
   }
@@ -139,7 +224,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       <Grid container spacing={3} sx={{ px: 2, pb: 3 }}>
         {/* Units Selector */}
         <Grid item xs={12}>
-          <Typography  color="text.secondary">
+          <Typography color="text.secondary">
             No. of Units
           </Typography>
 
@@ -176,13 +261,13 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               onClick={handleIncrease}
               size="small"
               sx={{
-                bgcolor: 'primary.dark',
-                color: 'white',
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
                 borderRadius: 0.5,
                 width: 45,
                 height: 32,
                 '&:hover': {
-                  bgcolor: 'primary.dark',
+                  bgcolor: 'primary.main',
                 },
               }}
             >
@@ -248,31 +333,22 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             </Typography>
           </Stack>
         </Grid>
-
-        {/* <Grid item xs={6}>
-          <Typography fontSize={14} color="text.secondary">
-            Unit Price
-          </Typography>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography fontSize={14} fontWeight={600} textAlign="right">
-            {currentDetails?.unitPrice}
-          </Typography>
-        </Grid> */}
-
-        <Grid item xs={6}>
+        <Grid item xs={12}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack direction="row" alignItems="center" spacing={0.5}>
-            <Typography fontSize={14} color="text.secondary">
+
+            <Typography fontSize={14} color="primary.dark">
               Accrued Interest
             </Typography>
             <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
+            </Stack>
+
+            <Typography fontSize={14} fontWeight={600} >
+              {calculatedValues.accruedInterest}
+            </Typography>
           </Stack>
         </Grid>
-        <Grid item xs={6}>
-          <Typography fontSize={14} fontWeight={600} textAlign="right">
-            {calculatedValues.accruedInterest}
-          </Typography>
-        </Grid>
+
       </Grid>
       <Box
         sx={{
@@ -327,7 +403,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           <Grid item xs={6}>
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <Typography fontSize={14} color="text.secondary">
-                Exp. Maturity Amount
+                Estimated Maturity Amount
               </Typography>
               <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
             </Stack>
@@ -337,6 +413,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               {calculatedValues.expectedMaturityAmount}
             </Typography>
           </Grid>
+
         </Grid>
       </Box>
       <Grid container spacing={3}>
@@ -411,9 +488,9 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
                       fontSize: 12,
                       fontWeight: 600,
                       borderRadius: 1,
-                      bgcolor: 'primary.dark',
+                      bgcolor: 'primary.main',
                       '&:hover': {
-                        bgcolor: 'primary.dark',
+                        bgcolor: 'primary.main',
                       },
                     }}
                   >
@@ -435,12 +512,12 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             <Checkbox
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
-              size="large" 
+              size="large"
               sx={{ p: 0, borderColor: 'primary' }}
             />
 
             <Typography
-              variant="caption" 
+              variant="caption"
               color="text.secondary"
               lineHeight={1.6}
             >
