@@ -150,7 +150,14 @@ export const paths = {
       invest: {
       root: `${ROOTS.DASHBOARD}/invest`,
       view: `${ROOTS.DASHBOARD}/invest/investPage`,
-      details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`
+      details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`,
+      agreement: (id) => `${ROOTS.DASHBOARD}/invest/${id}/agreement`,
+    },
+      portfolio: {
+      root: `${ROOTS.DASHBOARD}/portfolio`,
+      view: `${ROOTS.DASHBOARD}/portfolio/portfolioPage`,
+      onlinePayments: `${ROOTS.DASHBOARD}/portfolio/online-payments`,
+      onlineTransactions: `${ROOTS.DASHBOARD}/portfolio/online-transactions`,
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,

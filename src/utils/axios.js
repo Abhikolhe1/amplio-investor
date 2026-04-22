@@ -1,6 +1,6 @@
 import axios from 'axios';
 // config
-import { HOST_API } from 'src/config-global';
+import { HOST_API ,JSON_SERVER_API} from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -63,7 +63,14 @@ export const endpoints = {
     details: '/api/product/details',
     search: '/api/product/search',
   },
+  investTransaction:{
+    list:`${JSON_SERVER_API}/investor_data`,
+    details:(id)=>`${JSON_SERVER_API}/investor_data/${id}`,
+  },
   bankDetail: {
     list: '/investor-profiles/bank-details',
-  }
+  },
+  portfolio: {
+    data: `${JSON_SERVER_API}/portfolio-data`,
+  },
 };

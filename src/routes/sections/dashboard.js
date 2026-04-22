@@ -47,7 +47,12 @@ const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
 const NeedHelpPage = lazy(() => import('src/pages/dashboard/help/help'));
 // INVEST 
 const InvestViewPage = lazy(() => import('src/pages/dashboard/invest/view'));
-const InvestDetailsPage = lazy(() => import('src/pages/dashboard/invest/details'))
+const InvestDetailsPage = lazy(() => import('src/pages/dashboard/invest/details'));
+const InvestAgreementPage = lazy(() => import('src/pages/dashboard/invest/agreement'));;
+// Portfolio
+const PortfolioViewPage = lazy(() => import('src/pages/dashboard/portfolio/view'));
+const PortfolioOnlinePaymentsPage = lazy(() => import('src/pages/dashboard/portfolio/online-payments'));
+const PortfolioOnlineTransactionsPage = lazy(() => import('src/pages/dashboard/portfolio/online-transactions'));
 // JOB
 const JobDetailsPage = lazy(() => import('src/pages/dashboard/job/details'));
 const JobListPage = lazy(() => import('src/pages/dashboard/job/list'));
@@ -164,8 +169,18 @@ export const dashboardRoutes = [
         children: [
           { element: <InvestViewPage />, index: true },
           { path: 'investPage', element: <InvestViewPage /> },
-          { path: ':id', element: <InvestDetailsPage /> }
+          { path: ':id', element: <InvestDetailsPage /> },
+          { path: ':id/agreement', element: <InvestAgreementPage /> },
 
+        ],
+      },
+      {
+        path: 'portfolio',
+        children: [
+          { element: <PortfolioViewPage />, index: true },
+          { path: 'portfolioPage', element: <PortfolioViewPage /> },
+          { path: 'online-payments', element: <PortfolioOnlinePaymentsPage /> },
+          { path: 'online-transactions', element: <PortfolioOnlineTransactionsPage /> }
         ],
       },
       {
