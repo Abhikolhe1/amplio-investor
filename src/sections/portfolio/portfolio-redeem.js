@@ -1,11 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import { Dialog, DialogContent, Box, Typography, IconButton, Button } from '@mui/material';
 import Iconify from 'src/components/iconify';
-import PortfolioRedeemPDF from './portfolio-redeem-pdf';
 
-export default function PortfolioRedeem({ open, onClose, statementData }) {
+export default function PortfolioRedeem({ open, onClose,  }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogContent>
@@ -28,22 +26,14 @@ export default function PortfolioRedeem({ open, onClose, statementData }) {
             redemption has been processed.
           </Typography>
 
-          <PDFDownloadLink
-            document={<PortfolioRedeemPDF statement={statementData} />}
-            fileName={`Earnings-Statement-${Date.now()}.pdf`}
-            style={{ textDecoration: 'none' }}
-          >
-            {({ loading }) => (
               <Button
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 3, borderRadius: 5, bgcolor: 'common.black' }}
                 onClick={onClose}
               >
-                {loading ? 'Preparing PDF...' : 'Understood'}
+                Understood
               </Button>
-            )}
-          </PDFDownloadLink>
         </Box>
       </DialogContent>
     </Dialog>
@@ -53,5 +43,4 @@ export default function PortfolioRedeem({ open, onClose, statementData }) {
 PortfolioRedeem.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  statementData: PropTypes.object,
 };

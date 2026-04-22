@@ -5,24 +5,26 @@ import { Box, Card, Typography, Tabs, Tab, Button, Chip, Divider, IconButton, Gr
 import { useTheme } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 import axios from 'axios';
+import { useGetPortfolioData } from 'src/api/portfolio';
 
 export default function PortfolioListView() {
   const [tab, setTab] = useState(0);
   const theme = useTheme();
   const navigate = useNavigate();
-  const [portfolioData, setPortfolioData] = useState(null);
+  const { portfolioData, portfolioDataLoading, portfolioDataError } = useGetPortfolioData();
+  // const [portfolioData, setPortfolioData] = useState(null);
 
-  useEffect(() => {
-    const fetchPortfolioData = async () => {
-      try {
-        const response = await axios.get('http://localhost:3034/portfolio-data');
-        setPortfolioData(response.data);
-      } catch (err) {
-        console.log('API Error', err);
-      }
-    };
-    fetchPortfolioData();
-  }, []);
+  // useEffect(() => {
+  //   const fetchPortfolioData = async () => {
+  //     try {
+  //       const response = await axios.get('http://localhost:3034/portfolio-data');
+  //       setPortfolioData(response.data);
+  //     } catch (err) {
+  //       console.log('API Error', err);
+  //     }
+  //   };
+  //   fetchPortfolioData();
+  // }, []);
 
   const handleNext = () => {
     navigate(paths.dashboard.portfolio.onlinePayments, {

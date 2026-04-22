@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Box, Card, Typography, Button, Grid, IconButton, useTheme } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
+import { pdf } from '@react-pdf/renderer';
 import { useLocation, useNavigate } from 'react-router';
 import useGetProfileData from 'src/api/investorKyc';
+import PortfolioRedeemPDF from './portfolio-redeem-pdf';
 import DeployModal from './portfolio-deploy';
 import RedeemModal from './portfolio-redeem';
 
@@ -26,13 +28,28 @@ export default function PortfolioOnlinePayments() {
     annualizedEarnings: `${onlinePayment?.interestRate || 0}%`,
   };
 
+  const handleRedeem = async () => {
+    try {
+      setOpenRedeem(true);
+
+      const blob = await pdf(<PortfolioRedeemPDF statement={statementData} />).toBlob();
+      const pdfUrl = URL.createObjectURL(blob);
+
+      setTimeout(() => {
+        window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      }, 300);
+    } catch (error) {
+      console.error('Failed to generate redeem PDF', error);
+    }
+  };
+
   const handleNext = () => {
     navigate(paths.dashboard.portfolio.onlineTransactions, { state: { onlinePayment } });
   };
 
   return (
-    <Box sx={{ px: 2, py: 3, display: 'flex', justifyContent: 'center', }} >
-      <Box sx={{ width: '100%', maxWidth: '1000px', }} > 
+    <Box sx={{ px: 2, display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ width: '100%', maxWidth: '1000px' }}>
         <Grid container alignItems="center" spacing={1}>
           <Grid item>
             <IconButton onClick={() => navigate(-1)}>
@@ -43,8 +60,8 @@ export default function PortfolioOnlinePayments() {
             </IconButton>
           </Grid>
 
-          <Grid item margin={2} >
-            <Typography variant="h4" >Online Payments</Typography>
+          <Grid item margin={2}>
+            <Typography variant="h4">Online Payments</Typography>
           </Grid>
         </Grid>
         <Grid container spacing={3}>
@@ -78,7 +95,7 @@ export default function PortfolioOnlinePayments() {
 
                   <Grid item xs={6} sm="auto" textAlign="center">
                     <IconButton
-                      onClick={() => setOpenRedeem(true)}
+                      onClick={handleRedeem}
                       sx={{
                         bgcolor: 'primary.main',
                         color: 'primary.contrastText',
@@ -96,11 +113,7 @@ export default function PortfolioOnlinePayments() {
 
               <DeployModal open={openDeploy} onClose={() => setOpenDeploy(false)} />
 
-              <RedeemModal
-                open={openRedeem}
-                onClose={() => setOpenRedeem(false)}
-                statementData={statementData}
-              />
+              <RedeemModal open={openRedeem} onClose={() => setOpenRedeem(false)} />
 
               <Box
                 sx={{

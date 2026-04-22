@@ -71,6 +71,6 @@ export const endpoints = {
     list: '/investor-profiles/bank-details',
   },
   portfolio: {
-    data: '/portfolio-data',
+    data: `${JSON_SERVER_API}/portfolio-data`,
   },
 };
