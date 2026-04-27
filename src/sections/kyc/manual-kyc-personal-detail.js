@@ -192,7 +192,7 @@ export default function PersonalDetailKyc() {
       }
     } catch (error) {
       console.error('❌ Investor registration failed', error);
-      enqueueSnackbar(error?.response?.data?.error?.message || 'KYC submission failed', {
+      enqueueSnackbar(error?.error?.message || error?.response?.data?.error?.message || 'KYC submission failed', {
         variant: 'error',
       });
     }
