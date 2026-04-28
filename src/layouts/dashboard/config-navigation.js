@@ -3,11 +3,7 @@ import { useMemo } from 'react';
 import { paths } from 'src/routes/paths';
 // locales
 import { useLocales } from 'src/locales';
-// components
-import Label from 'src/components/label';
-import Iconify from 'src/components/iconify';
 import SvgColor from 'src/components/svg-color';
-import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -52,7 +48,6 @@ const ICONS = {
 
 export function useNavData() {
   const { t } = useLocales();
-  // const { user: currentUser } = useAuthContext();
 
   const data = useMemo(
     () => [                   
@@ -60,8 +55,21 @@ export function useNavData() {
         subheader: t('dashboard'),
         items: [
           // { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
-          { title: t('Activity'), path: paths.dashboard.general.banking, icon: ICONS.banking },
-          { title: t('Invest'), path: paths.dashboard.invest.view, icon: ICONS.invest },
+          // { title: t('Dashboard'), path: paths.dashboard.general.app, icon: ICONS.dashboard },
+          {
+            title: t('Wallet'),
+            path: paths.dashboard.wallet.root,
+            icon: ICONS.banking,
+            children: [
+              { title: t('Add Funds'), path: paths.dashboard.wallet.addFunds, hidden: true },
+              { title: t('Withdraw'), path: paths.dashboard.wallet.withdraw, hidden: true },
+            ],
+          },
+          {
+            title: t('Invest Transaction'),
+            path: paths.dashboard.investTransaction.view,
+            icon: ICONS.invest,
+          },
           { title: t('Portfolio'), path: paths.dashboard.portfolio.view, icon: ICONS.portfolio },
         ],
       },

@@ -18,6 +18,8 @@ export default function NavItem({ item, open, depth, active, config, externalLin
 
   const subItem = depth !== 1;
 
+  const showChild = !!children && children.some((child) => !child.hidden);
+
   const renderContent = (
     <StyledItem
       disableGutters
@@ -68,7 +70,7 @@ export default function NavItem({ item, open, depth, active, config, externalLin
         </Box>
       )}
 
-      {!!children && (
+      {showChild && (
         <Iconify
           width={16}
           icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
