@@ -110,7 +110,7 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
-      { element: <Navigate to="/dashboard/app" replace />, index: true },
+      { element: <Navigate to="/dashboard/wallet" replace />, index: true },
       { path: 'app', element: <OverviewAppPage /> },
       { path: 'ecommerce', element: <OverviewEcommercePage /> },
       { path: 'analytics', element: <OverviewAnalyticsPage /> },

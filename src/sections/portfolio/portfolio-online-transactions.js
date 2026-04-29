@@ -1,9 +1,28 @@
-import { Alert, Box, Card, IconButton, Typography, useTheme } from '@mui/material';
-import React, { useMemo } from 'react';
+import {
+  Alert,
+  Box,
+  Card,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useGetPortfolioData, useGetPortfolioPtcTransactions } from 'src/api/portfolio';
 import Iconify from 'src/components/iconify';
-import { TablePaginationCustom, useTable } from 'src/components/table';
+import {
+  useTable,
+  emptyRows,
+  TableNoData,
+  TableEmptyRows,
+  TablePaginationCustom,
+} from 'src/components/table';
 
 function formatInr(value) {
   return new Intl.NumberFormat('en-IN', {
@@ -12,6 +31,23 @@ function formatInr(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
+}
+
+function formatTransactionDate(value) {
+  if (!value) {
+    return '-';
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsedDate);
 }
 
 export default function PortfolioOnlineTransactions() {
@@ -67,10 +103,19 @@ export default function PortfolioOnlineTransactions() {
     });
   }, [buyTransactions, sellTransactions]);
   const ptcTransactionsTotalCount = mergedTransactions.length;
-  const transactions = mergedTransactions.slice(
-    table.page * table.rowsPerPage,
-    table.page * table.rowsPerPage + table.rowsPerPage
+  const { page, rowsPerPage, setPage } = table;
+  const denseHeight = table.dense ? 56 : 72;
+  const paginatedTransactions = mergedTransactions.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(ptcTransactionsTotalCount / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [ptcTransactionsTotalCount, page, rowsPerPage, setPage]);
 
   return (
     <Box width="620px" sx={{ mx: 'auto' }}>
@@ -106,54 +151,68 @@ export default function PortfolioOnlineTransactions() {
             </Alert>
           ) : null}
 
-          {transactions
-            .map((item) => (
-              <Box
-                key={item.id}
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                py={1}
-                sx={{
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                <Box display="flex" alignItems="center" gap={2}>
-                  <IconButton
-                    sx={{
-                      bgcolor: 'grey.200',
-                    }}
-                  >
-                    <Iconify
-                      icon={item.status === 'credit' ? 'mdi:arrow-down' : 'mdi:bank'}
-                      width={18}
-                    />
-                  </IconButton>
+          <TableContainer>
+            <Table size={table.dense ? 'small' : 'medium'}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    Amount
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedTransactions.map((item, index) => {
+                  const isCredit = String(item?.status || '').toLowerCase() === 'credit';
+                  const reference = item?.referenceId || item?.id || '-';
 
-                  <Box>
-                    <Typography fontWeight="500">{item.type}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {item.date}
-                    </Typography>
-                  </Box>
-                </Box>
+                  return (
+                    <TableRow key={`${item?.id || reference}-${index}`} hover>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1.5}>
+                          <IconButton
+                            size="small"
+                            sx={{
+                              bgcolor: 'grey.200',
+                            }}
+                          >
+                            <Iconify icon={isCredit ? 'mdi:arrow-down' : 'mdi:bank'} width={16} />
+                          </IconButton>
+                          <Typography variant="body2" fontWeight={500}>
+                            {item?.type || 'Transaction'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>{formatTransactionDate(item?.createdAt || item?.date)}</TableCell>
+                      <TableCell>{reference}</TableCell>
+                      <TableCell align="right" sx={{ color: isCredit ? 'success.main' : 'error.main', fontWeight: 600 }}>
+                        {isCredit ? '+' : '-'}
+                        {formatInr(item?.amount)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
 
-                <Typography
-                  fontWeight="bold"
-                  color={item.status === 'credit' ? 'success.main' : 'error.main'}
-                >
-                  {item.status === 'credit' ? '+' : '-'}
-                  {formatInr(item.amount)}
-                </Typography>
-              </Box>
-            ))}
+                <TableEmptyRows
+                  height={denseHeight}
+                  emptyRows={emptyRows(page, rowsPerPage, ptcTransactionsTotalCount)}
+                />
+
+                <TableNoData notFound={!ptcTransactionsLoading && !ptcTransactionsTotalCount} />
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
         <TablePaginationCustom
           count={ptcTransactionsTotalCount}
-          page={table.page}
-          rowsPerPage={table.rowsPerPage}
+          page={page}
+          rowsPerPage={rowsPerPage}
           onPageChange={table.onChangePage}
           onRowsPerPageChange={table.onChangeRowsPerPage}
+          dense={table.dense}
+          onChangeDense={table.onChangeDense}
         />
       </Card>
     </Box>

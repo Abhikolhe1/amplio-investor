@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   Alert,
   Box,
@@ -6,7 +6,6 @@ import {
   Card,
   Container,
   Divider,
-  Pagination,
   Paper,
   Stack,
   Table,
@@ -23,6 +22,13 @@ import { useGetBankDetail } from 'src/api/bank-detail';
 import { useGetWallet, useGetWalletHistory } from 'src/api/wallet';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useSettingsContext } from 'src/components/settings';
+import {
+  useTable,
+  emptyRows,
+  TableNoData,
+  TableEmptyRows,
+  TablePaginationCustom,
+} from 'src/components/table';
 import { paths } from 'src/routes/paths';
 import { getApiErrorMessage } from 'src/utils/api-error';
 
@@ -107,13 +113,12 @@ export default function InvestWalletView() {
   const settings = useSettingsContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const table = useTable({ defaultRowsPerPage: 5 });
   const addFundsRequest = location.state?.addFundsRequest;
 
   const { wallet, walletLoading, walletError } = useGetWallet();
   const { walletHistory, walletHistoryLoading, walletHistoryError } = useGetWalletHistory();
-  const { BankDetail, BankDetailLoading } = useGetBankDetail();
-
-  const [transactionPage, setTransactionPage] = useState(1);
+  const { BankDetailLoading } = useGetBankDetail();
 
   useEffect(() => {
     const requestedAmount = parseCurrencyAmount(addFundsRequest?.amount);
@@ -127,16 +132,19 @@ export default function InvestWalletView() {
   const blockedBalance = Number(wallet?.blockedBalance || 0);
   const availableBalance = Number(wallet?.availableBalance || 0);
   const transactions = walletHistory || [];
-  const transactionPageSize = 5;
-
+  const { page, rowsPerPage, setPage } = table;
+  const denseHeight = table.dense ? 56 : 72;
   const paginatedTransactions = transactions.slice(
-    (transactionPage - 1) * transactionPageSize,
-    transactionPage * transactionPageSize
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
-  const totalTransactionPages = Math.max(
-    1,
-    Math.ceil(transactions.length / transactionPageSize)
-  );
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(transactions.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [page, rowsPerPage, setPage, transactions.length]);
 
   const renderOverview = (
     <Stack spacing={3}>
@@ -221,28 +229,23 @@ export default function InvestWalletView() {
             </Box>
           </Stack>
 
-          {!transactions.length ? (
-            <Alert severity="info" variant="outlined">
-              No transaction history is available yet.
-            </Alert>
-          ) : (
-            <Stack spacing={2}>
-              <TableContainer component={Paper} variant="outlined">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Amount
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {paginatedTransactions.map((transaction, index) => {
-                      const presentation = getTransactionPresentation(transaction);
-                      return (
+          <Stack spacing={2}>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size={table.dense ? 'small' : 'medium'}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      Amount
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedTransactions.map((transaction, index) => {
+                    const presentation = getTransactionPresentation(transaction);
+                    return (
                       <TableRow
                         key={`${transaction.referenceId || 'ref'}-${transaction.createdAt || index}-${index}`}
                         hover
@@ -250,7 +253,8 @@ export default function InvestWalletView() {
                         <TableCell>{presentation.label}</TableCell>
                         <TableCell>{formatTransactionDate(transaction.createdAt)}</TableCell>
                         <TableCell sx={{ textTransform: 'capitalize' }}>
-                          {transaction.referenceType || '-'} {transaction.referenceId ? `(${transaction.referenceId})` : ''}
+                          {transaction.referenceType || '-'}{' '}
+                          {transaction.referenceId ? `(${transaction.referenceId})` : ''}
                         </TableCell>
                         <TableCell
                           align="right"
@@ -264,21 +268,28 @@ export default function InvestWalletView() {
                         </TableCell>
                       </TableRow>
                     );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  })}
 
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Pagination
-                  color="primary"
-                  page={transactionPage}
-                  count={totalTransactionPages}
-                  onChange={(_, page) => setTransactionPage(page)}
-                />
-              </Stack>
-            </Stack>
-          )}
+                  <TableEmptyRows
+                    height={denseHeight}
+                    emptyRows={emptyRows(page, rowsPerPage, transactions.length)}
+                  />
+
+                  <TableNoData notFound={!walletHistoryLoading && !transactions.length} />
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <TablePaginationCustom
+              count={transactions.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={table.onChangePage}
+              onRowsPerPageChange={table.onChangeRowsPerPage}
+              dense={table.dense}
+              onChangeDense={table.onChangeDense}
+            />
+          </Stack>
         </Stack>
       </Card>
     </Stack>
