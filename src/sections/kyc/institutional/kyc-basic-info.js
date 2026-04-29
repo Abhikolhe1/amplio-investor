@@ -54,6 +54,7 @@ export default function KYCBasicInfo() {
   const [panExtractionStatus, setPanExtractionStatus] = useState('idle'); // 'idle' | 'success' | 'failed'
   const [extractedPanDetails, setExtractedPanDetails] = useState(null);
   const [skipPanExtractionOnce, setSkipPanExtractionOnce] = useState(false);
+  const [gstinOptions, setGstinOptions] = useState([]);
 
   // State to store mapped API values
   const [investorOptions, setinvestorOptions] = useState([]);
@@ -78,6 +79,59 @@ export default function KYCBasicInfo() {
         [fieldName]: true,
       }));
     }
+  };
+
+  const normalizeGstinOptions = (gstinData) => {
+    if (!gstinData) return [];
+
+    if (Array.isArray(gstinData)) {
+      return gstinData
+        .map((item) => {
+          if (typeof item === 'string') return item.trim().toUpperCase();
+          return (item?.gstin || item?.GSTIN || item?.value || '').trim().toUpperCase();
+        })
+        .filter(Boolean);
+    }
+
+    if (typeof gstinData === 'string') {
+      return gstinData
+        .split(',')
+        .map((item) => item.trim().toUpperCase())
+        .filter(Boolean);
+    }
+
+    if (typeof gstinData === 'object') {
+      return Object.values(gstinData)
+        .flatMap((value) => normalizeGstinOptions(value))
+        .filter(Boolean);
+    }
+
+    return [];
+  };
+
+  const extractGstinOptionsFromCompanyInfo = (responseData) => {
+    const possibleSources = [
+      responseData?.data?.gstin,
+      responseData?.data?.gstins,
+      responseData?.data?.GSTIN,
+      responseData?.data?.GSTINS,
+      responseData?.data?.companyInfo?.gstin,
+      responseData?.data?.companyInfo?.gstins,
+      responseData?.data?.companyInfo?.GSTIN,
+      responseData?.data?.companyInfo?.GSTINS,
+      responseData?.gstin,
+      responseData?.gstins,
+      responseData?.GSTIN,
+      responseData?.GSTINS,
+    ];
+
+    return [...new Set(possibleSources.flatMap((source) => normalizeGstinOptions(source)))];
+  };
+
+  const extractPanFromGstin = (gstin) => {
+    const normalizedGstin = (gstin || '').trim().toUpperCase();
+    if (normalizedGstin.length < 12) return '';
+    return normalizedGstin.slice(2, 12);
   };
 
   const NewUserSchema = Yup.object().shape({
@@ -162,6 +216,15 @@ export default function KYCBasicInfo() {
     try {
       // eslint-disable-next-line no-shadow
       const sessionId = localStorage.getItem('sessionId') || '';
+      const normalizedPanNumber = (formData.panNumber || '').trim().toUpperCase();
+      const gstinPan = extractPanFromGstin(formData.gstin);
+
+      if (gstinPan && normalizedPanNumber && gstinPan !== normalizedPanNumber) {
+        enqueueSnackbar('Submitted PAN does not match PAN embedded in selected GSTIN', {
+          variant: 'error',
+        });
+        return;
+      }
 
       const dateOfIncorporationStr = formData.dateOfIncorporation
         ? new Date(formData.dateOfIncorporation).toISOString().split('T')[0]
@@ -281,11 +344,12 @@ export default function KYCBasicInfo() {
     if (kycProgress?.profile) {
       const p = kycProgress.profile;
       const panDocument = p?.investorPanCards?.panCardDocument || p?.investorPanCards?.media;
+      const existingGstin = p.GSTIN || '';
 
       reset({
         cin: p.CIN || '',
         companyName: p.companyName || '',
-        gstin: p.GSTIN || '',
+        gstin: existingGstin,
         dateOfIncorporation: p.dateOfIncorporation ? new Date(p.dateOfIncorporation) : null,
         msmeUdyamRegistrationNo: p.udyamRegistrationNumber || '',
         city: p.cityOfIncorporation || '',
@@ -305,6 +369,9 @@ export default function KYCBasicInfo() {
 
         investorTypeId: p?.investorTypeId || '',
       });
+
+      setGstinOptions(existingGstin ? [existingGstin] : []);
+
       if (panDocument) {
         const serverFile = {
           fileOriginalName: panDocument.fileOriginalName,
@@ -562,8 +629,16 @@ export default function KYCBasicInfo() {
                             });
                             const data = res?.data?.data;
                             if (res.data.success && data) {
+                              const normalizedGstins = extractGstinOptionsFromCompanyInfo(
+                                res?.data || {}
+                              );
+
                               setValue('companyName', data.companyName || '');
-                              setValue('gstin', data.gstin || '');
+                              setGstinOptions(normalizedGstins);
+                              setValue('gstin', normalizedGstins[0] || '', {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
                               setValue(
                                 'dateOfIncorporation',
                                 data.dateOfIncorporation ? new Date(data.dateOfIncorporation) : null
@@ -583,7 +658,12 @@ export default function KYCBasicInfo() {
                                 shouldDirty: true,
                               });
 
-                              enqueueSnackbar('CIN details fetched!', { variant: 'success' });
+                              enqueueSnackbar(
+                                normalizedGstins.length > 0
+                                  ? `CIN details fetched! ${normalizedGstins.length} GSTIN option(s) found.`
+                                  : 'CIN details fetched!',
+                                { variant: 'success' }
+                              );
                             }
                           } catch (err) {
                             enqueueSnackbar('Unable to fetch CIN details', { variant: 'error' });
@@ -640,7 +720,20 @@ export default function KYCBasicInfo() {
               </Grid>
 
               <Grid xs={12} md={4}>
-                <RHFTextField name="gstin" label="GSTIN *" placeholder="Enter GSTIN" />
+                {gstinOptions.length > 0 ? (
+                  <RHFSelect name="gstin" label="GSTIN *">
+                    <MenuItem value="" disabled>
+                      Select GSTIN
+                    </MenuItem>
+                    {gstinOptions.map((gstin) => (
+                      <MenuItem key={gstin} value={gstin}>
+                        {gstin}
+                      </MenuItem>
+                    ))}
+                  </RHFSelect>
+                ) : (
+                  <RHFTextField name="gstin" label="GSTIN *" placeholder="Enter GSTIN" />
+                )}
               </Grid>
 
               <Grid xs={12} md={4}>
