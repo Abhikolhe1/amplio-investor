@@ -1,12 +1,15 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 // utils
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
 export function useGetProducts() {
-  const URL = endpoints.product.list;
+  const { pathname } = useLocation();
+  const isProductPage = pathname?.includes('/product');
+  const URL = isProductPage ? endpoints.product.list : null;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
@@ -16,9 +19,9 @@ export function useGetProducts() {
       productsLoading: isLoading,
       productsError: error,
       productsValidating: isValidating,
-      productsEmpty: !isLoading && !data?.products.length,
+      productsEmpty: Boolean(URL) && !isLoading && !data?.products.length,
     }),
-    [data?.products, error, isLoading, isValidating]
+    [URL, data?.products, error, isLoading, isValidating]
   );
 
   return memoizedValue;

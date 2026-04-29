@@ -64,19 +64,21 @@ function maskAccountNumber(accountNumber) {
 }
 
 function resolveBankDetails(payload) {
+  let details = [];
   if (Array.isArray(payload)) {
-    return payload;
+    details = payload;
+  } else if (Array.isArray(payload?.bankDetails)) {
+    details = payload.bankDetails;
+  } else if (payload?.bankDetails) {
+    details = [payload.bankDetails];
+  } else if (Array.isArray(payload?.data)) {
+    details = payload.data;
+  } else if (Array.isArray(payload?.rows)) {
+    details = payload.rows;
   }
 
-  if (Array.isArray(payload?.data)) {
-    return payload.data;
-  }
-
-  if (Array.isArray(payload?.rows)) {
-    return payload.rows;
-  }
-
-  return [];
+  // Filter for approved accounts only (status === 1)
+  return details.filter((acc) => acc.status === 1);
 }
 
 export default function WalletWithdrawView() {

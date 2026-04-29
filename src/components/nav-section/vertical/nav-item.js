@@ -105,7 +105,7 @@ export default function NavItem({ item, open, depth, active, config, externalLin
     );
 
   // Has child
-  if (children) {
+  if (showChild) {
     return renderContent;
   }
 

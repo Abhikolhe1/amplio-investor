@@ -1,12 +1,27 @@
 import PropTypes from 'prop-types';
-import { Box, Card, Grid, Stack, Typography } from '@mui/material';
+import { Alert, Box, Card, Chip, Grid, Stack, Typography } from '@mui/material';
 
 import Iconify from 'src/components/iconify';
 
-export default function InvestTableRow({ row, onViewRow }) {
+export default function InvestTableRow({ row, onViewRow, fallbackSpvId }) {
   const product = row?.product || {};
+  const poolSummary = row?.poolSummary || null;
+  const isOnlinePaymentsProduct =
+    String(product.title || '').trim().toLowerCase() === 'online payments';
+  const spvId =
+    row?.spvId ||
+    row?.investmentDetails?.spvId ||
+    row?.product?.spvId ||
+    (isOnlinePaymentsProduct ? fallbackSpvId : null) ||
+    null;
+  const poolStatusLabel = poolSummary?.status?.label || 'Inactive';
+  let poolStatusColor = 'default';
 
-
+  if (poolStatusLabel === 'Deleted') {
+    poolStatusColor = 'error';
+  } else if (poolStatusLabel === 'Active') {
+    poolStatusColor = 'success';
+  }
 
   return (
     <Card
@@ -145,6 +160,46 @@ export default function InvestTableRow({ row, onViewRow }) {
               {product.payoutCycle || 'Weekly Repayment Cycle'}
             </Typography>
           </Box>
+
+          <Box
+            sx={{
+              mt: 2,
+              pt: 2,
+              borderTop: '1px solid #F1F1F1',
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle2">Pool</Typography>
+
+              {poolSummary ? (
+                <Chip
+                  label={poolStatusLabel}
+                  color={poolStatusColor}
+                  size="small"
+                  variant={poolSummary?.status?.isDeleted ? 'filled' : 'outlined'}
+                />
+              ) : null}
+            </Stack>
+
+            {!spvId ? (
+              <Alert
+                severity="info"
+                icon={false}
+                sx={{
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 2,
+                  bgcolor: 'grey.100',
+                  color: 'text.secondary',
+                  '& .MuiAlert-message': { p: 0 },
+                }}
+              >
+                <Typography variant="caption">
+                  Pool unavailable because this investment is not mapped to an SPV yet.
+                </Typography>
+              </Alert>
+            ) : null}
+          </Box>
         </Box>
       </Stack>
     </Card>
@@ -152,6 +207,7 @@ export default function InvestTableRow({ row, onViewRow }) {
 }
 
 InvestTableRow.propTypes = {
+  fallbackSpvId: PropTypes.string,
   row: PropTypes.object,
   onViewRow: PropTypes.func,
 };

@@ -79,7 +79,7 @@ export const INVESTMENTS = [
       faqs: [
         {
           id: 1,
-          question: 'What is Invoice Discounting?',
+          question: 'How does this investment work?',
           answer:
             'Invoice discounting is a financing method where businesses sell unpaid invoices to investors.',
         },
@@ -95,7 +95,7 @@ export const INVESTMENTS = [
         },
         {
           id: 4,
-          question: 'What is Invoice Discounting?',
+          question: 'How does this investment work?',
           answer:
             'Invoice discounting is a financing method where businesses sell unpaid invoices to investors.',
         },
@@ -213,7 +213,7 @@ export const INVESTMENTS = [
       aboutNBFC: {
         title: 'About NBFC',
         description:
-          'Gangotree Baitar Private Limited (GBPL) is a Non Deposit-Taking NBFC registered with RBI having registration number as 05.02902. Backed by a team of qualified investment professionals, GBPL specializes in providing Invoice Discounting and Supply Chain Financing to Corporates in India.',
+          'Gangotree Baitar Private Limited (GBPL) is a Non Deposit-Taking NBFC registered with RBI having registration number as 05.02902. Backed by a team of qualified investment professionals, GBPL specializes in providing structured working capital and supply chain financing solutions to corporates in India.',
       },
     },
   },
@@ -278,7 +278,7 @@ export const INVESTMENTS = [
       faqs: [
         {
           id: 1,
-          question: 'What is Invoice Discounting?',
+          question: 'How does this investment work?',
           answer: 'It allows early payment against invoices.',
         },
         { id: 2, question: 'How are returns generated?', answer: 'From buyer interest payments.' },
@@ -345,7 +345,7 @@ export const INVESTMENTS = [
       faqs: [
         {
           id: 1,
-          question: 'What is Invoice Discounting?',
+          question: 'How does this investment work?',
           answer: 'Early invoice-based financing.',
         },
         { id: 2, question: 'How are returns generated?', answer: 'Via buyer interest payments.' },

@@ -5,7 +5,7 @@ export default function PortfolioOnlineTransactionsPage() {
   return (
     <>
       <Helmet>
-        <title>Online Trasactions</title>
+        <title>PTC Transactions</title>
       </Helmet>
 
       <PortfolioOnlineTransactions />

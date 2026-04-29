@@ -20,8 +20,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useGetBankDetail } from 'src/api/bank-detail';
-import { useGetPortfolioData } from 'src/api/portfolio';
-import { useGetWallet } from 'src/api/wallet';
+import { useGetWallet, useGetWalletHistory } from 'src/api/wallet';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useSettingsContext } from 'src/components/settings';
 import { paths } from 'src/routes/paths';
@@ -61,6 +60,49 @@ function maskAccountNumber(accountNumber) {
   return `XXXX ${normalized.slice(-4)}`;
 }
 
+function getTransactionPresentation(transaction) {
+  const type = String(transaction?.type || '').toUpperCase();
+
+  if (type === 'DEPOSIT') {
+    return { label: 'Deposit', sign: '+', status: 'credit' };
+  }
+
+  if (type === 'BUY_DEBIT') {
+    return { label: 'Buy', sign: '-', status: 'debit' };
+  }
+
+  if (type === 'REDEMPTION_CREDIT') {
+    return { label: 'Sell', sign: '+', status: 'credit' };
+  }
+
+  if (type === 'WITHDRAWAL_DEBIT') {
+    return { label: 'Withdraw', sign: '-', status: 'debit' };
+  }
+
+  const isCredit = type.includes('CREDIT');
+  return {
+    label: transaction?.type || 'Transaction',
+    sign: isCredit ? '+' : '-',
+    status: isCredit ? 'credit' : 'debit',
+  };
+}
+
+function formatTransactionDate(value) {
+  if (!value) {
+    return '-';
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsedDate);
+}
+
 export default function InvestWalletView() {
   const settings = useSettingsContext();
   const location = useLocation();
@@ -68,7 +110,7 @@ export default function InvestWalletView() {
   const addFundsRequest = location.state?.addFundsRequest;
 
   const { wallet, walletLoading, walletError } = useGetWallet();
-  const { portfolioData } = useGetPortfolioData();
+  const { walletHistory, walletHistoryLoading, walletHistoryError } = useGetWalletHistory();
   const { BankDetail, BankDetailLoading } = useGetBankDetail();
 
   const [transactionPage, setTransactionPage] = useState(1);
@@ -84,16 +126,16 @@ export default function InvestWalletView() {
   const currentBalance = Number(wallet?.currentBalance || 0);
   const blockedBalance = Number(wallet?.blockedBalance || 0);
   const availableBalance = Number(wallet?.availableBalance || 0);
-  const ptcTransactions = portfolioData?.onlinePayment?.transactions || [];
+  const transactions = walletHistory || [];
   const transactionPageSize = 5;
 
-  const paginatedTransactions = ptcTransactions.slice(
+  const paginatedTransactions = transactions.slice(
     (transactionPage - 1) * transactionPageSize,
     transactionPage * transactionPageSize
   );
   const totalTransactionPages = Math.max(
     1,
-    Math.ceil(ptcTransactions.length / transactionPageSize)
+    Math.ceil(transactions.length / transactionPageSize)
   );
 
   const renderOverview = (
@@ -179,7 +221,7 @@ export default function InvestWalletView() {
             </Box>
           </Stack>
 
-          {!ptcTransactions.length ? (
+          {!transactions.length ? (
             <Alert severity="info" variant="outlined">
               No transaction history is available yet.
             </Alert>
@@ -191,48 +233,43 @@ export default function InvestWalletView() {
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Amount
                       </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedTransactions.map((transaction) => (
-                      <TableRow key={transaction.id} hover>
-                        <TableCell>{transaction.type}</TableCell>
-                        <TableCell>{transaction.date}</TableCell>
+                    {paginatedTransactions.map((transaction, index) => {
+                      const presentation = getTransactionPresentation(transaction);
+                      return (
+                      <TableRow
+                        key={`${transaction.referenceId || 'ref'}-${transaction.createdAt || index}-${index}`}
+                        hover
+                      >
+                        <TableCell>{presentation.label}</TableCell>
+                        <TableCell>{formatTransactionDate(transaction.createdAt)}</TableCell>
                         <TableCell sx={{ textTransform: 'capitalize' }}>
-                          {transaction.status}
+                          {transaction.referenceType || '-'} {transaction.referenceId ? `(${transaction.referenceId})` : ''}
                         </TableCell>
                         <TableCell
                           align="right"
                           sx={{
-                            color:
-                              transaction.status === 'credit'
-                                ? 'success.main'
-                                : 'error.main',
+                            color: presentation.status === 'credit' ? 'success.main' : 'error.main',
                             fontWeight: 600,
                           }}
                         >
-                          {transaction.status === 'credit' ? '+' : '-'}
+                          {presentation.sign}
                           {formatInr(transaction.amount)}
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Button
-                  variant="text"
-                  color="primary"
-                  onClick={() => navigate(paths.dashboard.portfolio.ptcTransactions())}
-                >
-                  View all
-                </Button>
-
                 <Pagination
                   color="primary"
                   page={transactionPage}
@@ -255,15 +292,15 @@ export default function InvestWalletView() {
         sx={{ mb: 3 }}
       />
 
-      {(walletLoading || BankDetailLoading) ? (
+      {(walletLoading || walletHistoryLoading || BankDetailLoading) ? (
         <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
           Loading wallet data...
         </Alert>
       ) : null}
 
-      {walletError ? (
+      {walletError || walletHistoryError ? (
         <Alert severity="error" variant="outlined" sx={{ mb: 3 }}>
-          {getApiErrorMessage(walletError, 'Unable to load wallet data.')}
+          {getApiErrorMessage(walletError || walletHistoryError, 'Unable to load wallet data.')}
         </Alert>
       ) : null}
 
@@ -271,4 +308,3 @@ export default function InvestWalletView() {
     </Container>
   );
 }
-

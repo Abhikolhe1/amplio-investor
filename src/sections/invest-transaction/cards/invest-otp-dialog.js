@@ -18,6 +18,7 @@ export default function InvestOtpDialog({
   emailOrMobile,
   onVerify,
   onResend,
+  verifyDisabled = false,
   length = 4,
 }) {
   const [timer, setTimer] = useState(60);
@@ -128,7 +129,7 @@ export default function InvestOtpDialog({
               fullWidth
               size="large"
               variant="contained"
-              disabled={!isOtpComplete}
+              disabled={!isOtpComplete || verifyDisabled}
               sx={{
                 borderRadius: 999,
                 bgcolor: isOtpComplete ? 'primary.main' : 'grey.400',
@@ -165,4 +166,5 @@ InvestOtpDialog.propTypes = {
   onVerify: PropTypes.func,
   open: PropTypes.bool,
   value: PropTypes.array.isRequired,
+  verifyDisabled: PropTypes.bool,
 };

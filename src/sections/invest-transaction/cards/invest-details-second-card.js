@@ -1,47 +1,31 @@
-import { Box, Card, Grid, Typography, Stack, Checkbox, IconButton, Button, Chip, } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  Checkbox,
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+} from '@mui/material';
 import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';
 import { paths } from 'src/routes/paths';
-import { useParams, useRouter } from 'src/routes/hook';
+import { useParams } from 'src/routes/hook';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Iconify from 'src/components/iconify';
+import InfoPopoverIcon from 'src/sections/invest-transaction/components/info-popover-icon';
+import {
+  calculateProjectedInterest,
+  getInvestmentAmounts,
+  parseAmount as parseCurrencyAmount,
+  parseUnitsValue as parseUnitCount,
+  resolvePayoutType,
+} from 'src/utils/investment-amounts';
 
-const INDIA_TIME_ZONE = 'Asia/Kolkata';
-const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24;
-
-const parseAmount = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
-
-const parseOptionalAmount = (value) => {
-  if (value === null || value === undefined) return null;
-
-  const rawValue = String(value).trim();
-
-  if (!rawValue) return null;
-
-  return parseAmount(rawValue);
-};
-
-const getFirstAmount = (...values) => {
-  const parsedValue = values
-    .map((value) => parseOptionalAmount(value))
-    .find((value) => value !== null);
-
-  return parsedValue ?? 0;
-};
-
-const parseUnitsValue = (value) => {
-  if (typeof value === 'number') return value;
-
-  const rawValue = String(value || '').trim();
-
-  if (!rawValue) return 0;
-
-  if (rawValue.includes('/')) {
-    return parseInt(rawValue.split('/')[0], 10) || 0;
-  }
-
-  return parseInt(rawValue, 10) || 0;
-};
 
 const formatAmount = (value) =>
   `₹${Number(value || 0).toLocaleString('en-IN', {
@@ -49,167 +33,149 @@ const formatAmount = (value) =>
     maximumFractionDigits: 2,
   })}`;
 
-const createUtcDate = (year, month, day) => {
-  const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-
-  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
-};
-
-const getIndiaToday = () => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: INDIA_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-
-  const year = parts.find((part) => part.type === 'year')?.value;
-  const month = parts.find((part) => part.type === 'month')?.value;
-  const day = parts.find((part) => part.type === 'day')?.value;
-
-  return createUtcDate(year, month, day);
-};
-
-const parseDate = (value) => {
-  if (!value) return null;
-
-  const rawValue = String(value).trim();
-
-  if (!rawValue) return null;
-
-  if (rawValue.includes('/')) {
-    const [day, month, year] = rawValue.split('/');
-    return createUtcDate(year, month, day);
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
-    const [year, month, day] = rawValue.split('-');
-    return createUtcDate(year, month, day);
-  }
-
-  const parsedDate = new Date(rawValue);
-
-  if (Number.isNaN(parsedDate.getTime())) return null;
-
-  return createUtcDate(
-    parsedDate.getUTCFullYear(),
-    parsedDate.getUTCMonth() + 1,
-    parsedDate.getUTCDate()
-  );
-};
-
-const getExactDays = (value) => {
-  const eventDate = parseDate(value);
-  if (!eventDate) return 0;
-
-  const today = getIndiaToday();
-  if (!today) return 0;
-
-  const diff = eventDate.getTime() - today.getTime();
-
-  if (diff <= 0) return 0;
-
-  return Math.ceil(diff / MILLISECONDS_IN_A_DAY);
-};
 
 export default function InvestDetailsSecondCard({ currentDetails }) {
-  const router = useRouter();
+  const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
   const { id } = params;
+  const payoutType = resolvePayoutType(currentDetails);
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(parseAmount(currentDetails?.walletAmount));
+  const [walletBalance, setWalletBalance] = useState(parseCurrencyAmount(currentDetails?.walletAmount));
+  const availableUnits = parseUnitCount(currentDetails?.units?.available);
+  const remainingInvestorLimit = parseUnitCount(currentDetails?.units?.remainingInvestorLimit);
+  const topUpResult = location.state?.topUpResult;
+  const maxSelectableUnits =
+    remainingInvestorLimit > 0
+      ? Math.min(availableUnits || 0, remainingInvestorLimit)
+      : availableUnits || 0;
 
   useEffect(() => {
-    const selectedUnits = parseUnitsValue(currentDetails?.units?.selected) || 1;
-    const availableUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
+    const selectedUnits = parseUnitCount(currentDetails?.units?.selected) || 1;
+    const normalizedSelectionCap = maxSelectableUnits > 0 ? maxSelectableUnits : 0;
+    const baseWalletBalance = parseCurrencyAmount(currentDetails?.walletAmount);
+    const returnedTopUpAmount =
+      topUpResult?.investmentId === id ? parseCurrencyAmount(topUpResult?.addedAmount) : 0;
 
-    setUnits(Math.min(selectedUnits, availableUnits));
-    setWalletBalance(parseAmount(currentDetails?.walletAmount));
-  }, [currentDetails]);
+    setUnits(
+      normalizedSelectionCap > 0
+        ? Math.min(selectedUnits, normalizedSelectionCap)
+        : 0
+    );
+    setWalletBalance(baseWalletBalance + returnedTopUpAmount);
+  }, [currentDetails, id, maxSelectableUnits, topUpResult]);
 
   const handleIncrease = () => {
-    const maxUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
-
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
-      return safePrev + 1 <= maxUnits ? safePrev + 1 : safePrev;
+      return safePrev + 1 <= maxSelectableUnits ? safePrev + 1 : safePrev;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
+      if (maxSelectableUnits === 0) {
+        return 0;
+      }
+
       const newValue = prev - 1;
       return newValue >= 1 ? newValue : 1;
     });
   };
 
   const handleQuickSelect = (value) => {
-    const maxUnits = parseUnitsValue(currentDetails?.units?.available) || 10;
-
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
       const safeValue = Number(value) || 0;
 
       const newValue = safePrev + safeValue;
 
-      return newValue <= maxUnits ? newValue : maxUnits;
+      return newValue <= maxSelectableUnits ? newValue : maxSelectableUnits;
     });
   };
 
   const handleAddFunds = () => {
-    setWalletBalance((prev) => prev + (calculatedValues.shortfallAmount || 0));
+    navigate(paths.dashboard.wallet.root, {
+      state: {
+        addFundsRequest: {
+          amount: calculatedValues.shortfallAmount,
+          investmentAmount: calculatedValues.investmentAmount,
+          units,
+          investmentId: id,
+          returnTo: paths.dashboard.investTransaction.details(id),
+        },
+      },
+    });
   };
 
   const handleOpenAgreement = () => {
-    router.push(paths.dashboard.invest.agreement(id));
+    navigate(paths.dashboard.investTransaction.agreement(id), {
+      state: {
+        investmentId: id,
+        units,
+      },
+    });
   };
 
 
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
-  
-    // 1. Basic values
-    const unitValue = parseAmount(currentDetails?.unitValue);
+
     const rate = parsePercentage(currentDetails?.couponRate);
-    const unitsCount = units;
-  
-    // 2. Principal
-    const principal = unitValue * unitsCount;
-  
-    // 3. Time calculation
-    const liquidityDays = getExactDays(currentDetails?.nextLiquidityEvent);
-    const maturityDays = getExactDays(currentDetails?.finalMaturityDate);
-  
-    const timeLiquidity = liquidityDays / 365;
-    const timeMaturity = maturityDays / 365;
-  
-    // 4. Interest calculations
-    const accruedInterest = (principal * rate * timeLiquidity) / 100;
-    const maturityInterest = (principal * rate * timeMaturity) / 100;
-  
-    // 5. Final amounts
-    const liquidityAmount = principal + accruedInterest;
-    const maturityAmount = principal + maturityInterest;
-  
-    // 6. Wallet logic
-    const shortfallAmount = Math.max(principal - walletBalance, 0);
-    const hasSufficientBalance = walletBalance >= principal;
-  
+    const { investmentAmount, principalAmount } = getInvestmentAmounts({
+      currentDetails,
+      units,
+      payoutType,
+    });
+    const nextLiquidityProjection = calculateProjectedInterest({
+      principalAmount,
+      annualRatePercent: rate,
+      endDate: currentDetails?.nextLiquidityEvent,
+    });
+    const maturityProjection = calculateProjectedInterest({
+      principalAmount,
+      annualRatePercent: rate,
+      endDate: currentDetails?.finalMaturityDate,
+    });
+    const shortfallAmount = Math.max(investmentAmount - walletBalance, 0);
+    const hasSufficientBalance = walletBalance >= investmentAmount;
+    const hasInventory = maxSelectableUnits > 0;
+    const isUnitsAllowed =
+      units > 0 &&
+      units <= (availableUnits || 0) &&
+      units <= maxSelectableUnits;
+
     return {
-      investmentValue: formatAmount(principal),
-      accruedInterest: formatAmount(accruedInterest),
-      liquidityEventAmount: formatAmount(liquidityAmount),
-      expectedMaturityAmount: formatAmount(maturityAmount),
+      investmentAmount,
+      investmentValue: formatAmount(investmentAmount),
+      maturityAmountLabel:
+        payoutType === 'cumulative'
+          ? 'Estimated Maturity Amount'
+          : 'Principal Return at Maturity',
+      maturityAmountValue: formatAmount(maturityProjection.totalAmount),
+      nextLiquidityInterestValue: formatAmount(nextLiquidityProjection.interestAmount),
+      maturityInterestValue: formatAmount(maturityProjection.interestAmount),
       shortfallAmount,
       walletAmount: formatAmount(walletBalance),
       shortfallAmountFormatted: formatAmount(shortfallAmount),
       hasSufficientBalance,
+      hasInventory,
+      isUnitsAllowed,
     };
-  }, [currentDetails, units, walletBalance]);
+  }, [availableUnits, currentDetails, maxSelectableUnits, payoutType, units, walletBalance]);
   if (!currentDetails) {
     return null;
   }
+
+  const nextLiquidityEventInfo =
+    'This is the next scheduled date on which the investment may offer a liquidity or payout event, subject to the product terms.';
+  const finalMaturityDateInfo =
+    'This is the date on which the investment tenure ends and your principal is expected to be returned as per the agreed structure.';
+  const maturityAmountInfo =
+    payoutType === 'cumulative'
+      ? 'This amount is projected from today to maturity using the current principal amount, coupon rate, and remaining days.'
+      : 'This amount is projected from today to maturity using the current principal amount, coupon rate, and remaining days.';
 
   return (
     <Card
@@ -222,10 +188,10 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       }}
     >
       <Grid container spacing={3} sx={{ px: 2, pb: 3 }}>
-        {/* Units Selector */}
+        {/* PTC Selector */}
         <Grid item xs={12}>
           <Typography color="text.secondary">
-            No. of Units
+            No. of PTC
           </Typography>
 
           <Stack
@@ -253,7 +219,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
                 {String(units).padStart(2, '0')}
               </Typography>
               <Typography component="span" fontSize={14} color="text.secondary" ml={0.5}>
-                Unit
+                PTC
               </Typography>
             </Box>
 
@@ -282,7 +248,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             {[5, 10, 20].map((value) => (
               <Chip
                 key={value}
-                label={`${value} Unit`}
+                label={`${value} PTC`}
                 onClick={() => handleQuickSelect(value)}
                 sx={{
                   bgcolor: 'grey.300',
@@ -303,7 +269,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
         {/* Investment Details */}
         <Grid item xs={6}>
           <Typography fontSize={14} color="text.secondary">
-            Unit Value
+            PTC Value
           </Typography>
         </Grid>
         <Grid item xs={6}>
@@ -326,29 +292,29 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
         <Grid item xs={12}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography fontSize={14} color="primary.dark">
-              Investment Value
+              Total Investment
             </Typography>
             <Typography fontSize={20} fontWeight={700} color="primary.main">
               {calculatedValues.investmentValue}
             </Typography>
           </Stack>
         </Grid>
-        <Grid item xs={12}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" alignItems="center" spacing={0.5}>
 
-            <Typography fontSize={14} color="primary.dark">
-              Accrued Interest
-            </Typography>
-            <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
-            </Stack>
+        {!calculatedValues.hasInventory ? (
+          <Grid item xs={12}>
+            <Alert severity="warning" variant="outlined">
+              No PTCs are currently available for purchase.
+            </Alert>
+          </Grid>
+        ) : null}
 
-            <Typography fontSize={14} fontWeight={600} >
-              {calculatedValues.accruedInterest}
-            </Typography>
-          </Stack>
-        </Grid>
-
+        {calculatedValues.hasInventory && !calculatedValues.isUnitsAllowed ? (
+          <Grid item xs={12}>
+            <Alert severity="error" variant="outlined">
+              You cannot buy more than the available PTCs or your investor limit.
+            </Alert>
+          </Grid>
+        ) : null}
       </Grid>
       <Box
         sx={{
@@ -363,7 +329,10 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               <Typography fontSize={14} color="text.secondary">
                 Next Liquidity Event
               </Typography>
-              <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
+              <InfoPopoverIcon
+                label="Next Liquidity Event"
+                content={nextLiquidityEventInfo}
+              />
             </Stack>
           </Grid>
           <Grid item xs={6}>
@@ -373,16 +342,13 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Grid>
 
           <Grid item xs={6}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <Typography fontSize={14} color="text.secondary">
-                Liquidity Event Amount
-              </Typography>
-              <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
-            </Stack>
+            <Typography fontSize={14} color="text.secondary">
+              Interest on Next Liquidity Event
+            </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {calculatedValues.liquidityEventAmount}
+            <Typography fontSize={14} fontWeight={600} textAlign="right" color="success.main">
+              {calculatedValues.nextLiquidityInterestValue}
             </Typography>
           </Grid>
 
@@ -391,7 +357,10 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               <Typography fontSize={14} color="text.secondary">
                 Final Maturity Date
               </Typography>
-              <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
+              <InfoPopoverIcon
+                label="Final Maturity Date"
+                content={finalMaturityDateInfo}
+              />
             </Stack>
           </Grid>
           <Grid item xs={6}>
@@ -400,17 +369,35 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             </Typography>
           </Grid>
 
+          {payoutType !== 'cumulative' ? (
+            <>
+              <Grid item xs={6}>
+                <Typography fontSize={14} color="text.secondary">
+                  Interest Till Maturity
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography fontSize={14} fontWeight={600} textAlign="right" color="success.main">
+                  {calculatedValues.maturityInterestValue}
+                </Typography>
+              </Grid>
+            </>
+          ) : null}
+
           <Grid item xs={6}>
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <Typography fontSize={14} color="text.secondary">
-                Estimated Maturity Amount
+                {calculatedValues.maturityAmountLabel}
               </Typography>
-              <Iconify icon="eva:info-outline" width={16} color="text.secondary" />
+              <InfoPopoverIcon
+                label={calculatedValues.maturityAmountLabel}
+                content={maturityAmountInfo}
+              />
             </Stack>
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right" color="success.main">
-              {calculatedValues.expectedMaturityAmount}
+              {calculatedValues.maturityAmountValue}
             </Typography>
           </Grid>
 
@@ -558,7 +545,12 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             fullWidth
             size="large"
             variant="contained"
-            disabled={!agree || !calculatedValues.hasSufficientBalance}
+            disabled={
+              !agree ||
+              !calculatedValues.hasSufficientBalance ||
+              !calculatedValues.hasInventory ||
+              !calculatedValues.isUnitsAllowed
+            }
             onClick={handleOpenAgreement}
             sx={{
               py: 1.5,
