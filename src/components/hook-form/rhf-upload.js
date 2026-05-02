@@ -36,7 +36,14 @@ RHFUploadAvatar.propTypes = {
 
 // ----------------------------------------------------------------------
 
-export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...other }) {
+export function RHFUploadBox({
+  name,
+  multiple = false,
+  autoUpload = true,
+  previewWidth = 80,
+  previewHeight = 80,
+  ...other
+}) {
   const { control, setValue } = useFormContext();
 
   // const handleFileDrop = async (fieldName, acceptedFiles) => {
@@ -99,6 +106,8 @@ export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...oth
         <UploadBox
           files={field.value}
           error={!!error}
+          previewThumbnail
+          previewSx={{ width: previewWidth, height: previewHeight }}
           {...other}
           onRemove={() => handleRemoveFile(name)}
           onRemoveAll={() => handleRemoveAllFiles(name)}
@@ -127,6 +136,8 @@ RHFUploadBox.propTypes = {
   name: PropTypes.string,
   multiple: PropTypes.bool,
   autoUpload: PropTypes.bool,
+  previewWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  previewHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 // ----------------------------------------------------------------------

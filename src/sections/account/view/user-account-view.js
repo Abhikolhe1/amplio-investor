@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 // @mui
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -81,6 +81,13 @@ export default function AccountView() {
 
   const { BankDetail } = useGetBankDetail();
 
+  const bankDetailObj = useMemo(() => {
+    if (Array.isArray(BankDetail?.bankDetails)) {
+      return { bankDetails: BankDetail.bankDetails[0] ?? null };
+    }
+    return BankDetail;
+  }, [BankDetail]);
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
@@ -109,7 +116,7 @@ export default function AccountView() {
 
       {currentTab === 'general' && <AccountGeneral />}
 
-      {currentTab === 'bank' && <BankNewForm bankDetail={BankDetail} />}
+      {currentTab === 'bank' && <BankNewForm bankDetail={bankDetailObj} />}
 
       {currentTab === 'nominee' && <AccountNomineeForm />}
 

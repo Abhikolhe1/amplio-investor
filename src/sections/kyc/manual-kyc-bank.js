@@ -99,7 +99,7 @@ export default function BankDetailKyc() {
       router.push(paths.auth.jwt.kycPending);
     } catch (error) {
       console.error('❌ Bank KYC submission failed:', error);
-      enqueueSnackbar(error?.response?.data?.error?.message || 'Bank KYC submission failed', {
+      enqueueSnackbar(error?.error?.message || error?.response?.data?.error?.message || 'Bank KYC submission failed', {
         variant: 'error',
       });
     }

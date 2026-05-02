@@ -1,7 +1,6 @@
 // utils
 import { paramCase } from 'src/utils/change-case';
 import { _id, _postTitles } from 'src/_mock/assets';
-import { options } from 'numeral';
 
 // ----------------------------------------------------------------------
 
@@ -117,9 +116,15 @@ export const paths = {
       app: `${ROOTS.DASHBOARD}/app`,
       ecommerce: `${ROOTS.DASHBOARD}/ecommerce`,
       analytics: `${ROOTS.DASHBOARD}/analytics`,
+      activity: `${ROOTS.DASHBOARD}/wallet`,
       banking: `${ROOTS.DASHBOARD}/banking`,
       booking: `${ROOTS.DASHBOARD}/booking`,
       file: `${ROOTS.DASHBOARD}/file`,
+    },
+    wallet: {
+      root: `${ROOTS.DASHBOARD}/wallet`,
+      addFunds: `${ROOTS.DASHBOARD}/wallet/add-funds`,
+      withdraw: `${ROOTS.DASHBOARD}/wallet/withdraw`,
     },
     user: {
       root: `${ROOTS.DASHBOARD}/user`,
@@ -149,15 +154,22 @@ export const paths = {
     },
       invest: {
       root: `${ROOTS.DASHBOARD}/invest`,
-      view: `${ROOTS.DASHBOARD}/invest/investPage`,
+      view: `${ROOTS.DASHBOARD}/invest/view`,
       details: (id)=> `${ROOTS.DASHBOARD}/invest/${id}`,
       agreement: (id) => `${ROOTS.DASHBOARD}/invest/${id}/agreement`,
     },
-      portfolio: {
+    investTransaction: {
+      root: `${ROOTS.DASHBOARD}/invest-transaction`,
+      view: `${ROOTS.DASHBOARD}/invest-transaction/view`,
+      details: (id) => `${ROOTS.DASHBOARD}/invest-transaction/${id}`,
+      agreement: (id) => `${ROOTS.DASHBOARD}/invest-transaction/${id}/agreement`,
+    },
+    portfolio: {
       root: `${ROOTS.DASHBOARD}/portfolio`,
-      view: `${ROOTS.DASHBOARD}/portfolio/portfolioPage`,
-      onlinePayments: `${ROOTS.DASHBOARD}/portfolio/online-payments`,
-      onlineTransactions: `${ROOTS.DASHBOARD}/portfolio/online-transactions`,
+      view: `${ROOTS.DASHBOARD}/portfolio`,
+      onlinePayments: (poolName = 'online-payments') => `${ROOTS.DASHBOARD}/portfolio/${paramCase(String(poolName || 'online-payments'))}/online-payments`,
+      ptcTransactions: (poolName = 'online-payments') => `${ROOTS.DASHBOARD}/portfolio/${paramCase(String(poolName || 'online-payments'))}/ptc-transactions`,
+      onlineTransactions: (poolName = 'online-payments') => `${ROOTS.DASHBOARD}/portfolio/${paramCase(String(poolName || 'online-payments'))}/ptc-transactions`,
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,
@@ -212,3 +224,5 @@ export const paths = {
     },
   },
 };
+
+

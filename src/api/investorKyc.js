@@ -72,6 +72,7 @@ export function useGetKycProgress(sessionId) {
       hasProfile: Boolean(data?.currentProgress?.length),
       profileId: data?.profile?.id || null,
       usersId: data?.profile?.usersId || null,
+      accessToken: data?.accessToken || null,
       kycProgressLoading: isLoading,
       kycProgressError: error,
       kycProgressValidating: isValidating,

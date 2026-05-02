@@ -4,10 +4,8 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 // components
-import { useState, useEffect } from 'react';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { useParams } from 'src/routes/hook';
-import axios from 'axios';
 import { useSettingsContext } from 'src/components/settings';
 import { useGetInvestTransaction } from 'src/api/invest-transaction';
 import InvestDetails from '../cards/invest-details-card';
@@ -20,30 +18,16 @@ export default function InvestDetailsView() {
   const settings = useSettingsContext();
   const params = useParams();
   const { id } = params;
-  // const [currentTransaction,setCurrentTransaction]=useState(null);
- 
-  // useEffect(()=>{
-  //   const Trasaction_DUMMY_DATA = async () =>{
-  //     try{
-  //       const response = await axios.get(`http://localhost:3005/investor_data/${id}`);
-  //       setCurrentTransaction(response.data)
-  //     }
-  //     catch (err){
-  //   console.log(err)
-  //     }
-  //   }
-  //   Trasaction_DUMMY_DATA();
-  // },[id]);
 
-  const { investTransaction: currentTransaction} = useGetInvestTransaction(id);
+  const { investTransaction: currentTransaction } = useGetInvestTransaction(id);
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Invest Details"
+        heading="Invest Transaction Details"
         links={[
           { name: 'Dashboard', href: '/' },
-          { name: 'Invest', href: paths.dashboard.invest.view },
-          { name: 'Invest Details' },
+          { name: 'Invest Transaction', href: paths.dashboard.investTransaction.view },
+          { name: 'Details' },
         ]}
         sx={{ mb: 3 }}
       />

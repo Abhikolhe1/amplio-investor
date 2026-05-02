@@ -16,6 +16,7 @@ export default function CustomUploadBox({
     icon,
     placeholder,
     error,
+    helperText,
     disabled,
     multiple,
     onRemove,
@@ -28,7 +29,7 @@ export default function CustomUploadBox({
     accept,
     ...other
 }) {
-    const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
         disabled,
         multiple,
         accept,
@@ -36,7 +37,13 @@ export default function CustomUploadBox({
         ...other,
     });
 
-    const hasError = isDragReject || error;
+    const firstRejectionError = fileRejections?.[0]?.errors?.[0];
+    const firstRejectionMessage =
+        firstRejectionError?.code === 'file-too-large'
+            ? `Max file size is ${maxSizeMB} MB.`
+            : firstRejectionError?.message;
+    const errorMessage = helperText || firstRejectionMessage;
+    const hasError = isDragReject || !!error || !!fileRejections.length;
 
     const uploadStatus =
         hasError ? 'error' :
@@ -216,6 +223,11 @@ export default function CustomUploadBox({
                     </Grid>
                 </Grid>
             </Box>
+            {!!errorMessage && (
+                <Typography variant="caption" color="error.main" sx={{ mt: 1, ml: 0.5, display: 'block' }}>
+                    {errorMessage}
+                </Typography>
+            )}
             {renderMultiPreview}
         </>
     );
@@ -227,6 +239,7 @@ CustomUploadBox.propTypes = {
   placeholder: PropTypes.string,
 
   error: PropTypes.bool,
+  helperText: PropTypes.string,
   disabled: PropTypes.bool,
   multiple: PropTypes.bool,
 

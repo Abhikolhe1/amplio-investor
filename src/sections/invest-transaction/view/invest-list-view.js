@@ -20,6 +20,7 @@ import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 // api
 import { useGetProducts } from 'src/api/product';
 import { useGetInvestTransactions } from 'src/api/invest-transaction';
+import { useGetPortfolioData } from 'src/api/portfolio';
 // components
 import { useSettingsContext } from 'src/components/settings';
 import {
@@ -87,7 +88,7 @@ export default function InvestListView() {
   // useEffect(() => {
   //   const TrasactionDATA = async () => {
   //     try {
-  //       const response = await axios.get('http://localhost:3005/investor_data');
+  //       const response = await axios.get('http://localhost:3005/investor-data');
   //       setTableData(response.data)
   //     } catch (err) {
   //       console.log('API Error', err);
@@ -96,6 +97,7 @@ export default function InvestListView() {
   //   TrasactionDATA();
   // }, []);
  const { investTransactions,investTransactionsEmpty}=useGetInvestTransactions();
+ const { portfolioData } = useGetPortfolioData();
   const confirm = useBoolean();
 
   // useEffect(() => {
@@ -165,7 +167,7 @@ export default function InvestListView() {
 
   const handleViewRow = useCallback(
     (id) => {
-      router.push(paths.dashboard.invest.details(id));
+      router.push(paths.dashboard.investTransaction.details(id));
       console.log('click');
     },
     [router]
@@ -179,8 +181,8 @@ export default function InvestListView() {
     // <>
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Invest"
-        links={[{ name: 'Dashboard', href: '/' }, { name: 'Invest' }]}
+        heading="Invest Transaction"
+        links={[{ name: 'Dashboard', href: '/' }, { name: 'Invest Transaction' }]}
         sx={{ mb: 3 }}
       />
 
@@ -271,6 +273,7 @@ export default function InvestListView() {
           <Grid item xs={12} sm={6} md={4} key={row.id}>
             <InvestTableRow
               row={row}
+              fallbackSpvId={portfolioData?.onlinePayment?.spvId || null}
               selected={table.selected.includes(row.id)}
               // onSelectRow={() => table.onSelectRow(row.id)}
               // onDeleteRow={() => handleDeleteRow(row.id)}

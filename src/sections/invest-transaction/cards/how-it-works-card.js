@@ -1,13 +1,11 @@
-import { Box, Button, Card, Grid, Typography } from '@mui/material';
-
-import Iconify from 'src/components/iconify';
+import { Box, Card, Grid, Typography } from '@mui/material';
 
 export default function HowItWorksCard() {
   return (
     <Card
       sx={{
         p: { xs: 2.5, md: 3.5 },
-        borderRadius: 4,
+        borderRadius: 2,
         border: '1px solid #E8EDF2',
         boxShadow: '0 6px 18px rgba(145, 158, 171, 0.08)',
         bgcolor: '#FFFFFF',
@@ -49,7 +47,7 @@ export default function HowItWorksCard() {
           </Typography>
         </Grid>
 
-        <Grid item xs={12}>
+        {/* <Grid item xs={12}>
           <Button
             variant="outlined"
             fullWidth
@@ -60,7 +58,7 @@ export default function HowItWorksCard() {
           >
             View More
           </Button>
-        </Grid>
+        </Grid> */}
       </Grid>
     </Card>
   );

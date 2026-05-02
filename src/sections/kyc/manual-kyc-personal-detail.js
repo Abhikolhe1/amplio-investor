@@ -16,6 +16,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useEffect, useRef, useState } from 'react';
 import axiosInstance from 'src/utils/axios';
+import { setSession } from 'src/auth/context/jwt/utils';
 import { enqueueSnackbar } from 'notistack';
 import { useGetKycProgress } from 'src/api/investorKyc';
 import { format } from 'date-fns';
@@ -23,6 +24,11 @@ import FormProgressBar from './stepper-bar';
 import { useKycStepper } from './kyc-stepper-context';
 import CameraCapture from './camera-capture';
 import UploadChooser from './upload-chooser';
+
+const PERSONAL_KYC_FILE_ACCEPT = {
+  'application/pdf': ['.pdf'],
+  'image/*': ['.jpeg', '.jpg', '.png'],
+};
 
 export default function PersonalDetailKyc() {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down('sm'));
@@ -35,7 +41,7 @@ export default function PersonalDetailKyc() {
 
   const { activeStep, setActiveStep, progress, setStepProgress, nextStep } = useKycStepper();
   const sessionId = localStorage.getItem('sessionId');
-  const { kycProgress, usersId: fetchedUsersId, profileId: fetchedProfileId } =
+  const { kycProgress, usersId: fetchedUsersId, profileId: fetchedProfileId, accessToken } =
     useGetKycProgress(sessionId);
 
   const PersonalKycSchema = Yup.object().shape({
@@ -98,6 +104,12 @@ export default function PersonalDetailKyc() {
   };
 
   const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (accessToken) {
+      setSession(accessToken);
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (!kycProgress || hydratedRef.current) return;
@@ -173,7 +185,12 @@ export default function PersonalDetailKyc() {
       const response = await axiosInstance.post('/auth/investor-registration', payload);
 
       if (response?.data?.success) {
-        const usersId = response?.data?.usersId;
+        const { usersId, accessToken: newAccessToken } = response.data;
+
+        // ✅ Set session with JWT token
+        if (newAccessToken) {
+          setSession(newAccessToken);
+        }
 
         // ✅ Store it so next page can access it
         if (usersId) {
@@ -192,7 +209,7 @@ export default function PersonalDetailKyc() {
       }
     } catch (error) {
       console.error('❌ Investor registration failed', error);
-      enqueueSnackbar(error?.response?.data?.error?.message || 'KYC submission failed', {
+      enqueueSnackbar(error?.error?.message || error?.response?.data?.error?.message || 'KYC submission failed', {
         variant: 'error',
       });
     }
@@ -292,10 +309,7 @@ export default function PersonalDetailKyc() {
             name="panCardFront"
             // onDrop={handleDrop('panCardFront')}
             maxSize={5 * 1024 * 1024}
-            accept={{
-              'application/pdf': ['.pdf'],
-              'image/*': ['.jpeg', '.jpg', '.png'],
-            }}
+            accept={PERSONAL_KYC_FILE_ACCEPT}
             sx={{
               width: '100%',
               height: 100,
@@ -312,10 +326,7 @@ export default function PersonalDetailKyc() {
             name="adharCardFront"
             // onDrop={handleDrop('adharCardFront')}
             maxSize={5 * 1024 * 1024}
-            accept={{
-              'application/pdf': ['.pdf'],
-              'image/*': ['.jpeg', '.jpg', '.png'],
-            }}
+            accept={PERSONAL_KYC_FILE_ACCEPT}
             sx={{
               width: '100%',
               height: 100,
@@ -332,10 +343,7 @@ export default function PersonalDetailKyc() {
             name="adharCardBack"
             // onDrop={handleDrop('adharCardBack')}
             maxSize={5 * 1024 * 1024}
-            accept={{
-              'application/pdf': ['.pdf'],
-              'image/*': ['.jpeg', '.jpg', '.png'],
-            }}
+            accept={PERSONAL_KYC_FILE_ACCEPT}
             sx={{
               width: '100%',
               height: 100,
@@ -372,6 +380,7 @@ export default function PersonalDetailKyc() {
             <RHFUploadBox
               name="selfieImage"
               autoUpload={false}
+              accept={PERSONAL_KYC_FILE_ACCEPT}
               sx={{
                 width: '100%',
                 height: 100,
@@ -466,7 +475,7 @@ export default function PersonalDetailKyc() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf,.jpeg,.jpg,.png,.pdf"
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];

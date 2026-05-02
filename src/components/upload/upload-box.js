@@ -9,13 +9,22 @@ import MultiFilePreview from './preview-multi-file';
 
 // ----------------------------------------------------------------------
 
-export default function UploadBox({ placeholder, error, disabled, sx, files, ...other }) {
+export default function UploadBox({
+  placeholder,
+  error,
+  disabled,
+  sx,
+  files,
+  onRemove,
+  onRemoveAll,
+  previewThumbnail = false,
+  previewSx,
+  ...other
+}) {
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     disabled,
     ...other,
   });
-
-  console.log('UploadBox files:', files);
 
   const hasError = isDragReject || error;
 
@@ -59,15 +68,26 @@ export default function UploadBox({ placeholder, error, disabled, sx, files, ...
         {placeholder || <Iconify icon="eva:cloud-upload-fill" width={28} />}
       </Box>
 
-      {files && <MultiFilePreview files={Array.isArray(files) ? files : [files]} />}
+      {files && (
+        <MultiFilePreview
+          files={Array.isArray(files) ? files : [files]}
+          onRemove={onRemove}
+          thumbnail={previewThumbnail}
+          sx={previewSx}
+        />
+      )}
     </>
   );
 }
 
 UploadBox.propTypes = {
-  disabled: PropTypes.object,
+  disabled: PropTypes.bool,
   error: PropTypes.bool,
-  placeholder: PropTypes.object,
+  files: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  onRemove: PropTypes.func,
+  onRemoveAll: PropTypes.func,
+  placeholder: PropTypes.node,
+  previewSx: PropTypes.object,
+  previewThumbnail: PropTypes.bool,
   sx: PropTypes.object,
-  files: PropTypes.array,
 };

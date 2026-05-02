@@ -1,6 +1,6 @@
 import axios from 'axios';
 // config
-import { HOST_API ,JSON_SERVER_API} from 'src/config-global';
+import { HOST_API } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -56,21 +56,39 @@ export const endpoints = {
     getProfileData: `/investor-profiles/me`,
   },
   investorType: {
-    list: '/investor-types'
+    list: '/investor-types',
   },
   product: {
     list: '/api/product/list',
     details: '/api/product/details',
     search: '/api/product/search',
   },
-  investTransaction:{
-    list:`${JSON_SERVER_API}/investor_data`,
-    details:(id)=>`${JSON_SERVER_API}/investor_data/${id}`,
+  investTransaction: {
+    list: '/investor-data',
+    details: (id) => `/investor-data/${id}`,
+    buy: (id) => `/investor-data/${id}/buy`,
   },
   bankDetail: {
     list: '/investor-profiles/bank-details',
   },
   portfolio: {
-    data: `${JSON_SERVER_API}/portfolio-data`,
+    data: '/portfolio-data',
+    ptcTransactions: '/dashboard/portfolio/ptc-transactions',
+    closedInvestments: '/portfolio-data/closed-investments',
+  },
+  wallet: {
+    details: '/wallet',
+    history: '/wallet/history',
+    deposit: '/wallet/deposit',
+    withdraw: '/wallet/withdraw',
+    processWithdrawal: (requestId) => `/wallet/withdraw/${requestId}/process`,
+  },
+  pool: {
+    details: (spvId) => `/pool/${spvId}`,
+  },
+  ptc: {
+    details: (spvId) => `/ptc/${spvId}`,
+    buy: (spvId) => `/ptc/${spvId}/buy`,
+    redeem: (spvId) => `/ptc/${spvId}/redeem`,
   },
 };
