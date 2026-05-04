@@ -84,7 +84,7 @@ export function useGetPortfolioClosedInvestments({ spvId, limit = 10, skip = 0 }
 
 async function refreshPortfolioData() {
   await Promise.all([
-    mutate(endpoints.portfolio.data),
+    mutate((key) => typeof key === 'string' && key.startsWith(endpoints.portfolio.data)),
     mutate((key) => Array.isArray(key) && key[0] === endpoints.portfolio.closedInvestments),
     mutate((key) => Array.isArray(key) && key[0] === endpoints.portfolio.ptcTransactions),
     mutate(endpoints.wallet.details),
