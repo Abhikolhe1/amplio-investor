@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -96,9 +96,26 @@ export default function PortfolioOnlinePayments() {
   const [openRedeem, setOpenRedeem] = useState(false);
   const location = useLocation();
   const routeOnlinePayment = location.state?.onlinePayment;
-  const { portfolioData } = useGetPortfolioData();
+  const { portfolioData, portfolioDataLoading } = useGetPortfolioData();
   const { investTransactions } = useGetInvestTransactions();
-  const onlinePayment = routeOnlinePayment || portfolioData?.onlinePayment || null;
+  const [optimisticOnlinePayment, setOptimisticOnlinePayment] = useState(null);
+  const baseOnlinePayment = useMemo(() => {
+    if (routeOnlinePayment?.status === 'CLOSED') {
+      return routeOnlinePayment;
+    }
+
+    if (portfolioDataLoading) {
+      return routeOnlinePayment || portfolioData?.onlinePayment || null;
+    }
+
+    return portfolioData?.onlinePayment || routeOnlinePayment || null;
+  }, [portfolioData?.onlinePayment, portfolioDataLoading, routeOnlinePayment]);
+
+  useEffect(() => {
+    setOptimisticOnlinePayment(null);
+  }, [baseOnlinePayment]);
+
+  const onlinePayment = optimisticOnlinePayment || baseOnlinePayment;
   const spvId = onlinePayment?.spvId || null;
   const {
     ptcTransactions: buyTransactions,
@@ -278,7 +295,94 @@ export default function PortfolioOnlinePayments() {
     navigate(paths.dashboard.investTransaction.view);
   };
 
-  const handleSellSuccess = () => {};
+  const handleSellSuccess = (redemption) => {
+    const visibleOnlinePayment = optimisticOnlinePayment || baseOnlinePayment;
+
+    if (!visibleOnlinePayment) {
+      setOpenRedeem(false);
+      return;
+    }
+
+    const redeemedUnits = Math.max(Number(redemption?.units || 0), 0);
+    const redeemedConsiderationAmount = Math.max(Number(redemption?.considerationAmount || 0), 0);
+    const redeemedRepaymentAmount = Math.max(Number(redemption?.repaymentAmount || 0), 0);
+    const currentAvailableUnits = Math.max(
+      Math.floor(
+        resolveFirstNumericValue(
+          visibleOnlinePayment?.availablePtcUnits,
+          visibleOnlinePayment?.availableUnits,
+          visibleOnlinePayment?.ptcUnits,
+          visibleOnlinePayment?.ownedPtcUnits,
+          visibleOnlinePayment?.ownedUnits,
+          visibleOnlinePayment?.units,
+          visibleOnlinePayment?.ptcHolding?.availableUnits
+        ) || 0
+      ),
+      0
+    );
+    const currentVisibleInvestment = Math.max(
+      resolveFirstNumericValue(
+        visibleOnlinePayment?.currentInvestment,
+        visibleOnlinePayment?.currentlyInvested,
+        visibleOnlinePayment?.deployed
+      ) || 0,
+      0
+    );
+    const currentRedeemedAmount = Math.max(
+      resolveFirstNumericValue(
+        visibleOnlinePayment?.totalRedeemedAmount,
+        visibleOnlinePayment?.redeemedAmount,
+        visibleOnlinePayment?.totalPayout,
+        visibleOnlinePayment?.netPayout,
+        visibleOnlinePayment?.finalPayout
+      ) || 0,
+      0
+    );
+    const currentInterestEarned = Math.max(
+      resolveFirstNumericValue(
+        visibleOnlinePayment?.totalInterestEarned,
+        visibleOnlinePayment?.interestPayout,
+        visibleOnlinePayment?.totalInterest,
+        visibleOnlinePayment?.interestEarned
+      ) || 0,
+      0
+    );
+    const nextAvailableUnits = Math.max(currentAvailableUnits - redeemedUnits, 0);
+    const nextInvestmentAmount = Math.max(
+      currentVisibleInvestment - redeemedConsiderationAmount,
+      0
+    );
+    const nextRedeemedAmount = currentRedeemedAmount + redeemedRepaymentAmount;
+    const nextInterestEarned =
+      currentInterestEarned + Math.max(redeemedRepaymentAmount - redeemedConsiderationAmount, 0);
+
+    setOptimisticOnlinePayment({
+      ...visibleOnlinePayment,
+      availablePtcUnits: nextAvailableUnits,
+      availableUnits: nextAvailableUnits,
+      ptcUnits: nextAvailableUnits,
+      ownedPtcUnits: nextAvailableUnits,
+      ownedUnits: nextAvailableUnits,
+      units: nextAvailableUnits,
+      ptcHolding: {
+        ...visibleOnlinePayment?.ptcHolding,
+        availableUnits: nextAvailableUnits,
+      },
+      currentInvestment: nextInvestmentAmount,
+      currentlyInvested: nextInvestmentAmount,
+      deployed: nextInvestmentAmount,
+      totalRedeemedAmount: nextRedeemedAmount,
+      redeemedAmount: nextRedeemedAmount,
+      totalPayout: nextRedeemedAmount,
+      netPayout: nextRedeemedAmount,
+      finalPayout: nextRedeemedAmount,
+      totalInterestEarned: nextInterestEarned,
+      interestPayout: nextInterestEarned,
+      totalInterest: nextInterestEarned,
+      interestEarned: nextInterestEarned,
+    });
+    setOpenRedeem(false);
+  };
 
   const handleRedeemRequest = async ({ units, considerationAmount, repaymentAmount, stampDutyAmount }) => {
     if (!onlinePayment?.spvId) {
