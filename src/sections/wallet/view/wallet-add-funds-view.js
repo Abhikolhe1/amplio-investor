@@ -171,7 +171,7 @@ export default function WalletAddFundsView() {
                     Back to investment
                   </Button>
                 ) : (
-                  <Button variant="outlined" onClick={() => navigate(paths.dashboard.wallet.root)}>
+                  <Button variant="outlined" color="primary" onClick={() => navigate(paths.dashboard.wallet.root)}>
                     Cancel
                   </Button>
                 )}
@@ -179,6 +179,7 @@ export default function WalletAddFundsView() {
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
+                  color="primary"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Adding...' : 'Add Funds'}

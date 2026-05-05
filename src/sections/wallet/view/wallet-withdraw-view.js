@@ -271,12 +271,13 @@ export default function WalletWithdrawView() {
               />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="flex-end">
-                <Button variant="outlined" onClick={() => navigate(paths.dashboard.wallet.root)}>
+                <Button variant="outlined" color="primary" onClick={() => navigate(paths.dashboard.wallet.root)}>
                   Cancel
                 </Button>
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
+                  color='primary'
                   disabled={isSubmitting || !registeredBankAccounts.length}
                 >
                   {isSubmitting ? 'Submitting...' : 'Request Withdrawal'}

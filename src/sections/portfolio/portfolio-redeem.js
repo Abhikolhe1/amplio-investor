@@ -13,7 +13,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
 import Iconify from 'src/components/iconify';
+import { getApiErrorMessage } from 'src/utils/api-error';
 
 const inrFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -31,18 +33,19 @@ function formatUnitCount(value) {
   return String(Math.max(Number(value) || 0, 0)).padStart(2, '0');
 }
 
-function SellStepperButton({ icon, onClick, disabled }) {
+function SellStepperButton({ icon, onClick, disabled, color }) {
   return (
     <IconButton
       onClick={onClick}
       disabled={disabled}
+      color={color}
       sx={{
         width: 34,
         height: 34,
-        bgcolor: 'common.black',
+        bgcolor: disabled ? 'common.black' : `${color}.main`,
         color: 'common.white',
         '&:hover': {
-          bgcolor: 'common.black',
+          bgcolor: disabled ? 'common.black' : `${color}.dark`,
         },
         '&.Mui-disabled': {
           bgcolor: 'action.disabledBackground',
@@ -56,12 +59,14 @@ function SellStepperButton({ icon, onClick, disabled }) {
 }
 
 SellStepperButton.propTypes = {
+  color: PropTypes.string,
   disabled: PropTypes.bool,
   icon: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
 };
 
 SellStepperButton.defaultProps = {
+  color: 'primary',
   disabled: false,
 };
 
@@ -81,7 +86,6 @@ export default function PortfolioRedeem({
   const [units, setUnits] = useState(availableUnits > 0 ? 1 : 0);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
   const wasOpenRef = useRef(false);
 
   useEffect(() => {
@@ -90,7 +94,6 @@ export default function PortfolioRedeem({
       setAgreed(false);
       setUnits(availableUnits > 0 ? 1 : 0);
       setSubmitting(false);
-      setSubmitError('');
     }
 
     wasOpenRef.current = open;
@@ -136,7 +139,6 @@ export default function PortfolioRedeem({
 
     try {
       setSubmitting(true);
-      setSubmitError('');
 
       const redeemResult = await onRedeem({
         units,
@@ -155,11 +157,9 @@ export default function PortfolioRedeem({
       );
       setStep('success');
     } catch (error) {
-      const message =
-        error?.error?.message ||
-        error?.message ||
-        'Unable to process redemption. Please try again.';
-      setSubmitError(message);
+      enqueueSnackbar(getApiErrorMessage(error, 'Unable to process redemption. Please try again.'), {
+        variant: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -210,6 +210,7 @@ export default function PortfolioRedeem({
             <SellStepperButton
               icon="ic:round-remove"
               onClick={handleDecrease}
+              color="primary"
               disabled={units <= 1}
             />
 
@@ -219,6 +220,7 @@ export default function PortfolioRedeem({
 
             <SellStepperButton
               icon="ic:round-add"
+              color="primary"
               onClick={handleIncrease}
               disabled={units >= availableUnits}
             />
@@ -371,15 +373,11 @@ export default function PortfolioRedeem({
           </Box>
         </Stack>
 
-        {submitError ? (
-          <Alert severity='error' variant='outlined'>{submitError}</Alert>
-        ) : null}
-
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Button
             fullWidth
             variant="outlined"
-            color="inherit"
+            color="primary"
             onClick={() => setStep('sell')}
             sx={{ borderRadius: 1.5, minHeight: 48 }}
           >
