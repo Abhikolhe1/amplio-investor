@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   Alert,
-  Box,
   Button,
   Card,
   Container,
@@ -115,8 +114,6 @@ export default function WalletWithdrawView() {
     }
   }, [registeredBankAccounts, form.account]);
 
-  const currentBalance = Number(wallet?.currentBalance || 0);
-  const blockedBalance = Number(wallet?.blockedBalance || 0);
   const availableBalance = Number(wallet?.availableBalance || 0);
   const withdrawAmount = parseCurrencyAmount(form.amount) || 0;
   const selectedAccount = registeredBankAccounts.find(
@@ -294,10 +291,7 @@ export default function WalletWithdrawView() {
             <Stack spacing={1.5}>
               <Typography variant="h6">Withdrawal Summary</Typography>
               <Typography variant="body2" color="text.secondary">
-                Current balance: {formatInr(currentBalance)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Blocked balance: {formatInr(blockedBalance)}
+                Wallet balance: {formatInr(availableBalance)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Available balance: {formatInr(availableBalance)}
@@ -306,7 +300,7 @@ export default function WalletWithdrawView() {
                 Withdrawal amount: {formatInr(withdrawAmount)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Available after request: {formatInr(Math.max(availableBalance - withdrawAmount, 0))}
+                Wallet balance after request: {formatInr(Math.max(availableBalance - withdrawAmount, 0))}
               </Typography>
             </Stack>
           </Card>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   Alert,
-  Box,
   Button,
   Card,
   Container,
@@ -69,7 +68,6 @@ export default function WalletAddFundsView() {
     }
   }, [addFundsRequest]);
 
-  const currentBalance = Number(wallet?.currentBalance || 0);
   const availableBalance = Number(wallet?.availableBalance || 0);
   const requiredPurchaseAmount = parseCurrencyAmount(addFundsRequest?.amount) || 0;
   const requestedUnits = Number(addFundsRequest?.units || 0);
@@ -195,7 +193,7 @@ export default function WalletAddFundsView() {
             <Stack spacing={1.5}>
               <Typography variant="h6">Wallet Summary</Typography>
               <Typography variant="body2" color="text.secondary">
-                Current balance: {formatInr(currentBalance)}
+                Wallet balance: {formatInr(availableBalance)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Available balance: {formatInr(availableBalance)}
@@ -204,7 +202,7 @@ export default function WalletAddFundsView() {
                 Amount to add: {formatInr(addFundsAmount)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                New balance after add: {formatInr(currentBalance + addFundsAmount)}
+                New balance after add: {formatInr(availableBalance + addFundsAmount)}
               </Typography>
             </Stack>
           </Card>

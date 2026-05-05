@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Alert,
   Box,
   Button,
   Card,
+  Chip,
   Container,
   Divider,
   Paper,
@@ -93,6 +94,35 @@ function getTransactionPresentation(transaction) {
   };
 }
 
+function normalizeTransactionStatus(transaction) {
+  const rawStatus =
+    transaction?.status ||
+    transaction?.transactionStatus ||
+    transaction?.withdrawalStatus ||
+    transaction?.requestStatus ||
+    '';
+
+  return String(rawStatus).trim().toUpperCase();
+}
+
+function getTransactionStatusMeta(transaction) {
+  const normalizedStatus = normalizeTransactionStatus(transaction);
+
+  if (normalizedStatus === 'PENDING' || normalizedStatus === 'PROCESSING') {
+    return { label: 'Pending', color: 'warning' };
+  }
+
+  if (normalizedStatus === 'FAILED' || normalizedStatus === 'REJECTED' || normalizedStatus === 'CANCELLED') {
+    return { label: 'Failed', color: 'error' };
+  }
+
+  if (normalizedStatus === 'SUCCESS' || normalizedStatus === 'COMPLETED') {
+    return { label: 'Completed', color: 'success' };
+  }
+
+  return null;
+}
+
 function formatTransactionDate(value) {
   if (!value) {
     return '-';
@@ -115,7 +145,6 @@ export default function InvestWalletView() {
   const navigate = useNavigate();
   const table = useTable({ defaultRowsPerPage: 5 });
   const addFundsRequest = location.state?.addFundsRequest;
-
   const { wallet, walletLoading, walletError } = useGetWallet();
   const { walletHistory, walletHistoryLoading, walletHistoryError } = useGetWalletHistory();
   const { BankDetailLoading } = useGetBankDetail();
@@ -128,10 +157,8 @@ export default function InvestWalletView() {
     }
   }, [addFundsRequest, navigate]);
 
-  const currentBalance = Number(wallet?.currentBalance || 0);
-  const blockedBalance = Number(wallet?.blockedBalance || 0);
   const availableBalance = Number(wallet?.availableBalance || 0);
-  const transactions = walletHistory || [];
+  const transactions = useMemo(() => walletHistory || [], [walletHistory]);
   const { page, rowsPerPage, setPage } = table;
   const denseHeight = table.dense ? 56 : 72;
   const paginatedTransactions = transactions.slice(
@@ -162,7 +189,7 @@ export default function InvestWalletView() {
               Wallet Balance
             </Typography>
             <Typography variant="h2" sx={{ mt: 1, color: 'success.main', fontWeight: 700 }}>
-              {formatInr(currentBalance)}
+              {formatInr(availableBalance)}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Add or Withdraw funds anytime
@@ -197,10 +224,7 @@ export default function InvestWalletView() {
           <Divider />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              Available: {formatInr(availableBalance)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Blocked: {formatInr(blockedBalance)}
+              Withdrawable: {formatInr(availableBalance)}
             </Typography>
             {wallet?.bankName ? (
               <Typography variant="body2" color="text.secondary">
@@ -237,6 +261,7 @@ export default function InvestWalletView() {
                     <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Reference</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 600 }}>
                       Amount
                     </TableCell>
@@ -245,6 +270,7 @@ export default function InvestWalletView() {
                 <TableBody>
                   {paginatedTransactions.map((transaction, index) => {
                     const presentation = getTransactionPresentation(transaction);
+                    const statusMeta = getTransactionStatusMeta(transaction);
                     return (
                       <TableRow
                         key={`${transaction.referenceId || 'ref'}-${transaction.createdAt || index}-${index}`}
@@ -255,6 +281,18 @@ export default function InvestWalletView() {
                         <TableCell sx={{ textTransform: 'capitalize' }}>
                           {transaction.referenceType || '-'}{' '}
                           {transaction.referenceId ? `(${transaction.referenceId})` : ''}
+                        </TableCell>
+                        <TableCell>
+                          {statusMeta ? (
+                            <Chip
+                              size="small"
+                              label={statusMeta.label}
+                              color={statusMeta.color}
+                              variant="soft"
+                            />
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell
                           align="right"
