@@ -24,6 +24,7 @@ import AccountNotifications from '../account-notifications';
 import AccountChangePassword from '../account-change-password';
 import BankNewForm from '../account-bank-details';
 import AccountNomineeForm from '../account-nominee-details';
+import AccountOrders from '../account-orders';
 
 // ----------------------------------------------------------------------
 
@@ -48,6 +49,11 @@ const TABS = [
     value: 'demat',
     label: 'Demat',
     icon: <Iconify icon="fluent:building-bank-16-filled" width={24} />,
+  },
+  {
+    value: 'orders',
+    label: 'Orders',
+    icon: <Iconify icon="solar:sort-by-time-bold-duotone" width={24} />,
   },
   // {
   //   value: 'security',
@@ -121,6 +127,8 @@ export default function AccountView() {
       {currentTab === 'nominee' && <AccountNomineeForm />}
 
       {currentTab === 'demat' && <BankNewForm />}
+
+      {currentTab === 'orders' && <AccountOrders />}
 
       {/* {currentTab === 'security' && <AccountChangePassword />} */}
     </Container>
