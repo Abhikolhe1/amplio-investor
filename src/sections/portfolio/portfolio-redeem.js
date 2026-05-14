@@ -86,6 +86,7 @@ export default function PortfolioRedeem({
   const [units, setUnits] = useState(availableUnits > 0 ? 1 : 0);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [payoutSchedule, setPayoutSchedule] = useState(null);
   const wasOpenRef = useRef(false);
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function PortfolioRedeem({
       setAgreed(false);
       setUnits(availableUnits > 0 ? 1 : 0);
       setSubmitting(false);
+      setPayoutSchedule(null);
     }
 
     wasOpenRef.current = open;
@@ -147,6 +149,7 @@ export default function PortfolioRedeem({
         stampDutyAmount,
       });
 
+      setPayoutSchedule(redeemResult || null);
       onSellSuccess(
         redeemResult || {
           units,
@@ -273,8 +276,14 @@ export default function PortfolioRedeem({
           </Typography>
         ) : null}
 
+        <Alert severity="info" variant="outlined" sx={{ textAlign: 'left' }}>
+          Requests before 5:00 PM IST are paid the <strong>next business day</strong>. Requests
+          after 5:00 PM IST are paid the <strong>day after next</strong>. Payout goes to your
+          primary verified bank account.
+        </Alert>
+
         {!redemptionAvailable ? (
-          <Alert severity="info" variant="outlined">
+          <Alert severity="warning" variant="outlined">
             Redemption is not available because the backend does not currently expose a redemption
             API for the investor app.
           </Alert>
@@ -368,7 +377,9 @@ export default function PortfolioRedeem({
 
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 1.5, px: 2, py: 1.25 }}>
             <Typography variant="caption" color="text.secondary">
-              <strong>Note:</strong> You will receive the payment in your Amplio Pocket.
+              <strong>Note:</strong> The payout will be credited to your primary verified bank
+              account. Requests submitted before 5:00 PM IST are paid the next business day;
+              requests after 5:00 PM IST are paid the day after next.
             </Typography>
           </Box>
         </Stack>
@@ -441,10 +452,12 @@ export default function PortfolioRedeem({
           </Typography>
 
           <Typography variant="body1" color="text.secondary">
-            The amount will be credited to your Amplio Pocket shortly.
+            {payoutSchedule?.expectedPayoutDate
+              ? `Payout scheduled for ${payoutSchedule.expectedPayoutDate}.`
+              : 'Your payout has been scheduled.'}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            Your transaction is being processed securely.
+            The amount will be credited to your primary verified bank account on the payout date.
           </Typography>
         </Box>
 
