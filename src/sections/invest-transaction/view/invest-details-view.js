@@ -73,7 +73,11 @@ export default function InvestDetailsView() {
             },
           }}
         >
-          <InvestDetailsSecondCard currentDetails={currentTransaction?.investmentDetails} />
+          <InvestDetailsSecondCard
+            currentDetails={currentTransaction?.investmentDetails}
+            spvId={currentTransaction?.spvId}
+            spvName={currentTransaction?.spvName}
+          />
         </Grid>
       </Grid>
     </Container>

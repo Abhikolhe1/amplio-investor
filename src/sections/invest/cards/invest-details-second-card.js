@@ -12,8 +12,11 @@ import {
 import PropTypes from 'prop-types';
 import { useState, useMemo } from 'react';
 import Iconify from 'src/components/iconify';
+import { useRouter } from 'src/routes/hook';
+import { paths } from 'src/routes/paths';
 
 export default function InvestDetailsSecondCard({ currentDetails }) {
+  const router = useRouter();
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
 
@@ -342,47 +345,21 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Box>
         </Grid>
 
-        {/* Bibalplus Pocket */}
+        {/* Payment Info */}
         <Grid item xs={12}>
           <Box
             sx={{
               p: 2,
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: 'primary.lighter',
               borderRadius: 1.5,
-              bgcolor: 'background.paper',
+              bgcolor: 'primary.lighter',
             }}
           >
-            <Stack direction="column" spacing={1}>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={15} fontWeight={600} mb={0.5}>
-                  Bibalplus pocket
-                </Typography>
-                <Typography fontSize={16} fontWeight={700} mt={1}>
-                  ₹0.25
-                </Typography>
-              </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={11} color="error.main">
-                  Amount insufficient in your account. Please add funds to the current wallet.
-                </Typography>
-                <Button
-                  variant="contained"
-                  sx={{
-                    minWidth: 100,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    borderRadius: 1,
-                    bgcolor: 'primary.dark',
-                    '&:hover': {
-                      bgcolor: 'primary.dark',
-                    },
-                  }}
-                >
-                  Add Funds
-                </Button>
-              </Stack>
-            </Stack>
+            <Typography fontSize={13} color="primary.dark">
+              Payment will be made directly to the SPV escrow account via bank transfer. You will be
+              asked to provide your UTR reference after initiating the transfer.
+            </Typography>
           </Box>
         </Grid>
 
@@ -443,6 +420,19 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             size="large"
             variant="contained"
             disabled={!agree}
+            onClick={() => {
+              const unitPrice = parseFloat(currentDetails?.unitPrice?.replace(/[^0-9.]/g, '') || 0);
+              const investmentAmount = unitPrice * units;
+
+              router.push(paths.dashboard.investTransaction.agreement(currentDetails.id), {
+                state: {
+                  spvId: currentDetails.spvId,
+                  spvName: currentDetails.name,
+                  units,
+                  investmentAmount,
+                },
+              });
+            }}
             sx={{
               py: 1.5,
               borderRadius: 1,

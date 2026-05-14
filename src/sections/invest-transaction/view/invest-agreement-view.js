@@ -1,106 +1,107 @@
 import { useState } from 'react';
-import Container from '@mui/material/Container';
-import Stack from '@mui/material/Stack';
+import {
+  Box,
+  Card,
+  Container,
+  Stack,
+  Typography,
+  Paper,
+} from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useLocation } from 'react-router';
-import { mutate } from 'swr';
 
 import { paths } from 'src/routes/paths';
 import { useParams, useRouter } from 'src/routes/hook';
-import axiosInstance, { endpoints } from 'src/utils/axios';
 import { getApiErrorMessage } from 'src/utils/api-error';
+import { createPaymentIntent } from 'src/api/invest-transaction';
 import InvestAgreementDialog from '../cards/invest-agreement-dialog';
-import InvestOtpDialog from '../cards/invest-otp-dialog';
-import InvestSuccessDialog from '../cards/invest-success-dialog';
+
+// ----------------------------------------------------------------------
 
 export default function InvestAgreementView() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
   const location = useLocation();
-  const [otpOpen, setOtpOpen] = useState(false);
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [otp, setOtp] = useState(Array(4).fill(''));
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+
   const requestedUnits = Number(location.state?.units ?? 1);
+  const spvId = location.state?.spvId ?? null;
+  const spvName = location.state?.spvName ?? null;
+  const investmentAmount = Number(location.state?.investmentAmount ?? 0);
 
-  const handleStartOtp = () => {
-    setOtp(Array(4).fill(''));
-    setOtpOpen(true);
-    enqueueSnackbar('OTP sent successfully. Please verify to sign the agreement.', {
-      variant: 'success',
-    });
-  };
-
-  const handleVerifyOtp = async () => {
-    try {
-      setIsSubmitting(true);
-      const response = await axiosInstance.post(endpoints.investTransaction.buy(id), {
-        units: requestedUnits,
-      });
-      await Promise.all([
-        mutate(endpoints.investTransaction.list),
-        mutate(endpoints.investTransaction.details(id)),
-        mutate(endpoints.portfolio.data),
-      ]);
-
-      enqueueSnackbar(
-        response?.data?.message || 'Agreement signed and investment allocated successfully.',
-        {
-          variant: 'success',
-        }
-      );
-      setOtpOpen(false);
-      setSuccessOpen(true);
-    } catch (error) {
-      enqueueSnackbar(getApiErrorMessage(error, 'Unable to complete this investment right now.'), {
+  const handleSign = async () => {
+    if (!spvId) {
+      enqueueSnackbar('SPV details are missing. Please go back and try again.', {
         variant: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
-  };
- 
-  const handleResendOtp = () => {
-    enqueueSnackbar('OTP sent successfully.', {
-      variant: 'success',
-    });
-  };
 
-  const handleCloseOtp = () => {
-    setOtpOpen(false);
-    setOtp(Array(4).fill(''));
-  };
+    try {
+      setIsSigning(true);
+      const verification = await createPaymentIntent(spvId, requestedUnits, investmentAmount);
+      const resolvedVerificationId = verification?.verificationId ?? verification?.id ?? null;
 
-  const handleCloseSuccess = () => {
-    setSuccessOpen(false);
-  };
+      if (!resolvedVerificationId) {
+        throw new Error('Payment intent created without a verification ID.');
+      }
 
-  const handleDone = () => {
-    setSuccessOpen(false);
-    router.push(paths.dashboard.investTransaction.view);
+      enqueueSnackbar('Agreement signed. Please complete your bank transfer.', {
+        variant: 'success',
+      });
+
+      router.push(paths.dashboard.investTransaction.paymentInstructions(resolvedVerificationId), {
+        state: {
+          verificationId: resolvedVerificationId,
+          referenceId: verification.referenceId,
+          spvId,
+          spvName,
+          units: requestedUnits,
+          investmentAmount,
+          investmentId: id,
+        },
+      });
+    } catch (error) {
+      enqueueSnackbar(
+        getApiErrorMessage(error, 'Unable to create payment intent. Please try again.'),
+        { variant: 'error' }
+      );
+    } finally {
+      setIsSigning(false);
+    }
   };
 
   return (
-    <Container >
+    <Container sx={{ pb: 8 }}>
+      <Card
+        sx={{
+          p: 4,
+          mt: 4,
+          borderRadius: 3,
+          width: '100%',
+          boxShadow: '0px 8px 25px rgba(0,0,0,0.08)',
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: 500,
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 10 }}>
+          {/* Title Section */}
+          <Stack spacing={0.5} sx={{ mb: 4 }}>
+            <Typography variant="h3" color="primary" sx={{ fontWeight: 700 }}>
+              Investment Agreement
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 500, color: '#000000' }}>
+              Review and sign to proceed
+            </Typography>
+          </Stack>
 
-
-      <Stack spacing={3}>
-        <InvestAgreementDialog onSign={handleStartOtp} />
-      </Stack>
-
-      <InvestOtpDialog
-        open={otpOpen}
-        onClose={handleCloseOtp}
-        emailOrMobile="your registered mobile number"
-        value={otp}
-        onChange={setOtp}
-        onVerify={handleVerifyOtp}
-        onResend={handleResendOtp}
-        verifyDisabled={isSubmitting}
-      />
-
-      <InvestSuccessDialog open={successOpen} onClose={handleCloseSuccess} onDone={handleDone} />
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <InvestAgreementDialog onSign={handleSign} signingDisabled={isSigning} />
+          </Paper>
+        </Box>
+      </Card>
     </Container>
   );
 }

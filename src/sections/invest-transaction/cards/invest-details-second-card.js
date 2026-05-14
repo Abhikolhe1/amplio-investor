@@ -14,13 +14,12 @@ import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';
 import { paths } from 'src/routes/paths';
 import { useParams } from 'src/routes/hook';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Iconify from 'src/components/iconify';
 import InfoPopoverIcon from 'src/sections/invest-transaction/components/info-popover-icon';
 import {
   calculateProjectedInterest,
   getInvestmentAmounts,
-  parseAmount as parseCurrencyAmount,
   parseUnitsValue as parseUnitCount,
   resolvePayoutType,
 } from 'src/utils/investment-amounts';
@@ -34,18 +33,15 @@ const formatAmount = (value) =>
   })}`;
 
 
-export default function InvestDetailsSecondCard({ currentDetails }) {
+export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const params = useParams();
   const { id } = params;
   const payoutType = resolvePayoutType(currentDetails);
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(parseCurrencyAmount(currentDetails?.walletAmount));
   const availableUnits = parseUnitCount(currentDetails?.units?.available);
   const remainingInvestorLimit = parseUnitCount(currentDetails?.units?.remainingInvestorLimit);
-  const topUpResult = location.state?.topUpResult;
   const maxSelectableUnits =
     remainingInvestorLimit > 0
       ? Math.min(availableUnits || 0, remainingInvestorLimit)
@@ -54,17 +50,13 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   useEffect(() => {
     const selectedUnits = parseUnitCount(currentDetails?.units?.selected) || 1;
     const normalizedSelectionCap = maxSelectableUnits > 0 ? maxSelectableUnits : 0;
-    const baseWalletBalance = parseCurrencyAmount(currentDetails?.walletAmount);
-    const returnedTopUpAmount =
-      topUpResult?.investmentId === id ? parseCurrencyAmount(topUpResult?.addedAmount) : 0;
 
     setUnits(
       normalizedSelectionCap > 0
         ? Math.min(selectedUnits, normalizedSelectionCap)
         : 0
     );
-    setWalletBalance(baseWalletBalance + returnedTopUpAmount);
-  }, [currentDetails, id, maxSelectableUnits, topUpResult]);
+  }, [currentDetails, maxSelectableUnits]);
 
   const handleIncrease = () => {
     setUnits((prev) => {
@@ -95,25 +87,14 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
     });
   };
 
-  const handleAddFunds = () => {
-    navigate(paths.dashboard.wallet.root, {
-      state: {
-        addFundsRequest: {
-          amount: calculatedValues.shortfallAmount,
-          investmentAmount: calculatedValues.investmentAmount,
-          units,
-          investmentId: id,
-          returnTo: paths.dashboard.investTransaction.details(id),
-        },
-      },
-    });
-  };
-
   const handleOpenAgreement = () => {
     navigate(paths.dashboard.investTransaction.agreement(id), {
       state: {
         investmentId: id,
         units,
+        spvId,
+        spvName,
+        investmentAmount: calculatedValues.investmentAmount,
       },
     });
   };
@@ -138,8 +119,6 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       annualRatePercent: rate,
       endDate: currentDetails?.finalMaturityDate,
     });
-    const shortfallAmount = Math.max(investmentAmount - walletBalance, 0);
-    const hasSufficientBalance = walletBalance >= investmentAmount;
     const hasInventory = maxSelectableUnits > 0;
     const isUnitsAllowed =
       units > 0 &&
@@ -156,14 +135,10 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
       maturityAmountValue: formatAmount(maturityProjection.totalAmount),
       nextLiquidityInterestValue: formatAmount(nextLiquidityProjection.interestAmount),
       maturityInterestValue: formatAmount(maturityProjection.interestAmount),
-      shortfallAmount,
-      walletAmount: formatAmount(walletBalance),
-      shortfallAmountFormatted: formatAmount(shortfallAmount),
-      hasSufficientBalance,
       hasInventory,
       isUnitsAllowed,
     };
-  }, [availableUnits, currentDetails, maxSelectableUnits, payoutType, units, walletBalance]);
+  }, [availableUnits, currentDetails, maxSelectableUnits, payoutType, units]);
   if (!currentDetails) {
     return null;
   }
@@ -442,50 +417,21 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Box>
         </Grid>
 
-        {/* Bibalplus Pocket */}
+        {/* Payment Info */}
         <Grid item xs={12}>
           <Box
             sx={{
               p: 2,
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: 'primary.lighter',
               borderRadius: 1.5,
+              bgcolor: 'primary.lighter',
             }}
           >
-            <Stack direction="column" spacing={1}>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={15} fontWeight={600} mb={0.5}>
-                  Bibalplus pocket
-                </Typography>
-                <Typography fontSize={16} fontWeight={700} mt={1}>
-                  {calculatedValues.walletAmount}
-                </Typography>
-              </Stack>
-              {!calculatedValues.hasSufficientBalance && (
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography fontSize={11} color="error.main" sx={{ maxWidth: '70%' }}>
-                    Amount insufficient in your account. Please add{' '}
-                    {calculatedValues.shortfallAmountFormatted} to the current wallet.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={handleAddFunds}
-                    sx={{
-                      minWidth: 100,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      borderRadius: 1,
-                      bgcolor: 'primary.main',
-                      '&:hover': {
-                        bgcolor: 'primary.main',
-                      },
-                    }}
-                  >
-                    Add Funds
-                  </Button>
-                </Stack>
-              )}
-            </Stack>
+            <Typography fontSize={13} color="primary.dark">
+              Payment will be made directly to the SPV escrow account via bank transfer. You will be
+              asked to provide your UTR reference after initiating the transfer.
+            </Typography>
           </Box>
         </Grid>
 
@@ -547,7 +493,6 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             variant="contained"
             disabled={
               !agree ||
-              !calculatedValues.hasSufficientBalance ||
               !calculatedValues.hasInventory ||
               !calculatedValues.isUnitsAllowed
             }
@@ -578,4 +523,6 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
 
 InvestDetailsSecondCard.propTypes = {
   currentDetails: PropTypes.object,
+  spvId: PropTypes.string,
+  spvName: PropTypes.string,
 };

@@ -143,29 +143,7 @@ export default function InvestTableRow({ row, onViewRow, fallbackSpvId }) {
         <Box sx={{ px: 2.5, py: 2 }}>
           <Box
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 2,
-              py: 1,
-              borderRadius: '999px',
-              backgroundColor: 'primary.main',
-              color: 'primary.contrastText',
-            }}
-          >
-            <Iconify icon="solar:refresh-outline" width={20} />
-            <Typography
-          variant='body2'
-            >
-              {product.payoutCycle || 'Weekly Repayment Cycle'}
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              mt: 2,
-              pt: 2,
-              borderTop: '1px solid #F1F1F1',
+              pt: 0.5,
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
