@@ -76,13 +76,6 @@ export const endpoints = {
     ptcTransactions: '/dashboard/portfolio/ptc-transactions',
     closedInvestments: '/portfolio-data/closed-investments',
   },
-  wallet: {
-    details: '/wallet',
-    history: '/wallet/history',
-    deposit: '/wallet/deposit',
-    withdraw: '/wallet/withdraw',
-    processWithdrawal: (requestId) => `/wallet/withdraw/${requestId}/process`,
-  },
   pool: {
     details: (spvId) => `/pool/${spvId}`,
   },
@@ -90,5 +83,26 @@ export const endpoints = {
     details: (spvId) => `/ptc/${spvId}`,
     buy: (spvId) => `/ptc/${spvId}/buy`,
     redeem: (spvId) => `/ptc/${spvId}/redeem`,
+  },
+  spvVerification: {
+    createIntent: (spvId) => `/spv/${spvId}/payment-intent`,
+    submitUtr: (verificationId) => `/spv/payment-verifications/${verificationId}/submit-utr`,
+    myVerifications: `/spv/payment-verifications`,
+    byId: (verificationId) => `/spv/payment-verifications/${verificationId}`,
+    paymentInstructions: (spvId) => `/spv/${spvId}/payment-instructions`,
+    flowState: (verificationId) => `/spv/payment-verifications/${verificationId}/flow-state`,
+  },
+  investmentOrders: {
+    create: '/investments/orders',
+    list: '/investments/orders',
+    byId: (orderId) => `/investments/orders/${orderId}`,
+    flowState: (orderId) => `/investments/orders/${orderId}/flow-state`,
+    submitUtr: (orderId) => `/investments/orders/${orderId}/submit-utr`,
+    cancel: (orderId) => `/investments/orders/${orderId}/cancel`,
+    escalate: (orderId) => `/investments/orders/${orderId}/escalate`,
+  },
+  adminInvestmentOrders: {
+    list: '/admin/investments/orders',
+    byId: (orderId) => `/admin/investments/orders/${orderId}`,
   },
 };
