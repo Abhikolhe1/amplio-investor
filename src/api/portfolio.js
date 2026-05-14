@@ -87,7 +87,6 @@ async function refreshPortfolioData() {
     mutate((key) => typeof key === 'string' && key.startsWith(endpoints.portfolio.data)),
     mutate((key) => Array.isArray(key) && key[0] === endpoints.portfolio.closedInvestments),
     mutate((key) => Array.isArray(key) && key[0] === endpoints.portfolio.ptcTransactions),
-    mutate(endpoints.wallet.details),
     mutate(endpoints.investTransaction.list),
   ]);
 }
