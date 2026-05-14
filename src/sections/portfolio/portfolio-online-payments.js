@@ -535,7 +535,7 @@ export default function PortfolioOnlinePayments() {
       <Box p={3}>
         {!redemptionAvailable ? (
           <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
-            Sell PTC redemption is processed using your investor wallet balance and holdings.
+            Sell PTC redemption is processed based on your current holdings.
           </Alert>
         ) : null}
 
