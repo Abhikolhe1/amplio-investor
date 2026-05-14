@@ -116,15 +116,10 @@ export const paths = {
       app: `${ROOTS.DASHBOARD}/app`,
       ecommerce: `${ROOTS.DASHBOARD}/ecommerce`,
       analytics: `${ROOTS.DASHBOARD}/analytics`,
-      activity: `${ROOTS.DASHBOARD}/wallet`,
+      activity: `${ROOTS.DASHBOARD}/invest-transaction/view`,
       banking: `${ROOTS.DASHBOARD}/banking`,
       booking: `${ROOTS.DASHBOARD}/booking`,
       file: `${ROOTS.DASHBOARD}/file`,
-    },
-    wallet: {
-      root: `${ROOTS.DASHBOARD}/wallet`,
-      addFunds: `${ROOTS.DASHBOARD}/wallet/add-funds`,
-      withdraw: `${ROOTS.DASHBOARD}/wallet/withdraw`,
     },
     user: {
       root: `${ROOTS.DASHBOARD}/user`,
@@ -163,6 +158,13 @@ export const paths = {
       view: `${ROOTS.DASHBOARD}/invest-transaction/view`,
       details: (id) => `${ROOTS.DASHBOARD}/invest-transaction/${id}`,
       agreement: (id) => `${ROOTS.DASHBOARD}/invest-transaction/${id}/agreement`,
+      paymentInstructions: (verificationId) =>
+        `${ROOTS.DASHBOARD}/invest-transaction/payment/${verificationId}`,
+      orders: `${ROOTS.DASHBOARD}/user/account?tab=orders`,
+      orderDetail: (orderId) => `${ROOTS.DASHBOARD}/invest-transaction/orders/${orderId}`,
+    },
+    trusteeOrders: {
+      root: `${ROOTS.DASHBOARD}/trustee/orders`,
     },
     portfolio: {
       root: `${ROOTS.DASHBOARD}/portfolio`,

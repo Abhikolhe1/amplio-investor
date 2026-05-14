@@ -16,9 +16,6 @@ const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics')
 const OverviewBankingPage = lazy(() => import('src/pages/dashboard/banking'));
 const OverviewBookingPage = lazy(() => import('src/pages/dashboard/booking'));
 const OverviewFilePage = lazy(() => import('src/pages/dashboard/file'));
-const WalletPage = lazy(() => import('src/pages/dashboard/wallet'));
-const WalletAddFundsPage = lazy(() => import('src/pages/dashboard/wallet-add-funds'));
-const WalletWithdrawPage = lazy(() => import('src/pages/dashboard/wallet-withdraw'));
 const KycPendingPage = lazy(() => import('src/pages/kyc/kyc-pending'));
 // PRODUCT
 const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/details'));
@@ -54,6 +51,12 @@ const InvestTransactionDetailsPage = lazy(() =>
 );
 const InvestTransactionAgreementPage = lazy(() =>
   import('src/pages/dashboard/invest-transaction/agreement')
+);
+const PaymentInstructionsPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/payment-instructions')
+);
+const InvestmentOrderDetailPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/order-detail')
 );
 // Portfolio
 const PortfolioViewPage = lazy(() => import('src/pages/dashboard/portfolio/view'));
@@ -110,19 +113,12 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
-      { element: <Navigate to="/dashboard/wallet" replace />, index: true },
+      { element: <Navigate to="/dashboard/invest-transaction/view" replace />, index: true },
       { path: 'app', element: <OverviewAppPage /> },
       { path: 'ecommerce', element: <OverviewEcommercePage /> },
       { path: 'analytics', element: <OverviewAnalyticsPage /> },
-      {
-        path: 'wallet',
-        children: [
-          { element: <WalletPage />, index: true },
-          { path: 'add-funds', element: <WalletAddFundsPage /> },
-          { path: 'withdraw', element: <WalletWithdrawPage /> },
-        ],
-      },
-      { path: 'activity', element: <Navigate to='/dashboard/wallet' replace /> },
+      { path: 'wallet', element: <Navigate to="/dashboard/invest-transaction/view" replace /> },
+      { path: 'activity', element: <Navigate to="/dashboard/invest-transaction/view" replace /> },
       { path: 'banking', element: <OverviewBankingPage /> },
       { path: 'booking', element: <OverviewBookingPage /> },
       { path: 'file', element: <OverviewFilePage /> },
@@ -208,6 +204,7 @@ export const dashboardRoutes = [
         children: [
           { element: <InvestTransactionViewPage />, index: true },
           { path: 'view', element: <InvestTransactionViewPage /> },
+          { path: 'orders/:orderId', element: <InvestmentOrderDetailPage /> },
           { path: ':id', element: <InvestTransactionDetailsPage /> },
           { path: ':id/agreement', element: <InvestTransactionAgreementPage /> },
         ],
@@ -253,6 +250,17 @@ export const dashboardRoutes = [
       { path: 'permission', element: <PermissionDeniedPage /> },
       { path: 'blank', element: <BlankPage /> },
     ],
+  },
+  // Standalone payment screen — rendered without DashboardLayout
+  {
+    path: 'dashboard/invest-transaction/payment/:verificationId',
+    element: (
+      <AuthGuard>
+        <Suspense fallback={<LoadingScreen />}>
+          <PaymentInstructionsPage />
+        </Suspense>
+      </AuthGuard>
+    ),
   },
 ];
 

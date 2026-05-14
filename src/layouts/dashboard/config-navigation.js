@@ -29,7 +29,6 @@ const ICONS = {
   blank: icon('ic_blank'),
   kanban: icon('ic_kanban'),
   folder: icon('ic_folder'),
-  banking: icon('ic_banking'),
   booking: icon('ic_booking'),
   invoice: icon('ic_invoice'),
   product: icon('ic_product'),
@@ -50,30 +49,26 @@ export function useNavData() {
   const { t } = useLocales();
 
   const data = useMemo(
-    () => [                   
+    () => [
       {
         subheader: t('dashboard'),
         items: [
           // { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
           // { title: t('Dashboard'), path: paths.dashboard.general.app, icon: ICONS.dashboard },
           {
-            title: t('Wallet'),
-            path: paths.dashboard.wallet.root,
-            icon: ICONS.banking,
-            children: [
-              { title: t('Add Funds'), path: paths.dashboard.wallet.addFunds, hidden: true },
-              { title: t('Withdraw'), path: paths.dashboard.wallet.withdraw, hidden: true },
-            ],
-          },
-          {
             title: t('Invest Transaction'),
-            path: paths.dashboard.investTransaction.view,
+            path: paths.dashboard.investTransaction.root,
+            deepMatch: true,
             icon: ICONS.invest,
           },
-          { title: t('Portfolio'), path: paths.dashboard.portfolio.view, icon: ICONS.portfolio },
+          {
+            title: t('Portfolio'),
+            path: paths.dashboard.portfolio.root,
+            deepMatch: true,
+            icon: ICONS.portfolio,
+          },
         ],
       },
-
       // DASHBOARD
       // ----------------------------------------------------------------------
       // {
