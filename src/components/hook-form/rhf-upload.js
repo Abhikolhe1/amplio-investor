@@ -117,9 +117,11 @@ export function RHFUploadBox({
           onDrop={async (acceptedFiles) => {
             if (!acceptedFiles?.length) return;
 
-            // ✅ Device upload: just set file, don't upload
+            // ✅ Device upload: attach a blob preview URL so FileThumbnail can render it
             if (!autoUpload) {
-              setValue(name, acceptedFiles[0], { shouldValidate: true });
+              const file = acceptedFiles[0];
+              Object.assign(file, { fileUrl: URL.createObjectURL(file) });
+              setValue(name, file, { shouldValidate: true });
               return;
             }
 
