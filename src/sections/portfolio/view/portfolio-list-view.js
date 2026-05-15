@@ -26,6 +26,37 @@ function formatInr(value) {
   }).format(Number(value || 0));
 }
 
+const PAYOUT_TERMINAL_STATUSES = ['PAID', 'RECONCILED', 'TRANSFERRED'];
+
+function getPayoutStatusDisplay(payoutStatus) {
+  if (!payoutStatus) {
+    return { label: 'Closed', color: 'success' };
+  }
+
+  if (PAYOUT_TERMINAL_STATUSES.includes(payoutStatus)) {
+    return { label: 'Paid', color: 'success' };
+  }
+
+  if (payoutStatus === 'FAILED') {
+    return { label: 'Failed', color: 'error' };
+  }
+
+  if (payoutStatus === 'CANCELLED') {
+    return { label: 'Cancelled', color: 'error' };
+  }
+
+  // REQUESTED, PENDING_SETTLEMENT, READY_FOR_PAYOUT, PAYOUT_PROCESSING,
+  // RETRY_PENDING, PENDING, PROCESSING (legacy)
+  return { label: 'Processing', color: 'warning' };
+}
+
+function formatExpectedPayoutDate(dateString) {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function PortfolioListView() {
   const CLOSED_PAGE_LIMIT = 10;
   const [tab, setTab] = useState(0);
@@ -219,14 +250,19 @@ export default function PortfolioListView() {
 
                         <Grid item>
                           <Box display="flex" alignItems="center" gap={1}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="success"
-                              sx={{ textTransform: 'none' }}
-                            >
-                              {investment.status || 'CLOSED'}
-                            </Button>
+                            {(() => {
+                              const { label, color } = getPayoutStatusDisplay(investment.payoutStatus);
+                              return (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color={color}
+                                  sx={{ textTransform: 'none' }}
+                                >
+                                  {label}
+                                </Button>
+                              );
+                            })()}
                             <IconButton onClick={() => handleClosedInvestmentDetails(investment)}>
                               <Iconify icon="mingcute:right-fill" width={12} />
                             </IconButton>
@@ -276,6 +312,19 @@ export default function PortfolioListView() {
                           </Typography>
                           <Typography>{investment.closedAt || '--'}</Typography>
                         </Grid>
+
+                        {investment.payoutStatus &&
+                          !PAYOUT_TERMINAL_STATUSES.includes(investment.payoutStatus) &&
+                          investment.expectedPayoutDate ? (
+                          <Grid container justifyContent="space-between" mt={1}>
+                            <Typography variant="body2" color="text.secondary">
+                              Expected Payout
+                            </Typography>
+                            <Typography variant="body2" color="warning.main">
+                              {formatExpectedPayoutDate(investment.expectedPayoutDate)}
+                            </Typography>
+                          </Grid>
+                        ) : null}
                       </Box>
                     </Box>
                   ))}

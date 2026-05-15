@@ -78,6 +78,41 @@ function parseNumericValue(value) {
   return null;
 }
 
+const PAYOUT_TERMINAL_STATUSES = ['PAID', 'RECONCILED', 'TRANSFERRED'];
+
+function getPayoutStatusDisplay(payoutStatus) {
+  if (!payoutStatus) {
+    return { label: 'Closed', color: 'success' };
+  }
+
+  if (PAYOUT_TERMINAL_STATUSES.includes(payoutStatus)) {
+    return { label: 'Paid', color: 'success' };
+  }
+
+  if (payoutStatus === 'FAILED') {
+    return { label: 'Failed', color: 'error' };
+  }
+
+  if (payoutStatus === 'CANCELLED') {
+    return { label: 'Cancelled', color: 'error' };
+  }
+
+  // REQUESTED, PENDING_SETTLEMENT, READY_FOR_PAYOUT, PAYOUT_PROCESSING,
+  // RETRY_PENDING, PENDING, PROCESSING (legacy)
+  return { label: 'Processing', color: 'warning' };
+}
+
+function formatExpectedPayoutDate(dateString) {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 function resolveFirstNumericValue(...values) {
   for (let index = 0; index < values.length; index += 1) {
     const parsedValue = parseNumericValue(values[index]);
@@ -442,8 +477,14 @@ export default function PortfolioOnlinePayments() {
     investment?.profit,
     investment?.finalProfit
   );
-  const finalProfit =
-    explicitTotalProfit !== null ? explicitTotalProfit : totalRedeemedAmount - totalInvestedAmount;
+  const calculatedProfit = totalRedeemedAmount - totalInvestedAmount;
+
+  let finalProfit = explicitTotalProfit !== null ? explicitTotalProfit : calculatedProfit;
+
+  if (investment?.status === 'CLOSED' && !explicitTotalProfit) {
+    finalProfit = calculatedProfit;
+  }
+
   const roiPercent = totalInvestedAmount > 0 ? (finalProfit / totalInvestedAmount) * 100 : null;
   const profitColor = finalProfit >= 0 ? 'success.main' : 'error.main';
   const closedDateDisplay = formatDate(investment?.closedAt || investment?.closedDate);
@@ -597,6 +638,8 @@ export default function PortfolioOnlinePayments() {
       );
     }
 
+    const { label, color } = getPayoutStatusDisplay(investment.payoutStatus);
+
     return (
       <>
         <Card sx={{ borderRadius: 3 }}>
@@ -607,6 +650,17 @@ export default function PortfolioOnlinePayments() {
             <Typography variant="body2" color="text.secondary">
               Final Investment
             </Typography>
+
+            <Box mt={2}>
+              <Button
+                size="small"
+                variant="outlined"
+                color={color}
+                sx={{ textTransform: 'none', fontWeight: 700, px: 2 }}
+              >
+                {label}
+              </Button>
+            </Box>
           </Box>
 
           <Box p={3}>
@@ -619,6 +673,34 @@ export default function PortfolioOnlinePayments() {
               <Grid item xs={6} textAlign="right">
                 <Typography fontWeight="bold">{poolDisplayName}</Typography>
               </Grid>
+
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Payout Status
+                </Typography>
+              </Grid>
+              <Grid item xs={6} textAlign="right">
+                <Typography fontWeight="bold" color={`${color}.main`}>
+                  {label}
+                </Typography>
+              </Grid>
+
+              {investment.payoutStatus &&
+                !PAYOUT_TERMINAL_STATUSES.includes(investment.payoutStatus) &&
+                investment.expectedPayoutDate ? (
+                <>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Expected Payout Date
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} textAlign="right">
+                    <Typography fontWeight="bold" color="warning.main">
+                      {formatExpectedPayoutDate(investment.expectedPayoutDate)}
+                    </Typography>
+                  </Grid>
+                </>
+              ) : null}
 
               <Grid item xs={6}>
                 <Typography variant="body2" color="text.secondary">
@@ -845,7 +927,19 @@ export default function PortfolioOnlinePayments() {
           </Grid>
 
           <Grid item margin={2}>
-            <Typography variant="h4">Online Payments</Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="h4">Online Payments</Typography>
+              {investment?.status === 'CLOSED' && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color={getPayoutStatusDisplay(investment.payoutStatus).color}
+                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 1 }}
+                >
+                  {getPayoutStatusDisplay(investment.payoutStatus).label}
+                </Button>
+              )}
+            </Box>
           </Grid>
         </Grid>
 
