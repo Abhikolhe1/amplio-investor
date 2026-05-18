@@ -20,6 +20,7 @@ import InfoPopoverIcon from 'src/sections/invest-transaction/components/info-pop
 import {
   calculateProjectedInterest,
   getInvestmentAmounts,
+  parseAmount,
   parseUnitsValue as parseUnitCount,
   resolvePayoutType,
 } from 'src/utils/investment-amounts';
@@ -47,44 +48,41 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       ? Math.min(availableUnits || 0, remainingInvestorLimit)
       : availableUnits || 0;
 
-  useEffect(() => {
-    const selectedUnits = parseUnitCount(currentDetails?.units?.selected) || 1;
-    const normalizedSelectionCap = maxSelectableUnits > 0 ? maxSelectableUnits : 0;
+  // ₹1 Crore block size: every purchase must be a multiple of minimumUnits.
+  const faceValuePerUnit = parseAmount(currentDetails?.unitValue);
+  const minimumUnits = faceValuePerUnit > 0 ? Math.round(10_000_000 / faceValuePerUnit) : 1;
 
-    setUnits(
-      normalizedSelectionCap > 0
-        ? Math.min(selectedUnits, normalizedSelectionCap)
-        : 0
-    );
-  }, [currentDetails, maxSelectableUnits]);
+  useEffect(() => {
+    if (minimumUnits <= 0) return;
+    const selectedUnits = parseUnitCount(currentDetails?.units?.selected) || minimumUnits;
+    const normalizedSelectionCap = maxSelectableUnits > 0 ? maxSelectableUnits : 0;
+    const capped = normalizedSelectionCap > 0 ? Math.min(selectedUnits, normalizedSelectionCap) : 0;
+    // Snap downward to the nearest valid block boundary.
+    const snapped = capped >= minimumUnits
+      ? Math.floor(capped / minimumUnits) * minimumUnits
+      : 0;
+    setUnits(snapped);
+  }, [currentDetails, maxSelectableUnits, minimumUnits]);
 
   const handleIncrease = () => {
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
-      return safePrev + 1 <= maxSelectableUnits ? safePrev + 1 : safePrev;
+      const next = safePrev + minimumUnits;
+      return next <= maxSelectableUnits ? next : safePrev;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
-      if (maxSelectableUnits === 0) {
-        return 0;
-      }
-
-      const newValue = prev - 1;
-      return newValue >= 1 ? newValue : 1;
+      if (maxSelectableUnits === 0) return 0;
+      const next = prev - minimumUnits;
+      return next >= minimumUnits ? next : minimumUnits;
     });
   };
 
+  // Quick-select sets the quantity to an absolute block multiple (not additive).
   const handleQuickSelect = (value) => {
-    setUnits((prev) => {
-      const safePrev = Number(prev) || 0;
-      const safeValue = Number(value) || 0;
-
-      const newValue = safePrev + safeValue;
-
-      return newValue <= maxSelectableUnits ? newValue : maxSelectableUnits;
-    });
+    setUnits(value <= maxSelectableUnits ? value : maxSelectableUnits);
   };
 
   const handleOpenAgreement = () => {
@@ -120,10 +118,19 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       endDate: currentDetails?.finalMaturityDate,
     });
     const hasInventory = maxSelectableUnits > 0;
+    const blockAligned = minimumUnits > 0 && units % minimumUnits === 0;
     const isUnitsAllowed =
       units > 0 &&
+      units >= minimumUnits &&
       units <= (availableUnits || 0) &&
-      units <= maxSelectableUnits;
+      units <= maxSelectableUnits &&
+      blockAligned;
+    let blockError = null;
+    if (units > 0 && units < minimumUnits) {
+      blockError = `Minimum investment is ${minimumUnits} units (₹1 Crore block).`;
+    } else if (units > 0 && !blockAligned) {
+      blockError = `Investment must be a multiple of ${minimumUnits} units (₹1 Crore block).`;
+    }
 
     return {
       investmentAmount,
@@ -137,8 +144,9 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       maturityInterestValue: formatAmount(maturityProjection.interestAmount),
       hasInventory,
       isUnitsAllowed,
+      blockError,
     };
-  }, [availableUnits, currentDetails, maxSelectableUnits, payoutType, units]);
+  }, [availableUnits, currentDetails, maxSelectableUnits, minimumUnits, payoutType, units]);
   if (!currentDetails) {
     return null;
   }
@@ -215,29 +223,42 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
               <Iconify icon="ic:round-add" width={20} />
             </IconButton>
           </Stack>
+
+          {/* Block-size hint and validation error */}
+          <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={0.5}>
+            Min. {minimumUnits} PTC per block (₹1 Crore)
+          </Typography>
+          {calculatedValues.blockError && (
+            <Alert severity="error" sx={{ mt: 1, py: 0.5, fontSize: 13 }}>
+              {calculatedValues.blockError}
+            </Alert>
+          )}
         </Grid>
 
-        {/* Quick Select Buttons */}
+        {/* Quick Select Buttons — each chip sets an absolute block multiple */}
         <Grid item xs={12}>
           <Stack direction="row" spacing={3} justifyContent="center">
-            {[5, 10, 20].map((value) => (
-              <Chip
-                key={value}
-                label={`${value} PTC`}
-                onClick={() => handleQuickSelect(value)}
-                sx={{
-                  bgcolor: 'grey.300',
-                  color: 'text.primary',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'grey.400',
-                  },
-                }}
-              />
-            ))}
+            {[1, 2, 3].map((blocks) => {
+              const value = blocks * minimumUnits;
+              return (
+                <Chip
+                  key={blocks}
+                  label={`${blocks} Block${blocks > 1 ? 's' : ''} (${value} PTC)`}
+                  onClick={() => handleQuickSelect(value)}
+                  sx={{
+                    bgcolor: 'grey.300',
+                    color: 'text.primary',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 20,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: 'grey.400',
+                    },
+                  }}
+                />
+              );
+            })}
           </Stack>
         </Grid>
 

@@ -82,8 +82,12 @@ export default function PortfolioRedeem({
   onRedeem,
   redemptionAvailable,
 }) {
+  // ₹1 Crore block size: every redemption must be a multiple of minimumUnits.
+  const minimumUnits =
+    considerationPerUnit > 0 ? Math.round(10_000_000 / considerationPerUnit) : 1;
+
   const [step, setStep] = useState('sell');
-  const [units, setUnits] = useState(availableUnits > 0 ? 1 : 0);
+  const [units, setUnits] = useState(availableUnits >= minimumUnits ? minimumUnits : 0);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [payoutSchedule, setPayoutSchedule] = useState(null);
@@ -93,13 +97,13 @@ export default function PortfolioRedeem({
     if (open && !wasOpenRef.current) {
       setStep('sell');
       setAgreed(false);
-      setUnits(availableUnits > 0 ? 1 : 0);
+      setUnits(availableUnits >= minimumUnits ? minimumUnits : 0);
       setSubmitting(false);
       setPayoutSchedule(null);
     }
 
     wasOpenRef.current = open;
-  }, [availableUnits, open]);
+  }, [availableUnits, minimumUnits, open]);
 
   const repaymentAmount = useMemo(
     () => Number((repaymentPerUnit * units).toFixed(2)),
@@ -115,19 +119,33 @@ export default function PortfolioRedeem({
   );
 
   const handleDecrease = () => {
-    setUnits((prevState) => Math.max(prevState - 1, 1));
+    setUnits((prev) => {
+      const next = prev - minimumUnits;
+      return next >= minimumUnits ? next : minimumUnits;
+    });
   };
 
   const handleIncrease = () => {
-    setUnits((prevState) => Math.min(prevState + 1, availableUnits));
+    setUnits((prev) => {
+      const next = prev + minimumUnits;
+      return next <= availableUnits ? next : prev;
+    });
   };
 
   const handleClose = () => {
     onClose();
   };
 
+  const blockError = useMemo(() => {
+    if (units <= 0) return null;
+    if (minimumUnits > 0 && units % minimumUnits !== 0) {
+      return `Redemption quantity must be a multiple of ${minimumUnits} units (₹1 Crore block).`;
+    }
+    return null;
+  }, [minimumUnits, units]);
+
   const handleContinue = () => {
-    if (!agreed || units <= 0 || !redemptionAvailable) {
+    if (!agreed || units <= 0 || !redemptionAvailable || blockError) {
       return;
     }
 
@@ -214,7 +232,7 @@ export default function PortfolioRedeem({
               icon="ic:round-remove"
               onClick={handleDecrease}
               color="primary"
-              disabled={units <= 1}
+              disabled={units <= minimumUnits}
             />
 
             <Typography variant="h4" fontWeight={700}>
@@ -225,9 +243,19 @@ export default function PortfolioRedeem({
               icon="ic:round-add"
               color="primary"
               onClick={handleIncrease}
-              disabled={units >= availableUnits}
+              disabled={units + minimumUnits > availableUnits}
             />
           </Stack>
+
+          <Typography variant="caption" color="text.secondary">
+            Min. {minimumUnits} units per block (₹1 Crore)
+          </Typography>
+
+          {blockError && (
+            <Alert severity="error" sx={{ py: 0.5, fontSize: 13 }}>
+              {blockError}
+            </Alert>
+          )}
         </Stack>
 
         <Box>
@@ -295,7 +323,7 @@ export default function PortfolioRedeem({
           color="primary"
           size="large"
           onClick={handleContinue}
-          disabled={!agreed || availableUnits <= 0 || units <= 0 || !redemptionAvailable}
+          disabled={!agreed || availableUnits <= 0 || units <= 0 || !redemptionAvailable || !!blockError}
           sx={{ borderRadius: 1.5, minHeight: 48 }}
         >
           Continue

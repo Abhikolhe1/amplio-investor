@@ -1,13 +1,14 @@
 import {
+  Alert,
   Box,
-  Card,
-  Grid,
-  Typography,
-  Stack,
-  Checkbox,
-  IconButton,
   Button,
+  Card,
+  Checkbox,
   Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useState, useMemo } from 'react';
@@ -20,33 +21,30 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
 
-  const handleIncrease = () => {
-    const maxUnits = Number(currentDetails?.units?.available) || 100;
+  // ₹1 Crore block size: every purchase must be a multiple of minimumUnits.
+  const faceValuePerUnit =
+    parseFloat(String(currentDetails?.unitPrice || '').replace(/[^0-9.]/g, '')) || 0;
+  const minimumUnits = faceValuePerUnit > 0 ? Math.round(10_000_000 / faceValuePerUnit) : 1;
+  const maxUnits = Number(currentDetails?.units?.available) || 0;
 
+  const handleIncrease = () => {
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
-      return safePrev + 1 <= maxUnits ? safePrev + 1 : safePrev;
+      const next = safePrev + minimumUnits;
+      return next <= maxUnits ? next : safePrev;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
-      const newValue = prev - 1;
-      return newValue >= 1 ? newValue : 1;
+      const next = prev - minimumUnits;
+      return next >= minimumUnits ? next : minimumUnits;
     });
   };
 
+  // Quick-select sets an absolute block multiple.
   const handleQuickSelect = (value) => {
-    const maxUnits = Number(currentDetails?.units?.available) || 100;
-
-    setUnits((prev) => {
-      const safePrev = Number(prev) || 0;
-      const safeValue = Number(value) || 0;
-
-      const newValue = safePrev + safeValue;
-
-      return newValue <= maxUnits ? newValue : maxUnits;
-    });
+    setUnits(value <= maxUnits ? value : maxUnits);
   };
 
   // Calculate dynamic values based on units
@@ -69,6 +67,15 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
     const totalLiquidityAmount = liquidityEventPerUnit * units;
     const totalMaturityAmount = maturityAmountPerUnit * units;
 
+    const blockAligned = minimumUnits > 0 && units % minimumUnits === 0;
+    const isUnitsAllowed = units > 0 && units >= minimumUnits && blockAligned;
+    let blockError = null;
+    if (units > 0 && units < minimumUnits) {
+      blockError = `Minimum investment is ${minimumUnits} units (₹1 Crore block).`;
+    } else if (units > 0 && !blockAligned) {
+      blockError = `Investment must be a multiple of ${minimumUnits} units (₹1 Crore block).`;
+    }
+
     return {
       investmentValue: `₹${investmentValue.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
@@ -86,8 +93,10 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
+      isUnitsAllowed,
+      blockError,
     };
-  }, [currentDetails, units]);
+  }, [currentDetails, minimumUnits, units]);
 
   if (!currentDetails) {
     return null;
@@ -156,29 +165,42 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
               <Iconify icon="ic:round-add" width={20} />
             </IconButton>
           </Stack>
+
+          {/* Block-size hint and validation error */}
+          <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={0.5}>
+            Min. {minimumUnits} units per block (₹1 Crore)
+          </Typography>
+          {calculatedValues.blockError && (
+            <Alert severity="error" sx={{ mt: 1, py: 0.5, fontSize: 13 }}>
+              {calculatedValues.blockError}
+            </Alert>
+          )}
         </Grid>
 
-        {/* Quick Select Buttons */}
+        {/* Quick Select Buttons — each chip sets an absolute block multiple */}
         <Grid item xs={12}>
           <Stack direction="row" spacing={3} justifyContent="center">
-            {[5, 10, 20].map((value) => (
-              <Chip
-                key={value}
-                label={`${value} Unit`}
-                onClick={() => handleQuickSelect(value)}
-                sx={{
-                  bgcolor: units === value ? '#F0F0F0' : '#F0F0F0',
-                  color: 'text.primary',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  '&:hover': {
+            {[1, 2, 3].map((blocks) => {
+              const value = blocks * minimumUnits;
+              return (
+                <Chip
+                  key={blocks}
+                  label={`${blocks} Block${blocks > 1 ? 's' : ''} (${value})`}
+                  onClick={() => handleQuickSelect(value)}
+                  sx={{
                     bgcolor: '#F0F0F0',
-                  },
-                }}
-              />
-            ))}
+                    color: 'text.primary',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 20,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: '#E0E0E0',
+                    },
+                  }}
+                />
+              );
+            })}
           </Stack>
         </Grid>
 
@@ -419,7 +441,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
             fullWidth
             size="large"
             variant="contained"
-            disabled={!agree}
+            disabled={!agree || !calculatedValues.isUnitsAllowed}
             onClick={() => {
               const unitPrice = parseFloat(currentDetails?.unitPrice?.replace(/[^0-9.]/g, '') || 0);
               const investmentAmount = unitPrice * units;
