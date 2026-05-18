@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Iconify from 'src/components/iconify';
 import { useRouter } from 'src/routes/hook';
 import { paths } from 'src/routes/paths';
@@ -25,13 +25,22 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
   const faceValuePerUnit =
     parseFloat(String(currentDetails?.unitPrice || '').replace(/[^0-9.]/g, '')) || 0;
   const minimumUnits = faceValuePerUnit > 0 ? Math.round(10_000_000 / faceValuePerUnit) : 1;
+
+  // Snap to minimumUnits on first load (if still at default 1 and block size > 1).
+  useEffect(() => {
+    if (minimumUnits > 1) {
+      setUnits((prev) => (prev === 1 ? minimumUnits : prev));
+    }
+  }, [minimumUnits]);
   const maxUnits = Number(currentDetails?.units?.available) || 0;
 
   const handleIncrease = () => {
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
       const next = safePrev + minimumUnits;
-      return next <= maxUnits ? next : safePrev;
+      // Only enforce cap when maxUnits is known (> 0); otherwise allow free increase.
+      if (maxUnits > 0 && next > maxUnits) return safePrev;
+      return next;
     });
   };
 

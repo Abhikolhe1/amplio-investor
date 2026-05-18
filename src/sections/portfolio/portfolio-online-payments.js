@@ -150,6 +150,13 @@ export default function PortfolioOnlinePayments() {
     setOptimisticOnlinePayment(null);
   }, [baseOnlinePayment]);
 
+  // Redirect back to portfolio if there's no investment data after loading finishes.
+  useEffect(() => {
+    if (!portfolioDataLoading && !baseOnlinePayment) {
+      navigate(paths.dashboard.portfolio.root, { replace: true });
+    }
+  }, [portfolioDataLoading, baseOnlinePayment, navigate]);
+
   const onlinePayment = optimisticOnlinePayment || baseOnlinePayment;
   const spvId = onlinePayment?.spvId || null;
   const {
@@ -495,16 +502,41 @@ export default function PortfolioOnlinePayments() {
     });
   };
 
+  const activeViewTotalEarnings =
+    resolveFirstNumericValue(
+      onlinePayment?.totalEarnings,
+      onlinePayment?.totalInterestEarned,
+      onlinePayment?.interestPayout,
+      onlinePayment?.totalInterest,
+      onlinePayment?.interestEarned
+    ) ?? 0;
+
+  const annualInterestRate = resolveFirstNumericValue(onlinePayment?.interestRate) ?? 0;
+  const todayReturns = currentInvestmentAmount * (annualInterestRate / 100) / 365;
+  const totalReturnsWithToday = activeViewTotalEarnings + todayReturns;
+
   const renderActiveView = () => (
     <Card sx={{ borderRadius: 3 }}>
       <Box textAlign="center" py={{ xs: 3, sm: 4 }}>
-        <Typography variant="h4" color="success.main" fontWeight="bold">
-          {formatInr(currentInvestmentDisplayAmount)}
-        </Typography>
+        <Grid container justifyContent="center" spacing={3}>
+          <Grid item textAlign="center">
+            <Typography variant="h4" color="text.primary" fontWeight="bold">
+              {formatInr(currentInvestmentDisplayAmount)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Current Investment
+            </Typography>
+          </Grid>
 
-        <Typography variant="body2" color="text.secondary">
-          Current Investment
-        </Typography>
+          <Grid item textAlign="center">
+            <Typography variant="h4" color="success.main" fontWeight="bold">
+              +{formatInr(totalReturnsWithToday)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total Returns
+            </Typography>
+          </Grid>
+        </Grid>
 
         <Grid container justifyContent="center" spacing={3} mt={2}>
           <Grid item xs={6} sm="auto" textAlign="center">

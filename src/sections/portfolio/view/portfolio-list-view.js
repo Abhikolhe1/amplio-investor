@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Card,
+  Chip,
   Divider,
   Grid,
   IconButton,
@@ -16,6 +17,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 import { useGetPortfolioClosedInvestments, useGetPortfolioData } from 'src/api/portfolio';
+import { useGetMyOrders } from 'src/api/invest-transaction';
 
 function formatInr(value) {
   return new Intl.NumberFormat('en-IN', {
@@ -57,6 +59,18 @@ function formatExpectedPayoutDate(dateString) {
   return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const PENDING_ORDER_STATUSES = ['CREATED', 'AGREEMENT_SIGNED', 'PAYMENT_PENDING', 'UTR_SUBMITTED', 'PAYMENT_UNDER_REVIEW'];
+
+function getPendingOrderStatusChip(status) {
+  if (status === 'UTR_SUBMITTED' || status === 'PAYMENT_UNDER_REVIEW') {
+    return { label: 'Under Review', color: 'warning' };
+  }
+  if (status === 'PAYMENT_PENDING') {
+    return { label: 'Awaiting Payment', color: 'info' };
+  }
+  return { label: 'Pending', color: 'default' };
+}
+
 export default function PortfolioListView() {
   const CLOSED_PAGE_LIMIT = 10;
   const [tab, setTab] = useState(0);
@@ -67,6 +81,10 @@ export default function PortfolioListView() {
 
   const currentTab = tab === 1 ? 'closed' : 'active';
   const { portfolioData, portfolioDataLoading, portfolioDataError } = useGetPortfolioData(currentTab);
+  const { orders: myOrders } = useGetMyOrders();
+  const pendingOrders = Array.isArray(myOrders)
+    ? myOrders.filter((o) => PENDING_ORDER_STATUSES.includes(o.status))
+    : [];
   const {
     closedInvestments,
     closedInvestmentsTotalCount,
@@ -131,6 +149,26 @@ export default function PortfolioListView() {
   const hasOnlinePayment = !!portfolioData?.onlinePayment;
   const hasClosedInvestments = allClosedInvestments.length > 0;
   const hasMoreClosedInvestments = allClosedInvestments.length < closedInvestmentsTotalCount;
+
+  // Today's earnings only applies to ACTIVE holdings — for closed investments the
+  // backend already records the final settled interest, so adding another day would double-count.
+  const summaryTodayEarnings = !isClosedTab
+    ? (Number(portfolioData?.summary?.investedTillDate) || 0) *
+      (Number(portfolioData?.summary?.annualisedReturns) || 0) /
+      100 / 365
+    : 0;
+  const summaryTotalEarnings =
+    (Number(portfolioData?.summary?.totalEarnings) || 0) + summaryTodayEarnings;
+
+  const onlinePaymentTodayEarnings = !isClosedTab
+    ? (Number(portfolioData?.onlinePayment?.currentInvestment ||
+               portfolioData?.onlinePayment?.currentlyInvested ||
+               portfolioData?.onlinePayment?.deployed) || 0) *
+      (Number(portfolioData?.onlinePayment?.interestRate) || 0) /
+      100 / 365
+    : 0;
+  const onlinePaymentTotalEarnings =
+    (Number(portfolioData?.onlinePayment?.totalEarnings) || 0) + onlinePaymentTodayEarnings;
   const isLoadingMoreClosedInvestments =
     isClosedTab && closedInvestmentsLoading && allClosedInvestments.length > 0;
 
@@ -154,7 +192,7 @@ export default function PortfolioListView() {
 
             <Grid item xs={6} textAlign="center">
               <Typography variant="h5" color="success.main">
-                {formatInr(portfolioData?.summary?.totalEarnings)}
+                {formatInr(summaryTotalEarnings)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Total Earnings
@@ -354,16 +392,103 @@ export default function PortfolioListView() {
 
             if (!hasOnlinePayment) {
               return (
-                <Box sx={{ py: 5, textAlign: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No {currentTab} investments found.
-                  </Typography>
-                </Box>
+                <>
+                  {pendingOrders.length > 0 ? (
+                    <>
+                      {pendingOrders.map((order) => {
+                        const { label, color } = getPendingOrderStatusChip(order.status);
+                        return (
+                          <Box
+                            key={order.id}
+                            sx={{
+                              border: `1px solid ${theme.palette.warning.light}`,
+                              borderRadius: '12px',
+                              p: 2,
+                              mb: 2,
+                              bgcolor: 'warning.lighter',
+                            }}
+                          >
+                            <Grid container alignItems="center" justifyContent="space-between">
+                              <Grid item>
+                                <Typography variant="subtitle1" fontWeight={600}>
+                                  PTC Investment
+                                </Typography>
+                              </Grid>
+                              <Grid item>
+                                <Chip label={label} color={color} size="small" />
+                              </Grid>
+                            </Grid>
+                            <Box mt={1.5}>
+                              <Grid container justifyContent="space-between">
+                                <Typography variant="body2" color="text.secondary">Units Requested</Typography>
+                                <Typography variant="body2" fontWeight={600}>{order.requestedUnits || '--'}</Typography>
+                              </Grid>
+                              <Grid container justifyContent="space-between" mt={0.5}>
+                                <Typography variant="body2" color="text.secondary">Investment Amount</Typography>
+                                <Typography variant="body2" fontWeight={600}>{formatInr(order.investmentAmount)}</Typography>
+                              </Grid>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" mt={1} display="block">
+                              Your payment is under review. Units will appear here once approved.
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <Box sx={{ py: 5, textAlign: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No {currentTab} investments found.
+                      </Typography>
+                    </Box>
+                  )}
+                </>
               );
             }
 
             return (
               <>
+                {pendingOrders.map((order) => {
+                  const { label, color } = getPendingOrderStatusChip(order.status);
+                  return (
+                    <Box
+                      key={order.id}
+                      sx={{
+                        border: `1px solid`,
+                        borderColor: 'warning.light',
+                        borderRadius: '12px',
+                        p: 2,
+                        mb: 2,
+                        bgcolor: 'warning.lighter',
+                      }}
+                    >
+                      <Grid container alignItems="center" justifyContent="space-between">
+                        <Grid item>
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            PTC Investment
+                          </Typography>
+                        </Grid>
+                        <Grid item>
+                          <Chip label={label} color={color} size="small" />
+                        </Grid>
+                      </Grid>
+                      <Box mt={1.5}>
+                        <Grid container justifyContent="space-between">
+                          <Typography variant="body2" color="text.secondary">Units Requested</Typography>
+                          <Typography variant="body2" fontWeight={600}>{order.requestedUnits || '--'}</Typography>
+                        </Grid>
+                        <Grid container justifyContent="space-between" mt={0.5}>
+                          <Typography variant="body2" color="text.secondary">Investment Amount</Typography>
+                          <Typography variant="body2" fontWeight={600}>{formatInr(order.investmentAmount)}</Typography>
+                        </Grid>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" mt={1} display="block">
+                        Your payment is under review. Units will appear here once approved.
+                      </Typography>
+                    </Box>
+                  );
+                })}
+
                 <Box
                   sx={{
                     border: `1px solid ${theme.palette.divider}`,
@@ -375,7 +500,7 @@ export default function PortfolioListView() {
                   <Grid container alignItems="center" justifyContent="space-between">
                     <Grid item xs={7}>
                       <Typography color="success.main">
-                        {formatInr(portfolioData?.onlinePayment?.totalEarnings)}
+                        {formatInr(onlinePaymentTotalEarnings)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Earnings

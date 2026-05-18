@@ -52,8 +52,19 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   const faceValuePerUnit = parseAmount(currentDetails?.unitValue);
   const minimumUnits = faceValuePerUnit > 0 ? Math.round(10_000_000 / faceValuePerUnit) : 1;
 
+  // When fewer units remain than a full block, use a sub-block step (1/10th of block size).
+  const isLowInventory = maxSelectableUnits > 0 && maxSelectableUnits < minimumUnits;
+  const effectiveStep = isLowInventory ? Math.max(1, Math.round(minimumUnits / 10)) : minimumUnits;
+  const effectiveFloor = effectiveStep;
+
   useEffect(() => {
     if (minimumUnits <= 0) return;
+    if (isLowInventory) {
+      // Start at the largest sub-block multiple that fits within available units.
+      const initUnits = Math.floor(maxSelectableUnits / effectiveStep) * effectiveStep || effectiveStep;
+      setUnits(Math.min(initUnits, maxSelectableUnits));
+      return;
+    }
     const selectedUnits = parseUnitCount(currentDetails?.units?.selected) || minimumUnits;
     const normalizedSelectionCap = maxSelectableUnits > 0 ? maxSelectableUnits : 0;
     const capped = normalizedSelectionCap > 0 ? Math.min(selectedUnits, normalizedSelectionCap) : 0;
@@ -62,21 +73,25 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       ? Math.floor(capped / minimumUnits) * minimumUnits
       : 0;
     setUnits(snapped);
-  }, [currentDetails, maxSelectableUnits, minimumUnits]);
+  }, [currentDetails, effectiveStep, isLowInventory, maxSelectableUnits, minimumUnits]);
 
   const handleIncrease = () => {
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
-      const next = safePrev + minimumUnits;
-      return next <= maxSelectableUnits ? next : safePrev;
+      const next = safePrev + effectiveStep;
+      // When next would exceed max, jump to max instead of blocking.
+      if (next > maxSelectableUnits) {
+        return safePrev < maxSelectableUnits ? maxSelectableUnits : safePrev;
+      }
+      return next;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
       if (maxSelectableUnits === 0) return 0;
-      const next = prev - minimumUnits;
-      return next >= minimumUnits ? next : minimumUnits;
+      const next = prev - effectiveStep;
+      return next >= effectiveFloor ? next : effectiveFloor;
     });
   };
 
@@ -126,7 +141,10 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       units <= maxSelectableUnits &&
       blockAligned;
     let blockError = null;
-    if (units > 0 && units < minimumUnits) {
+    if (isLowInventory) {
+      // Inventory is below one full block — purchase is blocked until ₹1 Crore is available.
+      blockError = `Only ${maxSelectableUnits} units remain. A minimum of ${minimumUnits} units (₹1 Crore) is required to proceed.`;
+    } else if (units > 0 && units < minimumUnits) {
       blockError = `Minimum investment is ${minimumUnits} units (₹1 Crore block).`;
     } else if (units > 0 && !blockAligned) {
       blockError = `Investment must be a multiple of ${minimumUnits} units (₹1 Crore block).`;
@@ -146,7 +164,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       isUnitsAllowed,
       blockError,
     };
-  }, [availableUnits, currentDetails, maxSelectableUnits, minimumUnits, payoutType, units]);
+  }, [availableUnits, currentDetails, isLowInventory, maxSelectableUnits, minimumUnits, payoutType, units]);
   if (!currentDetails) {
     return null;
   }
@@ -225,9 +243,15 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Stack>
 
           {/* Block-size hint and validation error */}
-          <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={0.5}>
-            Min. {minimumUnits} PTC per block (₹1 Crore)
-          </Typography>
+          {isLowInventory ? (
+            <Typography variant="caption" color="warning.main" display="block" textAlign="center" mt={0.5}>
+              Only {maxSelectableUnits} units remaining — less than one full block
+            </Typography>
+          ) : (
+            <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={0.5}>
+              Min. {minimumUnits} PTC per block (₹1 Crore)
+            </Typography>
+          )}
           {calculatedValues.blockError && (
             <Alert severity="error" sx={{ mt: 1, py: 0.5, fontSize: 13 }}>
               {calculatedValues.blockError}
@@ -238,27 +262,41 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
         {/* Quick Select Buttons — each chip sets an absolute block multiple */}
         <Grid item xs={12}>
           <Stack direction="row" spacing={3} justifyContent="center">
-            {[1, 2, 3].map((blocks) => {
-              const value = blocks * minimumUnits;
-              return (
-                <Chip
-                  key={blocks}
-                  label={`${blocks} Block${blocks > 1 ? 's' : ''} (${value} PTC)`}
-                  onClick={() => handleQuickSelect(value)}
-                  sx={{
-                    bgcolor: 'grey.300',
-                    color: 'text.primary',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 20,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: 'grey.400',
-                    },
-                  }}
-                />
-              );
-            })}
+            {isLowInventory ? (
+              <Chip
+                label={`Buy all ${maxSelectableUnits} remaining PTCs`}
+                onClick={() => handleQuickSelect(maxSelectableUnits)}
+                sx={{
+                  bgcolor: 'warning.lighter',
+                  color: 'warning.darker',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  borderRadius: 20,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'warning.light' },
+                }}
+              />
+            ) : (
+              [1, 2, 3].map((blocks) => {
+                const value = blocks * minimumUnits;
+                return (
+                  <Chip
+                    key={blocks}
+                    label={`${blocks} Block${blocks > 1 ? 's' : ''} (${value} PTC)`}
+                    onClick={() => handleQuickSelect(value)}
+                    sx={{
+                      bgcolor: 'grey.300',
+                      color: 'text.primary',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      borderRadius: 20,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'grey.400' },
+                    }}
+                  />
+                );
+              })
+            )}
           </Stack>
         </Grid>
 
@@ -304,7 +342,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Grid>
         ) : null}
 
-        {calculatedValues.hasInventory && !calculatedValues.isUnitsAllowed ? (
+        {calculatedValues.hasInventory && !calculatedValues.isUnitsAllowed && !isLowInventory && !calculatedValues.blockError ? (
           <Grid item xs={12}>
             <Alert severity="error" variant="outlined">
               You cannot buy more than the available PTCs or your investor limit.
