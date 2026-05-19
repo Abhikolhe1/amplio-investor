@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import InvestDetailsView from "src/sections/invest/view/invest-details-view";
+import InvestDetailsView from "src/sections/invest-transaction/view/invest-details-view";
 
 export default function InvestDetialsPage(){
     return(

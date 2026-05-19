@@ -3,11 +3,7 @@ import { useMemo } from 'react';
 import { paths } from 'src/routes/paths';
 // locales
 import { useLocales } from 'src/locales';
-// components
-import Label from 'src/components/label';
-import Iconify from 'src/components/iconify';
 import SvgColor from 'src/components/svg-color';
-import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -33,7 +29,6 @@ const ICONS = {
   blank: icon('ic_blank'),
   kanban: icon('ic_kanban'),
   folder: icon('ic_folder'),
-  banking: icon('ic_banking'),
   booking: icon('ic_booking'),
   invoice: icon('ic_invoice'),
   product: icon('ic_product'),
@@ -44,26 +39,36 @@ const ICONS = {
   ecommerce: icon('ic_ecommerce'),
   analytics: icon('ic_analytics'),
   dashboard: icon('ic_dashboard'),
-  invest: icon('ic_invest')
+  invest: icon('ic_invest'),
+  portfolio: icon('ic_portfolio'),
 };
 
 // ----------------------------------------------------------------------
 
 export function useNavData() {
   const { t } = useLocales();
-  // const { user: currentUser } = useAuthContext();
 
   const data = useMemo(
-    () => [                   
+    () => [
       {
         subheader: t('dashboard'),
         items: [
           // { title: t(`${currentUser.fullName}`), path: paths.dashboard.user.account, icon: ICONS.user },
-          { title: t('Activity'), path: paths.dashboard.general.banking, icon: ICONS.banking },
-          { title: t('Invest'), path: paths.dashboard.invest.view, icon: ICONS.invest },
+          // { title: t('Dashboard'), path: paths.dashboard.general.app, icon: ICONS.dashboard },
+          {
+            title: t('Invest Transaction'),
+            path: paths.dashboard.investTransaction.root,
+            deepMatch: true,
+            icon: ICONS.invest,
+          },
+          {
+            title: t('Portfolio'),
+            path: paths.dashboard.portfolio.root,
+            deepMatch: true,
+            icon: ICONS.portfolio,
+          },
         ],
       },
-
       // DASHBOARD
       // ----------------------------------------------------------------------
       // {

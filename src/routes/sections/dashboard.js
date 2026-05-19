@@ -1,17 +1,16 @@
 import { lazy, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useParams } from 'react-router-dom';
 // auth
 import { AuthGuard } from 'src/auth/guard';
 // layouts
 import DashboardLayout from 'src/layouts/dashboard';
 // components
 import { LoadingScreen } from 'src/components/loading-screen';
-import { element } from 'prop-types';
 
 // ----------------------------------------------------------------------
 
 // OVERVIEW
-const IndexPage = lazy(() => import('src/pages/dashboard/banking'));
+const OverviewAppPage = lazy(() => import('src/pages/dashboard/app'));
 const OverviewEcommercePage = lazy(() => import('src/pages/dashboard/ecommerce'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
 const OverviewBankingPage = lazy(() => import('src/pages/dashboard/banking'));
@@ -45,9 +44,24 @@ const BlogNewPostPage = lazy(() => import('src/pages/dashboard/post/new'));
 const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
 // NEED HELP
 const NeedHelpPage = lazy(() => import('src/pages/dashboard/help/help'));
-// INVEST 
-const InvestViewPage = lazy(() => import('src/pages/dashboard/invest/view'));
-const InvestDetailsPage = lazy(() => import('src/pages/dashboard/invest/details'))
+// INVEST TRANSACTION
+const InvestTransactionViewPage = lazy(() => import('src/pages/dashboard/invest-transaction/view'));
+const InvestTransactionDetailsPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/details')
+);
+const InvestTransactionAgreementPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/agreement')
+);
+const PaymentInstructionsPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/payment-instructions')
+);
+const InvestmentOrderDetailPage = lazy(() =>
+  import('src/pages/dashboard/invest-transaction/order-detail')
+);
+// Portfolio
+const PortfolioViewPage = lazy(() => import('src/pages/dashboard/portfolio/view'));
+const PortfolioOnlinePaymentsPage = lazy(() => import('src/pages/dashboard/portfolio/online-payments'));
+const PortfolioOnlineTransactionsPage = lazy(() => import('src/pages/dashboard/portfolio/online-transactions'));
 // JOB
 const JobDetailsPage = lazy(() => import('src/pages/dashboard/job/details'));
 const JobListPage = lazy(() => import('src/pages/dashboard/job/list'));
@@ -74,6 +88,18 @@ const FaqsViewPage = lazy(() => import('src/pages/dashboard/faqs/view'))
 
 // ----------------------------------------------------------------------
 
+function InvestTransactionDetailsRedirect() {
+  const { id } = useParams();
+
+  return <Navigate to={`/dashboard/invest-transaction/${id}`} replace />;
+}
+
+function InvestTransactionAgreementRedirect() {
+  const { id } = useParams();
+
+  return <Navigate to={`/dashboard/invest-transaction/${id}/agreement`} replace />;
+}
+
 export const dashboardRoutes = [
   {
     path: 'dashboard',
@@ -87,9 +113,12 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
-      { element: <IndexPage />, index: true },
+      { element: <Navigate to="/dashboard/invest-transaction/view" replace />, index: true },
+      { path: 'app', element: <OverviewAppPage /> },
       { path: 'ecommerce', element: <OverviewEcommercePage /> },
       { path: 'analytics', element: <OverviewAnalyticsPage /> },
+      { path: 'wallet', element: <Navigate to="/dashboard/invest-transaction/view" replace /> },
+      { path: 'activity', element: <Navigate to="/dashboard/invest-transaction/view" replace /> },
       { path: 'banking', element: <OverviewBankingPage /> },
       { path: 'booking', element: <OverviewBookingPage /> },
       { path: 'file', element: <OverviewFilePage /> },
@@ -162,10 +191,35 @@ export const dashboardRoutes = [
       {
         path: 'invest',
         children: [
-          { element: <InvestViewPage />, index: true },
-          { path: 'investPage', element: <InvestViewPage /> },
-          { path: ':id', element: <InvestDetailsPage /> }
+          { element: <Navigate to='/dashboard/invest-transaction/view' replace />, index: true },
+          { path: 'view', element: <Navigate to='/dashboard/invest-transaction/view' replace /> },
+          { path: 'investPage', element: <Navigate to='/dashboard/invest-transaction/view' replace /> },
+          { path: ':id', element: <InvestTransactionDetailsRedirect /> },
+          { path: ':id/agreement', element: <InvestTransactionAgreementRedirect /> },
 
+        ],
+      },
+      {
+        path: 'invest-transaction',
+        children: [
+          { element: <InvestTransactionViewPage />, index: true },
+          { path: 'view', element: <InvestTransactionViewPage /> },
+          { path: 'orders/:orderId', element: <InvestmentOrderDetailPage /> },
+          { path: ':id', element: <InvestTransactionDetailsPage /> },
+          { path: ':id/agreement', element: <InvestTransactionAgreementPage /> },
+        ],
+      },
+      {
+        path: 'portfolio',
+        children: [
+          { element: <PortfolioViewPage />, index: true },
+          { path: 'view', element: <PortfolioViewPage /> },
+          { path: ':poolName/online-payments', element: <PortfolioOnlinePaymentsPage /> },
+          { path: ':poolName/ptc-transactions', element: <PortfolioOnlineTransactionsPage /> },
+          { path: ':poolName/online-transactions', element: <PortfolioOnlineTransactionsPage /> },
+          { path: 'online-payments', element: <PortfolioOnlinePaymentsPage /> },
+          { path: 'ptc-transactions', element: <PortfolioOnlineTransactionsPage /> },
+          { path: 'online-transactions', element: <PortfolioOnlineTransactionsPage /> }
         ],
       },
       {
@@ -197,4 +251,17 @@ export const dashboardRoutes = [
       { path: 'blank', element: <BlankPage /> },
     ],
   },
+  // Standalone payment screen — rendered without DashboardLayout
+  {
+    path: 'dashboard/invest-transaction/payment/:verificationId',
+    element: (
+      <AuthGuard>
+        <Suspense fallback={<LoadingScreen />}>
+          <PaymentInstructionsPage />
+        </Suspense>
+      </AuthGuard>
+    ),
+  },
 ];
+
+

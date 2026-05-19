@@ -36,7 +36,14 @@ RHFUploadAvatar.propTypes = {
 
 // ----------------------------------------------------------------------
 
-export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...other }) {
+export function RHFUploadBox({
+  name,
+  multiple = false,
+  autoUpload = true,
+  previewWidth = 80,
+  previewHeight = 80,
+  ...other
+}) {
   const { control, setValue } = useFormContext();
 
   // const handleFileDrop = async (fieldName, acceptedFiles) => {
@@ -99,6 +106,8 @@ export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...oth
         <UploadBox
           files={field.value}
           error={!!error}
+          previewThumbnail
+          previewSx={{ width: previewWidth, height: previewHeight }}
           {...other}
           onRemove={() => handleRemoveFile(name)}
           onRemoveAll={() => handleRemoveAllFiles(name)}
@@ -108,9 +117,11 @@ export function RHFUploadBox({ name, multiple = false, autoUpload = true, ...oth
           onDrop={async (acceptedFiles) => {
             if (!acceptedFiles?.length) return;
 
-            // ✅ Device upload: just set file, don't upload
+            // ✅ Device upload: attach a blob preview URL so FileThumbnail can render it
             if (!autoUpload) {
-              setValue(name, acceptedFiles[0], { shouldValidate: true });
+              const file = acceptedFiles[0];
+              Object.assign(file, { fileUrl: URL.createObjectURL(file) });
+              setValue(name, file, { shouldValidate: true });
               return;
             }
 
@@ -127,6 +138,8 @@ RHFUploadBox.propTypes = {
   name: PropTypes.string,
   multiple: PropTypes.bool,
   autoUpload: PropTypes.bool,
+  previewWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  previewHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 // ----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 // @mui
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -24,6 +24,7 @@ import AccountNotifications from '../account-notifications';
 import AccountChangePassword from '../account-change-password';
 import BankNewForm from '../account-bank-details';
 import AccountNomineeForm from '../account-nominee-details';
+import AccountOrders from '../account-orders';
 
 // ----------------------------------------------------------------------
 
@@ -48,6 +49,11 @@ const TABS = [
     value: 'demat',
     label: 'Demat',
     icon: <Iconify icon="fluent:building-bank-16-filled" width={24} />,
+  },
+  {
+    value: 'orders',
+    label: 'Orders',
+    icon: <Iconify icon="solar:sort-by-time-bold-duotone" width={24} />,
   },
   // {
   //   value: 'security',
@@ -81,6 +87,13 @@ export default function AccountView() {
 
   const { BankDetail } = useGetBankDetail();
 
+  const bankDetailObj = useMemo(() => {
+    if (Array.isArray(BankDetail?.bankDetails)) {
+      return { bankDetails: BankDetail.bankDetails[0] ?? null };
+    }
+    return BankDetail;
+  }, [BankDetail]);
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
@@ -109,11 +122,13 @@ export default function AccountView() {
 
       {currentTab === 'general' && <AccountGeneral />}
 
-      {currentTab === 'bank' && <BankNewForm bankDetail={BankDetail} />}
+      {currentTab === 'bank' && <BankNewForm bankDetail={bankDetailObj} />}
 
       {currentTab === 'nominee' && <AccountNomineeForm />}
 
       {currentTab === 'demat' && <BankNewForm />}
+
+      {currentTab === 'orders' && <AccountOrders />}
 
       {/* {currentTab === 'security' && <AccountChangePassword />} */}
     </Container>

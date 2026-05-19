@@ -17,7 +17,7 @@ export default function NavList({ data, depth, hasChild, config }) {
 
   const pathname = usePathname();
 
-  const active = useActiveLink(data.path, hasChild);
+  const active = useActiveLink(data.path, hasChild || Boolean(data.deepMatch));
 
   const externalLink = data.path.includes('http');
 
