@@ -41,6 +41,17 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   const payoutType = resolvePayoutType(currentDetails);
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
+
+  const checkAfterCutoff = () => {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(Date.now() + IST_OFFSET_MS);
+    return istNow.getUTCHours() >= 15;
+  };
+  const [isAfterAllocationCutoff, setIsAfterAllocationCutoff] = useState(checkAfterCutoff);
+  useEffect(() => {
+    const timer = setInterval(() => setIsAfterAllocationCutoff(checkAfterCutoff()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const availableUnits = parseUnitCount(currentDetails?.units?.available);
   const remainingInvestorLimit = parseUnitCount(currentDetails?.units?.remainingInvestorLimit);
   const maxSelectableUnits =
@@ -493,6 +504,16 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
             </Typography>
           </Box>
         </Grid>
+
+        {/* After-3PM allocation notice — informational only, does not block investment */}
+        {isAfterAllocationCutoff && (
+          <Grid item xs={12}>
+            <Alert severity="info" sx={{ fontSize: 13 }}>
+              Investments made after 3:00 PM IST will be allocated on the next business day
+              and will not earn today&apos;s interest.
+            </Alert>
+          </Grid>
+        )}
 
         {/* Terms & Policy */}
         <Grid item xs={12}>

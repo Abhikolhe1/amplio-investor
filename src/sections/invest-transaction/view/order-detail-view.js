@@ -865,9 +865,9 @@ export default function OrderDetailView() {
               </>
             )}
             {order.submittedInWindow === false && (
-              <Alert severity="warning" sx={{ mt: 1 }}>
-                UTR submitted outside the 9 AM–3 PM investment window. Allocation will be on the
-                next business day.
+              <Alert severity="info" sx={{ mt: 1 }}>
+                UTR submitted after 3:00 PM IST. Allocation will be on the next business day
+                and today&apos;s interest will not be earned.
               </Alert>
             )}
           </Card>

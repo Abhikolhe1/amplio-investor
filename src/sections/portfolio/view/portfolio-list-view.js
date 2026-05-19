@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paths } from 'src/routes/paths';
 import {
@@ -18,6 +18,7 @@ import { useTheme } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 import { useGetPortfolioClosedInvestments, useGetPortfolioData } from 'src/api/portfolio';
 import { useGetMyOrders } from 'src/api/invest-transaction';
+import { TablePaginationCustom } from 'src/components/table';
 
 function formatInr(value) {
   return new Intl.NumberFormat('en-IN', {
@@ -47,8 +48,6 @@ function getPayoutStatusDisplay(payoutStatus) {
     return { label: 'Cancelled', color: 'error' };
   }
 
-  // REQUESTED, PENDING_SETTLEMENT, READY_FOR_PAYOUT, PAYOUT_PROCESSING,
-  // RETRY_PENDING, PENDING, PROCESSING (legacy)
   return { label: 'Processing', color: 'warning' };
 }
 
@@ -72,10 +71,16 @@ function getPendingOrderStatusChip(status) {
 }
 
 export default function PortfolioListView() {
-  const CLOSED_PAGE_LIMIT = 10;
   const [tab, setTab] = useState(0);
-  const [closedSkip, setClosedSkip] = useState(0);
-  const [allClosedInvestments, setAllClosedInvestments] = useState([]);
+
+  // Closed investments — server-side pagination
+  const [closedPage, setClosedPage] = useState(0);
+  const [closedRowsPerPage, setClosedRowsPerPage] = useState(5);
+
+  // Active pending orders — client-side pagination
+  const [activePage, setActivePage] = useState(0);
+  const [activeRowsPerPage, setActiveRowsPerPage] = useState(5);
+
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -85,20 +90,28 @@ export default function PortfolioListView() {
   const pendingOrders = Array.isArray(myOrders)
     ? myOrders.filter((o) => PENDING_ORDER_STATUSES.includes(o.status))
     : [];
+
   const {
     closedInvestments,
     closedInvestmentsTotalCount,
     closedInvestmentsLoading,
     closedInvestmentsError,
   } = useGetPortfolioClosedInvestments({
-    limit: CLOSED_PAGE_LIMIT,
-    skip: closedSkip,
+    limit: closedRowsPerPage,
+    skip: closedPage * closedRowsPerPage,
   });
+
   const isClosedTab = currentTab === 'closed';
   const isClosedInitialLoading =
-    isClosedTab && closedInvestmentsLoading && allClosedInvestments.length === 0;
+    isClosedTab && closedInvestmentsLoading && closedInvestments.length === 0;
   const isLoading = isClosedTab ? isClosedInitialLoading : portfolioDataLoading;
   const activeError = isClosedTab ? closedInvestmentsError : portfolioDataError;
+
+  const handleTabChange = (event, value) => {
+    setTab(value);
+    setActivePage(0);
+    setClosedPage(0);
+  };
 
   const handleNext = () => {
     const poolName =
@@ -109,28 +122,6 @@ export default function PortfolioListView() {
     navigate(paths.dashboard.portfolio.onlinePayments(poolName), {
       state: { onlinePayment: portfolioData?.onlinePayment },
     });
-  };
-
-  useEffect(() => {
-    if (closedSkip === 0) {
-      setAllClosedInvestments(closedInvestments);
-      return;
-    }
-
-    setAllClosedInvestments((previousInvestments) => {
-      const uniqueInvestmentsById = new Map();
-
-      [...previousInvestments, ...closedInvestments].forEach((investment, index) => {
-        const fallbackKey = `${investment?.poolName || 'pool'}-${investment?.closedAt || 'closed'}-${index}`;
-        uniqueInvestmentsById.set(investment?.id || fallbackKey, investment);
-      });
-
-      return Array.from(uniqueInvestmentsById.values());
-    });
-  }, [closedInvestments, closedSkip]);
-
-  const handleLoadMoreClosedInvestments = () => {
-    setClosedSkip((previousSkip) => previousSkip + CLOSED_PAGE_LIMIT);
   };
 
   const handleClosedInvestmentDetails = (investment) => {
@@ -147,11 +138,8 @@ export default function PortfolioListView() {
   };
 
   const hasOnlinePayment = !!portfolioData?.onlinePayment;
-  const hasClosedInvestments = allClosedInvestments.length > 0;
-  const hasMoreClosedInvestments = allClosedInvestments.length < closedInvestmentsTotalCount;
+  const hasClosedInvestments = closedInvestments.length > 0;
 
-  // Today's earnings only applies to ACTIVE holdings — for closed investments the
-  // backend already records the final settled interest, so adding another day would double-count.
   const summaryTodayEarnings = !isClosedTab
     ? (Number(portfolioData?.summary?.investedTillDate) || 0) *
       (Number(portfolioData?.summary?.annualisedReturns) || 0) /
@@ -169,8 +157,12 @@ export default function PortfolioListView() {
     : 0;
   const onlinePaymentTotalEarnings =
     (Number(portfolioData?.onlinePayment?.totalEarnings) || 0) + onlinePaymentTodayEarnings;
-  const isLoadingMoreClosedInvestments =
-    isClosedTab && closedInvestmentsLoading && allClosedInvestments.length > 0;
+
+  // Slice pending orders for the current active page
+  const pagedPendingOrders = pendingOrders.slice(
+    activePage * activeRowsPerPage,
+    activePage * activeRowsPerPage + activeRowsPerPage
+  );
 
   return (
     <Box sx={{ px: 2, py: 3, display: 'flex', justifyContent: 'center' }}>
@@ -240,7 +232,7 @@ export default function PortfolioListView() {
             Investments
           </Typography>
 
-          <Tabs value={tab} onChange={(event, value) => setTab(value)} variant="fullWidth">
+          <Tabs value={tab} onChange={handleTabChange} variant="fullWidth">
             <Tab label="Active Investments" />
             <Tab label="Closed Investments" />
           </Tabs>
@@ -258,6 +250,7 @@ export default function PortfolioListView() {
               );
             }
 
+            // ── Closed tab ──────────────────────────────────────────────────────
             if (isClosedTab) {
               if (!hasClosedInvestments) {
                 return (
@@ -271,7 +264,7 @@ export default function PortfolioListView() {
 
               return (
                 <>
-                  {allClosedInvestments.map((investment, index) => (
+                  {closedInvestments.map((investment, index) => (
                     <Box
                       key={`${investment.id || investment.poolName || 'closed'}-${investment.closedAt || 'na'}-${index}`}
                       sx={{
@@ -367,35 +360,36 @@ export default function PortfolioListView() {
                     </Box>
                   ))}
 
-                  {isLoadingMoreClosedInvestments ? (
+                  {closedInvestmentsLoading ? (
                     <Box sx={{ py: 2, textAlign: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
-                        Loading more closed investments...
+                        Loading...
                       </Typography>
                     </Box>
                   ) : null}
 
-                  {hasMoreClosedInvestments ? (
-                    <Box sx={{ pt: 1, pb: 2, textAlign: 'center' }}>
-                      <Button
-                        variant="outlined"
-                        onClick={handleLoadMoreClosedInvestments}
-                        disabled={closedInvestmentsLoading}
-                      >
-                        Load More
-                      </Button>
-                    </Box>
-                  ) : null}
+                  <TablePaginationCustom
+                    count={closedInvestmentsTotalCount}
+                    page={closedPage}
+                    rowsPerPage={closedRowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    onPageChange={(e, newPage) => setClosedPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setClosedRowsPerPage(parseInt(e.target.value, 10));
+                      setClosedPage(0);
+                    }}
+                  />
                 </>
               );
             }
 
+            // ── Active tab ──────────────────────────────────────────────────────
             if (!hasOnlinePayment) {
               return (
                 <>
                   {pendingOrders.length > 0 ? (
                     <>
-                      {pendingOrders.map((order) => {
+                      {pagedPendingOrders.map((order) => {
                         const { label, color } = getPendingOrderStatusChip(order.status);
                         return (
                           <Box
@@ -434,6 +428,18 @@ export default function PortfolioListView() {
                           </Box>
                         );
                       })}
+
+                      <TablePaginationCustom
+                        count={pendingOrders.length}
+                        page={activePage}
+                        rowsPerPage={activeRowsPerPage}
+                        rowsPerPageOptions={[5, 10, 25]}
+                        onPageChange={(e, newPage) => setActivePage(newPage)}
+                        onRowsPerPageChange={(e) => {
+                          setActiveRowsPerPage(parseInt(e.target.value, 10));
+                          setActivePage(0);
+                        }}
+                      />
                     </>
                   ) : (
                     <Box sx={{ py: 5, textAlign: 'center' }}>
@@ -448,7 +454,7 @@ export default function PortfolioListView() {
 
             return (
               <>
-                {pendingOrders.map((order) => {
+                {pagedPendingOrders.map((order) => {
                   const { label, color } = getPendingOrderStatusChip(order.status);
                   return (
                     <Box
@@ -488,6 +494,20 @@ export default function PortfolioListView() {
                     </Box>
                   );
                 })}
+
+                {pendingOrders.length > 0 && (
+                  <TablePaginationCustom
+                    count={pendingOrders.length}
+                    page={activePage}
+                    rowsPerPage={activeRowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    onPageChange={(e, newPage) => setActivePage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setActiveRowsPerPage(parseInt(e.target.value, 10));
+                      setActivePage(0);
+                    }}
+                  />
+                )}
 
                 <Box
                   sx={{

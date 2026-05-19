@@ -34,6 +34,7 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 import { useGetMyOrders } from 'src/api/invest-transaction';
+import { IconButton } from '@mui/material';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ const TABLE_HEAD = [
   { id: 'investmentAmount', label: 'Amount', align: 'right' },
   { id: 'requestedUnits', label: 'Units', align: 'center' },
   { id: 'status', label: 'Status', align: 'center' },
-  { id: '', label: '' },
+  { id: 'action', label: 'Action', align: 'right' },
 ];
 
 const INR = new Intl.NumberFormat('en-IN', {
@@ -115,8 +116,10 @@ function getTabLabelColor(tabValue) {
 
 function getTabCount(allOrders, tabValue) {
   if (tabValue === 'all') return allOrders.length;
-  if (tabValue === 'ACTIVE') return allOrders.filter((o) => ACTIVE_STATUSES.includes(o.status)).length;
-  if (tabValue === 'FAILED') return allOrders.filter((o) => FAILED_STATUSES.includes(o.status)).length;
+  if (tabValue === 'ACTIVE')
+    return allOrders.filter((o) => ACTIVE_STATUSES.includes(o.status)).length;
+  if (tabValue === 'FAILED')
+    return allOrders.filter((o) => FAILED_STATUSES.includes(o.status)).length;
   return allOrders.filter((o) => o.status === tabValue).length;
 }
 
@@ -210,7 +213,7 @@ function OrderRow({ row, onView }) {
       </TableCell>
 
       <TableCell sx={{ py: 1.5, textAlign: 'right' }}>
-        <Button
+        {/* <Button
           size="small"
           variant={isActive ? 'contained' : 'outlined'}
           color={isActive ? 'primary' : 'inherit'}
@@ -222,7 +225,17 @@ function OrderRow({ row, onView }) {
           sx={{ textTransform: 'none', fontWeight: 600, fontSize: 11, borderRadius: 1, py: 0.5 }}
         >
           {isActive ? 'View' : 'Details'}
-        </Button>
+        </Button> */}
+        <Tooltip title="View" placement="top" arrow>
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+          >
+            <Iconify icon="solar:eye-bold" />
+          </IconButton>
+        </Tooltip>
       </TableCell>
     </TableRow>
   );
