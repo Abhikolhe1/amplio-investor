@@ -7,9 +7,16 @@ import {
   Card,
   Chip,
   CircularProgress,
-  Collapse,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -19,10 +26,10 @@ import { useParams, useRouter } from 'src/routes/hook';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import { UploadBox } from 'src/components/upload';
 import { getApiErrorMessage } from 'src/utils/api-error';
 import {
   cancelInvestmentOrder,
-  escalateInvestmentOrder,
   useGetOrderById,
   useGetOrderFlowState,
   useGetPaymentInstructions,
@@ -61,13 +68,6 @@ const ACTIVE_STATUSES = [
   'PAYMENT_UNDER_REVIEW',
 ];
 const CANCELLABLE = ['CREATED', 'AGREEMENT_SIGNED', 'PAYMENT_PENDING', 'UTR_SUBMITTED'];
-const ESCALATABLE = [
-  'UTR_SUBMITTED',
-  'PAYMENT_UNDER_REVIEW',
-  'PAYMENT_FAILED',
-  'PTC_FREEZE_EXPIRED',
-  'PAYMENT_TIMEOUT',
-];
 
 const INR = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -359,109 +359,6 @@ OrderTimeline.propTypes = {
   }).isRequired,
 };
 
-// ── Escalation form ────────────────────────────────────────────────────────────
-
-function EscalationSection({ orderId, onDone }) {
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState('');
-  const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!reason.trim() || !description.trim()) {
-      enqueueSnackbar('Please fill in both reason and description.', { variant: 'error' });
-      return;
-    }
-    try {
-      setSubmitting(true);
-      await escalateInvestmentOrder(orderId, {
-        escalationType: 'PAYMENT_DISPUTE',
-        reason: reason.trim(),
-        description: description.trim(),
-      });
-      enqueueSnackbar('Dispute raised. Our team will respond within 2 business days.', {
-        variant: 'success',
-      });
-      setOpen(false);
-      setReason('');
-      setDescription('');
-      onDone?.();
-    } catch (err) {
-      enqueueSnackbar(getApiErrorMessage(err, 'Failed to raise dispute.'), { variant: 'error' });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <Stack spacing={1.5}>
-      <Button
-        fullWidth
-        variant="outlined"
-        color="warning"
-        startIcon={<Iconify icon="eva:alert-triangle-fill" width={17} />}
-        onClick={() => setOpen((v) => !v)}
-        sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
-      >
-        {open ? 'Cancel Dispute' : 'Raise a Payment Dispute'}
-      </Button>
-
-      <Collapse in={open}>
-        <Card
-          sx={{
-            p: 2.5,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'warning.light',
-            bgcolor: 'warning.lighter',
-          }}
-        >
-          <Stack spacing={2}>
-            <Typography fontSize={13} fontWeight={700} color="warning.darker">
-              Payment Dispute Form
-            </Typography>
-            <TextField
-              fullWidth
-              size="small"
-              label="Short Reason"
-              placeholder="e.g. Transfer made but UTR not accepted"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              inputProps={{ maxLength: 200 }}
-            />
-            <TextField
-              fullWidth
-              size="small"
-              multiline
-              rows={3}
-              label="Full Description"
-              placeholder="Include transfer date, amount, bank name, and any reference numbers."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              inputProps={{ maxLength: 2000 }}
-            />
-            <Button
-              fullWidth
-              variant="contained"
-              color="warning"
-              disabled={submitting || !reason.trim() || !description.trim()}
-              onClick={handleSubmit}
-              startIcon={submitting ? <CircularProgress size={14} color="inherit" /> : null}
-              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
-            >
-              {submitting ? 'Submitting…' : 'Submit Dispute'}
-            </Button>
-          </Stack>
-        </Card>
-      </Collapse>
-    </Stack>
-  );
-}
-EscalationSection.propTypes = {
-  orderId: PropTypes.string.isRequired,
-  onDone: PropTypes.func,
-};
-
 // ── Cancel confirmation ────────────────────────────────────────────────────────
 
 function CancelSection({ orderId, onCancelled }) {
@@ -545,11 +442,173 @@ CancelSection.propTypes = {
   onCancelled: PropTypes.func,
 };
 
+// ── Support questions ──────────────────────────────────────────────────────────
+
+const SUPPORT_QUESTIONS = [
+  'I placed an order but PTC units were not allocated.',
+  'I initiated a refund but have not received the money.',
+  'My payment was verified but the order status is not updated.',
+  'I am unable to submit my UTR reference.',
+  'I received a partial allocation but expected full allocation.',
+  'Other',
+];
+
+function SupportDialog({ open, onClose, orderId, orderShort }) {
+  const [question, setQuestion] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState(null);
+
+  const isOther = question === 'Other';
+  const canSave = question !== '' && (!isOther || customDescription.trim() !== '');
+
+  const handleDropFile = useCallback((acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file) setAttachmentFile(file);
+  }, []);
+
+  const handleClose = () => {
+    setQuestion('');
+    setCustomDescription('');
+    setAttachmentFile(null);
+    onClose();
+  };
+
+  const handleSave = () => {
+    // API integration to be added later
+    handleClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Iconify icon="eva:headphones-fill" width={22} sx={{ color: 'primary.main' }} />
+          <span>Contact Support</span>
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: '12px !important' }}>
+        <Stack spacing={2.5}>
+          {/* Linked order reference */}
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: 1.5,
+              bgcolor: 'primary.lighter',
+              border: '1px solid',
+              borderColor: 'primary.light',
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Iconify icon="eva:link-2-fill" width={16} sx={{ color: 'primary.main' }} />
+              <Typography fontSize={13} color="primary.dark">
+                Linked Order:&nbsp;
+                <Typography component="span" fontSize={13} fontWeight={700} color="primary.dark">
+                  {orderShort}
+                </Typography>
+              </Typography>
+            </Stack>
+          </Box>
+
+          {/* Issue dropdown */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Select your issue</InputLabel>
+            <Select
+              value={question}
+              label="Select your issue"
+              onChange={(e) => {
+                setQuestion(e.target.value);
+                setCustomDescription('');
+              }}
+            >
+              {SUPPORT_QUESTIONS.map((q) => (
+                <MenuItem key={q} value={q}>
+                  {q}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Custom description — shown only when "Other" is selected */}
+          {isOther && (
+            <TextField
+              fullWidth
+              size="small"
+              multiline
+              rows={4}
+              label="Describe your issue"
+              placeholder="Please describe your issue in detail..."
+              value={customDescription}
+              onChange={(e) => setCustomDescription(e.target.value)}
+              inputProps={{ maxLength: 1000 }}
+            />
+          )}
+
+          {/* Attachment upload */}
+          <Stack spacing={1}>
+            <Typography fontSize={13} color="text.secondary">
+              Attachment (optional)
+            </Typography>
+            <UploadBox
+              onDrop={handleDropFile}
+              placeholder={
+                <Stack alignItems="center" spacing={0.5}>
+                  <Iconify icon="eva:cloud-upload-fill" width={28} sx={{ color: 'text.secondary' }} />
+                  <Typography fontSize={12} color="text.secondary">
+                    {attachmentFile ? attachmentFile.name : 'Drop or click to upload'}
+                  </Typography>
+                </Stack>
+              }
+              sx={{ width: '100%', height: 100, borderRadius: 1.5 }}
+            />
+            {attachmentFile && (
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography fontSize={12} color="text.secondary">
+                  {attachmentFile.name}
+                </Typography>
+                <Button size="small" color="error" onClick={() => setAttachmentFile(null)}>
+                  Remove
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button
+          variant="outlined"
+          onClick={handleClose}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!canSave}
+          onClick={handleSave}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
+        >
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+SupportDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  orderId: PropTypes.string.isRequired,
+  orderShort: PropTypes.string.isRequired,
+};
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function OrderDetailView() {
   const router = useRouter();
   const { orderId } = useParams();
+
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const { order, orderLoading, orderError, refreshOrder } = useGetOrderById(orderId);
   const { flowState, refreshFlowState } = useGetOrderFlowState(orderId);
@@ -608,7 +667,6 @@ export default function OrderDetailView() {
   };
   const isActive = ACTIVE_STATUSES.includes(order.status);
   const isCancellable = CANCELLABLE.includes(order.status);
-  const isEscalatable = ESCALATABLE.includes(order.status);
   const isFailed = TERMINAL_FAILED.includes(order.status);
   const isSuccess = TERMINAL_SUCCESS.includes(order.status);
   const isCancelled = order.status === 'CANCELLED';
@@ -917,13 +975,20 @@ export default function OrderDetailView() {
                 </Button>
               )}
 
-              {isEscalatable && (
-                <EscalationSection orderId={order.id} onDone={handleAfterAction} />
-              )}
-
               {isCancellable && (
                 <CancelSection orderId={order.id} onCancelled={handleAfterAction} />
               )}
+
+              <Button
+                fullWidth
+                variant="outlined"
+                color="info"
+                startIcon={<Iconify icon="eva:headphones-fill" width={17} />}
+                onClick={() => setSupportOpen(true)}
+                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
+              >
+                Support
+              </Button>
 
               <Button
                 fullWidth
@@ -938,6 +1003,13 @@ export default function OrderDetailView() {
           </Card>
         </Stack>
       </Box>
+
+      <SupportDialog
+        open={supportOpen}
+        onClose={() => setSupportOpen(false)}
+        orderId={order.id}
+        orderShort={orderShort}
+      />
     </Container>
   );
 }
