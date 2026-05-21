@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   Box,
@@ -27,9 +27,11 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { UploadBox } from 'src/components/upload';
+import axiosInstance from 'src/utils/axios';
 import { getApiErrorMessage } from 'src/utils/api-error';
 import {
   cancelInvestmentOrder,
+  createCustomerSupportRequest,
   useGetOrderById,
   useGetOrderFlowState,
   useGetPaymentInstructions,
@@ -455,27 +457,78 @@ const SUPPORT_QUESTIONS = [
 
 function SupportDialog({ open, onClose, orderId, orderShort }) {
   const [question, setQuestion] = useState('');
-  const [customDescription, setCustomDescription] = useState('');
+  const [complaintDescription, setComplaintDescription] = useState('');
   const [attachmentFile, setAttachmentFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const isOther = question === 'Other';
-  const canSave = question !== '' && (!isOther || customDescription.trim() !== '');
+  const canSave = question !== '' && complaintDescription.trim() !== '';
+
+  const revokeAttachmentPreview = useCallback((file) => {
+    if (file?.fileUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(file.fileUrl);
+    }
+  }, []);
 
   const handleDropFile = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
-    if (file) setAttachmentFile(file);
-  }, []);
+    if (!file) return;
+
+    setAttachmentFile((currentFile) => {
+      revokeAttachmentPreview(currentFile);
+
+      return Object.assign(file, {
+        fileUrl: URL.createObjectURL(file),
+        fileOriginalName: file.name,
+      });
+    });
+  }, [revokeAttachmentPreview]);
+
+  const handleRemoveAttachment = useCallback(() => {
+    setAttachmentFile((currentFile) => {
+      revokeAttachmentPreview(currentFile);
+      return null;
+    });
+  }, [revokeAttachmentPreview]);
+
+  useEffect(() => () => revokeAttachmentPreview(attachmentFile), [attachmentFile, revokeAttachmentPreview]);
 
   const handleClose = () => {
     setQuestion('');
-    setCustomDescription('');
-    setAttachmentFile(null);
+    setComplaintDescription('');
+    handleRemoveAttachment();
     onClose();
   };
 
-  const handleSave = () => {
-    // API integration to be added later
-    handleClose();
+  const handleSave = async () => {
+    try {
+      setSubmitting(true);
+
+      let attachmentMediaId;
+      if (attachmentFile) {
+        const formData = new FormData();
+        formData.append('file', attachmentFile);
+        const uploadRes = await axiosInstance.post('/files', formData);
+        attachmentMediaId = uploadRes?.data?.files?.[0]?.id;
+      }
+
+      await createCustomerSupportRequest(orderId, {
+        issueType: question,
+        complaintDescription: complaintDescription.trim(),
+        attachmentMediaId,
+      });
+
+      enqueueSnackbar('Support request submitted successfully.', {
+        variant: 'success',
+      });
+      handleClose();
+    } catch (error) {
+      enqueueSnackbar(
+        getApiErrorMessage(error, 'Failed to submit support request.'),
+        { variant: 'error' }
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -518,7 +571,6 @@ function SupportDialog({ open, onClose, orderId, orderShort }) {
               label="Select your issue"
               onChange={(e) => {
                 setQuestion(e.target.value);
-                setCustomDescription('');
               }}
             >
               {SUPPORT_QUESTIONS.map((q) => (
@@ -530,19 +582,17 @@ function SupportDialog({ open, onClose, orderId, orderShort }) {
           </FormControl>
 
           {/* Custom description — shown only when "Other" is selected */}
-          {isOther && (
-            <TextField
-              fullWidth
-              size="small"
-              multiline
-              rows={4}
-              label="Describe your issue"
-              placeholder="Please describe your issue in detail..."
-              value={customDescription}
-              onChange={(e) => setCustomDescription(e.target.value)}
-              inputProps={{ maxLength: 1000 }}
-            />
-          )}
+          <TextField
+            fullWidth
+            size="small"
+            multiline
+            rows={4}
+            label="Complaint Description"
+            placeholder="Please describe your issue in detail..."
+            value={complaintDescription}
+            onChange={(e) => setComplaintDescription(e.target.value)}
+            inputProps={{ maxLength: 2000 }}
+          />
 
           {/* Attachment upload */}
           <Stack spacing={1}>
@@ -550,7 +600,11 @@ function SupportDialog({ open, onClose, orderId, orderShort }) {
               Attachment (optional)
             </Typography>
             <UploadBox
+              files={attachmentFile}
               onDrop={handleDropFile}
+              onRemove={handleRemoveAttachment}
+              previewThumbnail
+              previewSx={{ width: 80, height: 80 }}
               placeholder={
                 <Stack alignItems="center" spacing={0.5}>
                   <Iconify icon="eva:cloud-upload-fill" width={28} sx={{ color: 'text.secondary' }} />
@@ -566,7 +620,7 @@ function SupportDialog({ open, onClose, orderId, orderShort }) {
                 <Typography fontSize={12} color="text.secondary">
                   {attachmentFile.name}
                 </Typography>
-                <Button size="small" color="error" onClick={() => setAttachmentFile(null)}>
+                <Button size="small" color="error" onClick={handleRemoveAttachment}>
                   Remove
                 </Button>
               </Stack>
@@ -585,11 +639,11 @@ function SupportDialog({ open, onClose, orderId, orderShort }) {
         </Button>
         <Button
           variant="contained"
-          disabled={!canSave}
+          disabled={!canSave || submitting}
           onClick={handleSave}
           sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
         >
-          Save
+          {submitting ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -100,6 +100,7 @@ export const endpoints = {
     submitUtr: (orderId) => `/investments/orders/${orderId}/submit-utr`,
     cancel: (orderId) => `/investments/orders/${orderId}/cancel`,
     escalate: (orderId) => `/investments/orders/${orderId}/escalate`,
+    customerSupport: (orderId) => `/investments/orders/${orderId}/customer-support`,
   },
   adminInvestmentOrders: {
     list: '/admin/investments/orders',
