@@ -66,7 +66,6 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   // When fewer units remain than a full block, use a sub-block step (1/10th of block size).
   const isLowInventory = maxSelectableUnits > 0 && maxSelectableUnits < minimumUnits;
   const effectiveStep = isLowInventory ? Math.max(1, Math.round(minimumUnits / 10)) : minimumUnits;
-  const effectiveFloor = effectiveStep;
 
   useEffect(() => {
     if (minimumUnits <= 0) return;
@@ -90,21 +89,19 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
       const next = safePrev + effectiveStep;
-      // When next would exceed max, jump to max instead of blocking.
-      if (next > maxSelectableUnits) {
-        return safePrev < maxSelectableUnits ? maxSelectableUnits : safePrev;
-      }
-      return next;
+      return next <= maxSelectableUnits ? next : safePrev;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
-      if (maxSelectableUnits === 0) return 0;
       const next = prev - effectiveStep;
-      return next >= effectiveFloor ? next : effectiveFloor;
+      return next >= 0 ? next : 0;
     });
   };
+
+  const canDecrease = units > 0;
+  const canIncrease = units + effectiveStep <= maxSelectableUnits;
 
   // Quick-select sets the quantity to an absolute block multiple (not additive).
   const handleQuickSelect = (value) => {
@@ -214,6 +211,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           >
             <IconButton
               onClick={handleDecrease}
+              disabled={!canDecrease}
               size="small"
               sx={{
                 border: '1px solid',
@@ -237,15 +235,20 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
 
             <IconButton
               onClick={handleIncrease}
+              disabled={!canIncrease}
               size="small"
               sx={{
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
+                bgcolor: canIncrease ? 'primary.main' : 'action.disabledBackground',
+                color: canIncrease ? 'primary.contrastText' : 'action.disabled',
                 borderRadius: 0.5,
                 width: 45,
                 height: 32,
                 '&:hover': {
-                  bgcolor: 'primary.main',
+                  bgcolor: canIncrease ? 'primary.main' : 'action.disabledBackground',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'action.disabled',
                 },
               }}
             >
