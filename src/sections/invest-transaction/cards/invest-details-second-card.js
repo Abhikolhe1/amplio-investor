@@ -24,6 +24,7 @@ import {
   parseUnitsValue as parseUnitCount,
   resolvePayoutType,
 } from 'src/utils/investment-amounts';
+import { fDate } from 'src/utils/format-time';
 
 const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 
@@ -41,6 +42,17 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   const payoutType = resolvePayoutType(currentDetails);
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
+
+  const checkAfterCutoff = () => {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(Date.now() + IST_OFFSET_MS);
+    return istNow.getUTCHours() >= 15;
+  };
+  const [isAfterAllocationCutoff, setIsAfterAllocationCutoff] = useState(checkAfterCutoff);
+  useEffect(() => {
+    const timer = setInterval(() => setIsAfterAllocationCutoff(checkAfterCutoff()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const availableUnits = parseUnitCount(currentDetails?.units?.available);
   const remainingInvestorLimit = parseUnitCount(currentDetails?.units?.remainingInvestorLimit);
   const maxSelectableUnits =
@@ -55,7 +67,6 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   // When fewer units remain than a full block, use a sub-block step (1/10th of block size).
   const isLowInventory = maxSelectableUnits > 0 && maxSelectableUnits < minimumUnits;
   const effectiveStep = isLowInventory ? Math.max(1, Math.round(minimumUnits / 10)) : minimumUnits;
-  const effectiveFloor = effectiveStep;
 
   useEffect(() => {
     if (minimumUnits <= 0) return;
@@ -79,21 +90,19 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
     setUnits((prev) => {
       const safePrev = Number(prev) || 0;
       const next = safePrev + effectiveStep;
-      // When next would exceed max, jump to max instead of blocking.
-      if (next > maxSelectableUnits) {
-        return safePrev < maxSelectableUnits ? maxSelectableUnits : safePrev;
-      }
-      return next;
+      return next <= maxSelectableUnits ? next : safePrev;
     });
   };
 
   const handleDecrease = () => {
     setUnits((prev) => {
-      if (maxSelectableUnits === 0) return 0;
       const next = prev - effectiveStep;
-      return next >= effectiveFloor ? next : effectiveFloor;
+      return next >= 0 ? next : 0;
     });
   };
+
+  const canDecrease = units > 0;
+  const canIncrease = units + effectiveStep <= maxSelectableUnits;
 
   // Quick-select sets the quantity to an absolute block multiple (not additive).
   const handleQuickSelect = (value) => {
@@ -113,6 +122,23 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   };
 
 
+  const tenureDays = useMemo(
+    () => parseAmount(currentDetails?.tenureDays || currentDetails?.tenure || currentDetails?.maturityDays || 0),
+    [currentDetails]
+  );
+
+  const formattedNextLiquidityEvent = useMemo(() => {
+    const rawDate = currentDetails?.nextLiquidityEvent;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
+
+  const formattedFinalMaturityDate = useMemo(() => {
+    const rawDate = currentDetails?.finalMaturityDate;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
+
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
 
@@ -126,11 +152,13 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       principalAmount,
       annualRatePercent: rate,
       endDate: currentDetails?.nextLiquidityEvent,
+      tenureDays,
     });
     const maturityProjection = calculateProjectedInterest({
       principalAmount,
       annualRatePercent: rate,
       endDate: currentDetails?.finalMaturityDate,
+      tenureDays,
     });
     const hasInventory = maxSelectableUnits > 0;
     const blockAligned = minimumUnits > 0 && units % minimumUnits === 0;
@@ -157,14 +185,17 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
         payoutType === 'cumulative'
           ? 'Estimated Maturity Amount'
           : 'Principal Return at Maturity',
-      maturityAmountValue: formatAmount(maturityProjection.totalAmount),
+      maturityAmountValue:
+        payoutType === 'cumulative'
+          ? formatAmount(maturityProjection.totalAmount)
+          : formatAmount(principalAmount),
       nextLiquidityInterestValue: formatAmount(nextLiquidityProjection.interestAmount),
       maturityInterestValue: formatAmount(maturityProjection.interestAmount),
       hasInventory,
       isUnitsAllowed,
       blockError,
     };
-  }, [availableUnits, currentDetails, isLowInventory, maxSelectableUnits, minimumUnits, payoutType, units]);
+  }, [availableUnits, currentDetails, isLowInventory, maxSelectableUnits, minimumUnits, payoutType, tenureDays, units]);
   if (!currentDetails) {
     return null;
   }
@@ -203,6 +234,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           >
             <IconButton
               onClick={handleDecrease}
+              disabled={!canDecrease}
               size="small"
               sx={{
                 border: '1px solid',
@@ -226,15 +258,20 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
 
             <IconButton
               onClick={handleIncrease}
+              disabled={!canIncrease}
               size="small"
               sx={{
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
+                bgcolor: canIncrease ? 'primary.main' : 'action.disabledBackground',
+                color: canIncrease ? 'primary.contrastText' : 'action.disabled',
                 borderRadius: 0.5,
                 width: 45,
                 height: 32,
                 '&:hover': {
-                  bgcolor: 'primary.main',
+                  bgcolor: canIncrease ? 'primary.main' : 'action.disabledBackground',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'action.disabled',
                 },
               }}
             >
@@ -371,7 +408,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.nextLiquidityEvent}
+              {formattedNextLiquidityEvent}
             </Typography>
           </Grid>
 
@@ -399,7 +436,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.finalMaturityDate}
+              {formattedFinalMaturityDate}
             </Typography>
           </Grid>
 
@@ -493,6 +530,16 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
             </Typography>
           </Box>
         </Grid>
+
+        {/* After-3PM allocation notice — informational only, does not block investment */}
+        {isAfterAllocationCutoff && (
+          <Grid item xs={12}>
+            <Alert severity="info" sx={{ fontSize: 13 }}>
+              Investments made after 3:00 PM IST will be allocated on the next business day
+              and will not earn today&apos;s interest.
+            </Alert>
+          </Grid>
+        )}
 
         {/* Terms & Policy */}
         <Grid item xs={12}>

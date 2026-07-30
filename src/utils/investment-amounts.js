@@ -102,10 +102,14 @@ export const calculateProjectedInterest = ({
   principalAmount = 0,
   annualRatePercent = 0,
   endDate,
+  tenureDays = 90,
 }) => {
   const normalizedPrincipal = Number(principalAmount) || 0;
   const normalizedRate = Number(annualRatePercent) || 0;
-  const daysUntilEvent = getDaysUntilDate(endDate);
+  let daysUntilEvent = getDaysUntilDate(endDate);
+  if (daysUntilEvent <= 0) {
+    daysUntilEvent = Number(tenureDays) || 90;
+  }
   const interestAmount = (normalizedPrincipal * normalizedRate * daysUntilEvent) / (365 * 100);
 
   return {

@@ -116,6 +116,14 @@ export async function escalateInvestmentOrder(orderId, dto) {
   return response.data?.data ?? response.data;
 }
 
+export async function createCustomerSupportRequest(orderId, dto) {
+  const response = await axiosInstance.post(
+    endpoints.investmentOrders.customerSupport(orderId),
+    dto,
+  );
+  return response.data?.data ?? response.data;
+}
+
 export function useGetOrderFlowState(orderId) {
   const URL = orderId ? endpoints.investmentOrders.flowState(orderId) : null;
   const { data, isLoading, error, mutate } = useSWR(URL, fetcher, {
