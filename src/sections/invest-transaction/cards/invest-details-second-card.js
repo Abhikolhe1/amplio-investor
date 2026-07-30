@@ -24,6 +24,7 @@ import {
   parseUnitsValue as parseUnitCount,
   resolvePayoutType,
 } from 'src/utils/investment-amounts';
+import { fDate } from 'src/utils/format-time';
 
 const parsePercentage = (value) => parseFloat(String(value || '0').replace(/[^0-9.]/g, '')) || 0;
 
@@ -121,6 +122,23 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
   };
 
 
+  const tenureDays = useMemo(
+    () => parseAmount(currentDetails?.tenureDays || currentDetails?.tenure || currentDetails?.maturityDays || 0),
+    [currentDetails]
+  );
+
+  const formattedNextLiquidityEvent = useMemo(() => {
+    const rawDate = currentDetails?.nextLiquidityEvent;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
+
+  const formattedFinalMaturityDate = useMemo(() => {
+    const rawDate = currentDetails?.finalMaturityDate;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
+
   const calculatedValues = useMemo(() => {
     if (!currentDetails) return {};
 
@@ -134,11 +152,13 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
       principalAmount,
       annualRatePercent: rate,
       endDate: currentDetails?.nextLiquidityEvent,
+      tenureDays,
     });
     const maturityProjection = calculateProjectedInterest({
       principalAmount,
       annualRatePercent: rate,
       endDate: currentDetails?.finalMaturityDate,
+      tenureDays,
     });
     const hasInventory = maxSelectableUnits > 0;
     const blockAligned = minimumUnits > 0 && units % minimumUnits === 0;
@@ -165,14 +185,17 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
         payoutType === 'cumulative'
           ? 'Estimated Maturity Amount'
           : 'Principal Return at Maturity',
-      maturityAmountValue: formatAmount(maturityProjection.totalAmount),
+      maturityAmountValue:
+        payoutType === 'cumulative'
+          ? formatAmount(maturityProjection.totalAmount)
+          : formatAmount(principalAmount),
       nextLiquidityInterestValue: formatAmount(nextLiquidityProjection.interestAmount),
       maturityInterestValue: formatAmount(maturityProjection.interestAmount),
       hasInventory,
       isUnitsAllowed,
       blockError,
     };
-  }, [availableUnits, currentDetails, isLowInventory, maxSelectableUnits, minimumUnits, payoutType, units]);
+  }, [availableUnits, currentDetails, isLowInventory, maxSelectableUnits, minimumUnits, payoutType, tenureDays, units]);
   if (!currentDetails) {
     return null;
   }
@@ -385,7 +408,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.nextLiquidityEvent}
+              {formattedNextLiquidityEvent}
             </Typography>
           </Grid>
 
@@ -413,7 +436,7 @@ export default function InvestDetailsSecondCard({ currentDetails, spvId, spvName
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.finalMaturityDate}
+              {formattedFinalMaturityDate}
             </Typography>
           </Grid>
 

@@ -15,11 +15,29 @@ import { useState, useMemo, useEffect } from 'react';
 import Iconify from 'src/components/iconify';
 import { useRouter } from 'src/routes/hook';
 import { paths } from 'src/routes/paths';
+import { fDate } from 'src/utils/format-time';
 
 export default function InvestDetailsSecondCard({ currentDetails }) {
   const router = useRouter();
   const [units, setUnits] = useState(1);
   const [agree, setAgree] = useState(false);
+
+  const tenureDays = useMemo(
+    () => Number(currentDetails?.tenureDays || currentDetails?.tenure || currentDetails?.maturityDays || 0),
+    [currentDetails]
+  );
+
+  const formattedNextLiquidityEvent = useMemo(() => {
+    const rawDate = currentDetails?.nextLiquidityEvent;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
+
+  const formattedFinalMaturityDate = useMemo(() => {
+    const rawDate = currentDetails?.finalMaturityDate;
+    if (!rawDate) return '-';
+    return fDate(rawDate, 'dd MMM yyyy');
+  }, [currentDetails]);
 
   // ₹1 Crore block size: every purchase must be a multiple of minimumUnits.
   const faceValuePerUnit =
@@ -290,7 +308,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.nextLiquidityEvent}
+              {formattedNextLiquidityEvent}
             </Typography>
           </Grid>
 
@@ -318,7 +336,7 @@ export default function InvestDetailsSecondCard({ currentDetails }) {
           </Grid>
           <Grid item xs={6}>
             <Typography fontSize={14} fontWeight={600} textAlign="right">
-              {currentDetails?.finalMaturityDate}
+              {formattedFinalMaturityDate}
             </Typography>
           </Grid>
 

@@ -46,6 +46,7 @@ import axios from 'axios';
 import InvestTableToolbar from '../invest-table-toolbar';
 import InvestTableFiltersResult from '../invest-table-filters-result';
 import InvestTableRow from '../invest-table-row';
+import InvestmentPreferenceDialog from '../investment-preference-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -82,6 +83,15 @@ export default function InvestListView() {
 
   const [filters, setFilters] = useState(defaultFilters);
 
+  const [openPreferences, setOpenPreferences] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('investment_preference');
+    if (!saved) {
+      setOpenPreferences(true);
+    }
+  }, []);
+
   const { products, productsLoading, productsEmpty } = useGetProducts();
 
 
@@ -96,8 +106,8 @@ export default function InvestListView() {
   //   }
   //   TrasactionDATA();
   // }, []);
- const { investTransactions,investTransactionsEmpty}=useGetInvestTransactions();
- const { portfolioData } = useGetPortfolioData();
+  const { investTransactions, investTransactionsEmpty } = useGetInvestTransactions();
+  const { portfolioData } = useGetPortfolioData();
   const confirm = useBoolean();
 
   // useEffect(() => {
@@ -105,9 +115,9 @@ export default function InvestListView() {
   //     setTableData(products);
   //   }
   // }, [products]);
-   useEffect(() => {
+  useEffect(() => {
     setTableData(investTransactions);
-   }, [investTransactions]);
+  }, [investTransactions]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -183,6 +193,16 @@ export default function InvestListView() {
       <CustomBreadcrumbs
         heading="Invest Transaction"
         links={[{ name: 'Dashboard', href: '/' }, { name: 'Invest Transaction' }]}
+        action={
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Iconify icon="solar:settings-bold" />}
+            onClick={() => setOpenPreferences(true)}
+          >
+            Investment Preferences
+          </Button>
+        }
         sx={{ mb: 3 }}
       />
 
@@ -284,25 +304,29 @@ export default function InvestListView() {
         ))}
       </Grid>
 
-      
-        <TableEmptyRows
-          height={denseHeight}
-          emptyRows={emptyRows(table.page, table.rowsPerPage, tableData.length)}
-        />
 
-     {/* <TableNoData notFound={notFound} />  */}
+      <TableEmptyRows
+        height={denseHeight}
+        emptyRows={emptyRows(table.page, table.rowsPerPage, tableData.length)}
+      />
 
-   <TablePaginationCustom
-          count={dataFiltered.length}
-          page={table.page}
-          rowsPerPage={table.rowsPerPage}
-          rowsPerPageOptions={[6, 15, 30]}
-          onPageChange={table.onChangePage}
-          onRowsPerPageChange={table.onChangeRowsPerPage}
-          //
-          dense={table.dense}
-          onChangeDense={table.onChangeDense}
-        /> 
+      {/* <TableNoData notFound={notFound} />  */}
+
+      <TablePaginationCustom
+        count={dataFiltered.length}
+        page={table.page}
+        rowsPerPage={table.rowsPerPage}
+        rowsPerPageOptions={[6, 15, 30]}
+        onPageChange={table.onChangePage}
+        onRowsPerPageChange={table.onChangeRowsPerPage}
+      //
+      // dense={table.dense}
+      // onChangeDense={table.onChangeDense}
+      />
+      <InvestmentPreferenceDialog
+        open={openPreferences}
+        onClose={() => setOpenPreferences(false)}
+      />
 
     </Container>
 
